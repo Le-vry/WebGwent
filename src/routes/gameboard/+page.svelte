@@ -17,7 +17,7 @@
 <style>
 main {
     
-    background-image: "Board.png";
+    background-image: url("/static/Board.png");
     background-size: cover;
     height: 100vh;
     width: 100vw;
