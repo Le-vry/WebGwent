@@ -11,7 +11,7 @@
 <style>
 	main {
 		
-		background:url("my-website\static\Background.png");
+		background-image: url("my-website\static\Background.png");
 		background-size:cover;
 		height: 100vh;
 		width: 100vw;
