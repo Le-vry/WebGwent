@@ -1,15 +1,28 @@
-<!-- YOU CAN DELETE EVERYTHING IN THIS PAGE -->
+<script>
+	import { base } from '$app/paths';
+</script>	
 
-<div class="container h-full mx-auto flex justify-center items-center">
-	<div class="space-y-5">
-		<h1 class="h1">Let's get cracking bones!</h1>
-		<p>Start by exploring:</p>
-		<ul>
-			<li><code class="code">/src/routes/+layout.svelte</code> - barebones layout</li>
-			<li><code class="code">/src/app.postcss</code> - app wide css</li>
-			<li>
-				<code class="code">/src/routes/+page.svelte</code> - this page, you can replace the contents
-			</li>
-		</ul>
-	</div>
-</div>
+<main>
+	<img src="Gwent header.png" alt="Gwent header">
+	<a href="{base}/card-select">Play Gwent</a>
+</main>
+
+
+<style>
+	main {
+		
+		background-image: url("Background.png");
+		background-size:cover;
+		height: 100vh;
+		width: 100vw;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		overflow: hidden;
+	}
+
+	img {
+		width: 30vw;
+		height: 30vh;
+	}
+</style>
