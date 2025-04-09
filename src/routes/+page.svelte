@@ -11,7 +11,7 @@
 <style>
 	main {
 		
-		background-image: url("/static/Background.png");
+		background-image: url("Background.png");
 		background-size:cover;
 		height: 100vh;
 		width: 100vw;
