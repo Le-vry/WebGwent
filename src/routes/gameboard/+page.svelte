@@ -23,8 +23,8 @@
 
     let P1 = players
     let P2 = players
-    let P1Leader = {name: ""}
-    let P2Leader = {name: ""}
+    let P1Leader = {name: "Ballista1"}
+    let P2Leader = {name: "Ballista1"}
     
     
     
