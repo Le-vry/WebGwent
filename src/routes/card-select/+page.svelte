@@ -2,34 +2,34 @@
     import {players_store} from "$lib/players";
     import { goto } from '$app/navigation';
 
-    let Base_NoRe_Deck = [
-        {id: 1, name: "Biting Frost", type: "special", row: "weather", ability: "W1"},
-        {id: 2, name: "Biting Frost", type: "special", row: "weather", ability: "W1"},
+    let Base_NR_Deck = [
+        {id: 1, name: "Biting Frost", type: "special", row: "weather", value: 0, ability: "W1"},
+        {id: 2, name: "Biting Frost", type: "special", row: "weather", value: 0,ability: "W1"},
         {id: 3, name: "Biting Frost", type: "special", row: "weather", ability: "W1"},
-        {id: 4, name: "Impenetrable Fog", type: "special", row: "weather", ability: "W2"},
-        {id: 5, name: "Impenetrable Fog", type: "special", row: "weather", ability: "W2"},
-        {id: 6, name: "Impenetrable Fog", type: "special", row: "weather", ability: "W2"},
-        {id: 7, name: "Torrential Rain", type: "special", row: "weather", ability: "W3"},
-        {id: 8, name: "Torrential Rain", type: "special", row: "weather", ability: "W3"},
-        {id: 9, name: "Torrential Rain", type: "special", row: "weather", ability: "W3"},
-        {id: 10, name: "Skellige Storm", type: "special", row: "weather", ability: "W4"},
-        {id: 11, name: "Skellige Storm", type: "special", row: "weather", ability: "W4"},
-        {id: 12, name: "Skellige Storm", type: "special", row: "weather", ability: "W4"},
-        {id: 13, name: "Clear Weather", type: "special", row: "weather", ability: "W5"},
-        {id: 14, name: "Clear Weather", type: "special", row: "weather", ability: "W5"},
-        {id: 15, name: "Clear Weather", type: "special", row: "weather", ability: "W5"},
-        {id: 16, name: "Commander's Horn", type: "special", row: "none", ability: "horn"},
-        {id: 17, name: "Commander's Horn", type: "special", row: "none", ability: "horn"},
-        {id: 18, name: "Commander's Horn", type: "special", row: "none", ability: "horn"},
-        {id: 19, name: "Decoy", type: "special", row: "none", ability: "decoy"},
-        {id: 20, name: "Decoy", type: "special", row: "none", ability: "decoy"},
-        {id: 21, name: "Decoy", type: "special", row: "none", ability: "decoy"},
-        {id: 22, name: "Scorch", type: "special", row: "none", ability: "scorch"},
-        {id: 23, name: "Scorch", type: "special", row: "none", ability: "scorch"},
-        {id: 24, name: "Scorch", type: "special", row: "none", ability: "scorch"},
+        {id: 4, name: "Impenetrable Fog", type: "special", row: "weather", value: 0, ability: "W2"},
+        {id: 5, name: "Impenetrable Fog", type: "special", row: "weather", value: 0, ability: "W2"},
+        {id: 6, name: "Impenetrable Fog", type: "special", row: "weather", value: 0, ability: "W2"},
+        {id: 7, name: "Torrential Rain", type: "special", row: "weather", value: 0, ability: "W3"},
+        {id: 8, name: "Torrential Rain", type: "special", row: "weather", value: 0, ability: "W3"},
+        {id: 9, name: "Torrential Rain", type: "special", row: "weather", value: 0, ability: "W3"},
+        {id: 10, name: "Skellige Storm", type: "special", row: "weather", value: 0, ability: "W4"},
+        {id: 11, name: "Skellige Storm", type: "special", row: "weather", value: 0, ability: "W4"},
+        {id: 12, name: "Skellige Storm", type: "special", row: "weather", value: 0, ability: "W4"},
+        {id: 13, name: "Clear Weather", type: "special", row: "weather", value: 0, ability: "W5"},
+        {id: 14, name: "Clear Weather", type: "special", row: "weather", value: 0, ability: "W5"},
+        {id: 15, name: "Clear Weather", type: "special", row: "weather", value: 0, ability: "W5"},
+        {id: 16, name: "Commander's Horn", type: "special", row: "any", value: 0, ability: "horn"},
+        {id: 17, name: "Commander's Horn", type: "special", row: "any", value: 0, ability: "horn"},
+        {id: 18, name: "Commander's Horn", type: "special", row: "any", value: 0, ability: "horn"},
+        {id: 19, name: "Decoy", type: "special", row: "any", value: 0, ability: "decoy"},
+        {id: 20, name: "Decoy", type: "special", row: "any", value: 0, ability: "decoy"},
+        {id: 21, name: "Decoy", type: "special", row: "any", value: 0, ability: "decoy"},
+        {id: 22, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
+        {id: 23, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
+        {id: 24, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
         {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, ability: "muster", M_ID: "Roach1"},
         {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, ability: "muster", M_ID: "Roach1"},
-        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "melee", value: 7, ability: "medic"},
+        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, ability: "medic"},
         {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, ability: "none"},
         {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, ability: "spy"},
         {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, ability: "none"},
@@ -86,21 +86,106 @@
         {id: 79, name: "Ves", type: "unit", row: "melee", value: 5, ability: "none"},
         {id: 80, name: "Yarpen Zigrin", type: "unit", row: "melee", value: 2, ability: "none"},
     ]
+
+    let Base_NGE_Deck = [
+        {id: 1, name: "Biting Frost", type: "special", row: "weather", value: 0, ability: "W1"},
+        {id: 2, name: "Biting Frost", type: "special", row: "weather", value: 0,ability: "W1"},
+        {id: 3, name: "Biting Frost", type: "special", row: "weather", ability: "W1"},
+        {id: 4, name: "Impenetrable Fog", type: "special", row: "weather", value: 0, ability: "W2"},
+        {id: 5, name: "Impenetrable Fog", type: "special", row: "weather", value: 0, ability: "W2"},
+        {id: 6, name: "Impenetrable Fog", type: "special", row: "weather", value: 0, ability: "W2"},
+        {id: 7, name: "Torrential Rain", type: "special", row: "weather", value: 0, ability: "W3"},
+        {id: 8, name: "Torrential Rain", type: "special", row: "weather", value: 0, ability: "W3"},
+        {id: 9, name: "Torrential Rain", type: "special", row: "weather", value: 0, ability: "W3"},
+        {id: 10, name: "Skellige Storm", type: "special", row: "weather", value: 0, ability: "W4"},
+        {id: 11, name: "Skellige Storm", type: "special", row: "weather", value: 0, ability: "W4"},
+        {id: 12, name: "Skellige Storm", type: "special", row: "weather", value: 0, ability: "W4"},
+        {id: 13, name: "Clear Weather", type: "special", row: "weather", value: 0, ability: "W5"},
+        {id: 14, name: "Clear Weather", type: "special", row: "weather", value: 0, ability: "W5"},
+        {id: 15, name: "Clear Weather", type: "special", row: "weather", value: 0, ability: "W5"},
+        {id: 16, name: "Commander's Horn", type: "special", row: "any", value: 0, ability: "horn"},
+        {id: 17, name: "Commander's Horn", type: "special", row: "any", value: 0, ability: "horn"},
+        {id: 18, name: "Commander's Horn", type: "special", row: "any", value: 0, ability: "horn"},
+        {id: 19, name: "Decoy", type: "special", row: "any", value: 0, ability: "decoy"},
+        {id: 20, name: "Decoy", type: "special", row: "any", value: 0, ability: "decoy"},
+        {id: 21, name: "Decoy", type: "special", row: "any", value: 0, ability: "decoy"},
+        {id: 22, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
+        {id: 23, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
+        {id: 24, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
+        {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, ability: "muster", M_ID: "Roach1"},
+        {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, ability: "muster", M_ID: "Roach1"},
+        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, ability: "medic"},
+        {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, ability: "none"},
+        {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, ability: "spy"},
+        {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, ability: "none"},
+        {id: 30, name: "Vesemir", type: "unit", row: "melee", value: 6, ability: "none"},
+        {id: 31, name: "Villentretenmerth", type: "unit", row: "melee", value: 7, ability: "scorch"},
+        {id: 32, name: "Dandelion", type: "unit", row: "melee", value: 2, ability: "horn"},
+        {id: 33, name: "Zoltan Chivay", type: "unit", row: "melee", value: 5, ability: "none"},
+        {id: 34, name: "Olgierd von Everec", type: "unit", row: "agile", value: 6, ability: "morale_boost"},
+        {id: 35, name: "Gaunter O'Dimm", type: "unit", row: "siege", value: 2, ability: "muster", M_ID: "GOD1"},
+        {id: 36, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ability: "muster", M_ID: "GOD"},
+        {id: 37, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ability: "muster", M_ID: "GOD"},
+        {id: 38, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ability: "muster", M_ID: "GOD"},
+
+        {id: 39, name: "Albrich", type: "unit", row: "range", value: 2, ability: "none"},
+        {id: 40, name: "Assire var Anahid", type: "unit", row: "range", value: 6, ability: "none"},
+        {id: 41, name: "Black Infantry Archer1", type: "unit", row: "range", value: 10, ability: "none"},
+        {id: 42, name: "Black Infantry Archer2", type: "unit", row: "range", value: 10, ability: "none"},
+        {id: 43, name: "Cahir Mawr Dyffryn aep Ceallach", type: "unit", row: "melee", value: 6, ability: "none"},
+        {id: 44, name: "Cynthia", type: "unit", row: "range", value: 4, ability: "none"},
+        {id: 45, name: "Emhyr var Emreis Emperor of Nilfgaard", type: "leader", ability: "NGE1"},
+        {id: 46, name: "Emhyr var Emreis His Imperial Majesty", type: "leader", ability: "NGE2"},
+        {id: 47, name: "Emhyr var Emreis Invader of the North", type: "leader", ability: "NGE3"},
+        {id: 48, name: "Emhyr var Emreis the Relentless", type: "leader", ability: "NGE4"},
+        {id: 49, name: "Emhyr var Emreis the White Flame", type: "leader", ability: "NGE5"},
+        {id: 50, name: "Etolian Auxiliary Archers1", type: "unit", row: "range", value: 1, ability: "medic"},
+        {id: 51, name: "Etolian Auxiliary Archers2", type: "unit", row: "range", value: 1, ability: "medic"},
+        {id: 52, name: "Fringilla Vigo", type: "unit", row: "range", value: 6, ability: "none"},
+        {id: 53, name: "Heavy Zerrikanian Fire Scorpion", type: "unit", row: "siege", value: 10, ability: "none"},
+        {id: 54, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ability: "tight_bond"},
+        {id: 55, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ability: "tight_bond"},
+        {id: 56, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ability: "tight_bond"},
+        {id: 57, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ability: "tight_bond"},
+        {id: 58, name: "Letho of Gulet", type: "hero", row: "melee", value: 10, ability: "none"},
+        {id: 59, name: "Menno Coehoorn", type: "hero", row: "melee", value: 10, ability: "medic"},
+        {id: 60, name: "Morteisen", type: "unit", row: "melee", value: 3, ability: "none"},
+        {id: 61, name: "Morvran Voorhis", type: "hero", row: "siege", value: 10, ability: "none"},
+        {id: 62, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, ability: "tight_bond"},
+        {id: 63, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, ability: "tight_bond"},
+        {id: 64, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, ability: "tight_bond"},
+        {id: 65, name: "Puttkammer", type: "unit", row: "range", value: 3, ability: "none"},
+        {id: 66, name: "Rainfarn", type: "unit", row: "melee", value: 4, ability: "none"},
+        {id: 67, name: "Rotten Mangonel", type: "unit", row: "siege", value: 4, ability: "none"},
+        {id: 68, name: "Shilard Fitz-Oesterlen", type: "unit", row: "melee", value: 7, ability: "spy"},
+        {id: 69, name: "Siege Engineer", type: "unit", row: "siege", value: 6, ability: "none"},
+        {id: 70, name: "Siege Technician", type: "unit", row: "siege", value: 0, ability: "medic"},
+        {id: 71, name: "Stefan Skellen", type: "unit", row: "melee", value: 9, ability: "spy"},
+        {id: 72, name: "Sweers", type: "unit", row: "melee", value: 2, ability: "none"},
+        {id: 73, name: "Tibor Eggebracht", type: "hero", row: "melee", value: 10, ability: "none"},
+        {id: 74, name: "Vanhemar", type: "unit", row: "range", value: 4, ability: "none"},
+        {id: 75, name: "Vattier de Rideaux", type: "unit", row: "melee", value: 4, ability: "spy"},
+        {id: 76, name: "Vreemde", type: "unit", row: "melee", value: 2, ability: "none"},
+        {id: 77, name: "Young Emissary1", type: "unit", row: "melee", value: 5, ability: "tight_bond"},
+        {id: 78, name: "Young Emissary2", type: "unit", row: "melee", value: 5, ability: "tight_bond"},
+        {id: 79, name: "Zerrikanian Fire Scorpion", type: "unit", row: "siege", value: 5, ability: "none"},
+    ]
     
-    let shownLeaders = []
-    let shownDeck = Base_NoRe_Deck
 
     let decks = [
         {name: "Monsters", ability: "One randomly-chosen Monster Unit Card stays on the battlefield after each round"},
-                 {name: "Nilfgaardian Empire", ability: "Win whenever there is a draw"},
-                 {name: "Northern Realms", ability: "Draw a card from your deck whenever you win a round"},
-                 {name: "Scoia' tael", ability: "You decide who goes first at the start of a battle"},
-                 {name: "Skellige", ability: "2 random cards are placed back on the battlefield at the start of the third round"}
+        {name: "Nilfgaardian Empire", ability: "Win whenever there is a draw"},
+        {name: "Northern Realms", ability: "Draw a card from your deck whenever you win a round"},
+        {name: "Scoia' tael", ability: "You decide who goes first at the start of a battle"},
+        {name: "Skellige", ability: "2 random cards are placed back on the battlefield at the start of the third round"}
     ]
+    let decks_cards = [ "*", Base_NGE_Deck, Base_NR_Deck, "*", "*"]
 
     let selected = 2
     let selected_faction = decks[selected]
 
+    let shownLeaders = []
+    let shownDeck = decks_cards[selected]
 
 
     /* Saved player data*/
@@ -155,6 +240,10 @@
         }
         selected_faction = decks[selected]
         selected_deck = []
+        selected_faction = decks[selected]
+        shownDeck = decks_cards[selected]
+        shownDeck = shownDeck
+        deckSetUp()
         selectFaction()
     }
 
@@ -165,6 +254,10 @@
             selected += 1
         }
         selected_faction = decks[selected]
+        selected_deck = []
+        shownDeck = decks_cards[selected]
+        shownDeck = shownDeck
+        deckSetUp()
         selectFaction()
     }
 
@@ -209,9 +302,21 @@
     /* 3 Functions related to selecting and removing cards from the deck*/
     /* 3-----------------------------------------------------------------------------------3 */
     function selectCard (a){
-        selected_deck.push(a)
-        shownDeck = shownDeck.filter(card => card.id != a.id)
-        selected_deck.sort((a, b) => a.id - b.id)
+        
+        if (selected_deck.filter(card => card.type == "special").length == 10){
+            
+            if (a.type == "special"){
+                alert("You can only have 10 special cards in your deck")
+            } else {
+                selected_deck.push(a)
+                shownDeck = shownDeck.filter(card => card.id != a.id)
+                selected_deck.sort((a, b) => a.id - b.id)
+            }
+        } else {
+            selected_deck.push(a)
+            shownDeck = shownDeck.filter(card => card.id != a.id)
+            selected_deck.sort((a, b) => a.id - b.id)
+        }
         selected_deck = selected_deck
         shownDeck = shownDeck
     }
@@ -617,6 +722,7 @@
         box-shadow: #ff9100 0 0 0.7vh;
         padding: 0.5em;
     }
+    
     .confirm img{
         width: 3vh;
         height: 3vh;
