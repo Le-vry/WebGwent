@@ -1,7 +1,0 @@
-import{s as x,n as d}from"./BkTvAqf4.js";import{S as _,i as g,d as s,b as l,e as c,g as u,h as v,m as C,j as m,s as y,t as k}from"./D8ucdG3Y.js";function w(b){let e,p="Hello 👋",o,a,f=`Welcome to my first devblog post!
-Getting started with this project it became appearant that i’d have to use assets from the Witcher 3 and the stand alone Gwent game
-and that I’d have to edit them somewhat. This first version of the site has only one deck and cannot currently be played but the deck selector
-is very nearly complete aside from some styling and the rest of the decks. Currently the only things that are currently happening after
-selecting your deck is that the leaders and background appear.`,i,r,h;return{c(){e=m("h1"),e.textContent=p,o=y(),a=m("p"),a.textContent=f,i=y(),r=m("br"),h=k(`
-Each post needs to have a title and a date in the frontmatter, between the --- tags.`)},l(t){e=c(t,"H1",{"data-svelte-h":!0}),u(e)!=="svelte-1pn57ik"&&(e.textContent=p),o=v(t),a=c(t,"P",{"data-svelte-h":!0}),u(a)!=="svelte-1v4zcu3"&&(a.textContent=f),i=v(t),r=c(t,"BR",{}),h=C(t,`
-Each post needs to have a title and a date in the frontmatter, between the --- tags.`)},m(t,n){l(t,e,n),l(t,o,n),l(t,a,n),l(t,i,n),l(t,r,n),l(t,h,n)},p:d,i:d,o:d,d(t){t&&(s(e),s(o),s(a),s(i),s(r),s(h))}}}const H={title:"Devblog 1",date:"2025-04-09"},{title:G,date:S}=H;class W extends _{constructor(e){super(),g(this,e,null,w,x,{})}}export{W as default,H as metadata};

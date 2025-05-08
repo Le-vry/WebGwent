@@ -11,5 +11,4 @@ Getting started with this project it became appearant that i'd have to use asset
 and that I'd have to edit them somewhat. This first version of the site has only one deck and cannot currently be played but the deck selector
 is very nearly complete aside from some styling and the rest of the decks. Currently the only things that are currently happening after
 selecting your deck is that the leaders and background appear.
-<br>
-Each post needs to have a title and a date in the frontmatter, between the --- tags.
+

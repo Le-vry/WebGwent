@@ -1,0 +1,19 @@
+---
+title: "Devblog 2"
+date: "2025-05-07"
+---
+
+# Hi again
+
+After another months development a good amount of progress has been made. 
+If you remember from last time, the card selector works and hasn't been improved at all since then. However,
+The gameboard wasn't at all playable. Now the gameboard shows up fine and other improvements are as follows:
+Each player now get a hand randomly picked out for them from the cards they chose in the card selector.
+All unit and hero cards are now placable and four out of seven abilities work.
+The remaining card abilities that don't work are: 
+Weather and special cards aren't placeable, 
+the Medic, Scorch and Morale Boost abilities don't exist either.
+and leader cards don't have their abilities and can't be clicked.
+You can also place all unit and hero cards correctly and their lines 
+are correctly placed.
+

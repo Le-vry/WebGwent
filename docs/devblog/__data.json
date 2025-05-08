@@ -1,1 +1,1 @@
-{"type":"data","nodes":[null,{"type":"data","data":[{"posts":1},[2],{"slug":3,"title":4,"date":5},"hello-world","Devblog 1","2025-04-09"],"uses":{}}]}
+{"type":"data","nodes":[null,{"type":"data","data":[{"posts":1},[2,6],{"slug":3,"title":4,"date":5},"devblog2","Devblog 2","2025-05-07",{"slug":7,"title":8,"date":9},"devblog1","Devblog 1","2025-04-09"],"uses":{}}]}
