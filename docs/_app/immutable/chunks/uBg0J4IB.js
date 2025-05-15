@@ -1,0 +1,5 @@
+import{s as u,n as o}from"./BkTvAqf4.js";import{S as f,i as v,d as l,b as i,e as h,g as c,h as y,j as m,s as g}from"./DBmetd-G.js";function x(p){let t,r="Hello 👋",n,a,d=`Welcome to my first devblog post!
+Getting started with this project it became appearant that i’d have to use assets from the Witcher 3 and the stand alone Gwent game
+and that I’d have to edit them somewhat. This first version of the site has only one deck and cannot currently be played but the deck selector
+is very nearly complete aside from some styling and the rest of the decks. Currently the only things that are currently happening after
+selecting your deck is that the leaders and background appear.`;return{c(){t=m("h1"),t.textContent=r,n=g(),a=m("p"),a.textContent=d},l(e){t=h(e,"H1",{"data-svelte-h":!0}),c(t)!=="svelte-1pn57ik"&&(t.textContent=r),n=y(e),a=h(e,"P",{"data-svelte-h":!0}),c(a)!=="svelte-1v4zcu3"&&(a.textContent=d)},m(e,s){i(e,t,s),i(e,n,s),i(e,a,s)},p:o,i:o,o,d(e){e&&(l(t),l(n),l(a))}}}const _={title:"Devblog 1",date:"2025-04-09"},{title:k,date:w}=_;class j extends f{constructor(t){super(),v(this,t,null,x,u,{})}}export{j as default,_ as metadata};

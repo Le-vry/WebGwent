@@ -15,45 +15,63 @@
         P1Leader = P1[1]
         P1Cards = P1[0]
         P1Cards.sort(() => .5- Math.random())
-        P1Hand = P1Cards.slice(0, P1LostCardsIndex)
+        P1Hand = P1Cards.slice(0, 10)
         P1Hand = P1Hand.sort((a, b) => {return a.value - b.value})
-
+        P1Cards.forEach(card => {
+            P1Hand.forEach(hand => {
+                if(card.id == hand.id){
+                    P1Cards = P1Cards.filter(cards => cards.id != card.id)
+                    P1Cards = P1Cards
+                    
+                }
+            })
+        });
 
         P2Leader = P2[1]
         P2Cards = P2[0]
         P2Cards.sort(() => .5- Math.random())
-        P2Hand = P2Cards.slice(0, P2LostCardsIndex)
+        P2Hand = P2Cards.slice(0, 10)
         P2Hand = P2Hand.sort((a, b) => {return a.value - b.value})
+        P2Cards.forEach(card => {
+            P2Hand.forEach(hand => {
+                if(card.id == hand.id){
+                    P2Cards = P2Cards.filter(cards => cards.id != card.id)
+                    P2Cards = P2Cards
+                }
+            })
+        })
+    })
+    
 
-        
 
-    });
-
-
-    let turn = 1
+    let turn = 0.5
+    let placedCard = false
+    let passedTurn = false
+    let popupvisability = "block"
     let players = []
 
-    let test1 = ["1", "2"]
-    let test2 = ["3", "4"]
+
 
     /* P2 variables */
     let P1 = players
     let P1Leader = {name: "Ballista1"}
     let P1Cards = [{name: "Ballista2"}]
-    let P1LostCardsIndex = 10
+    
     let P1Hand = []
 
     let P1TotalValue = 0
+    
     let meleeP1 = {value: 0, rowMultiplier: 1, units: []}
     let rangeP1 = {value: 0, rowMultiplier: 1, units: []}
     let siegeP1 = {value: 0, rowMultiplier: 1, units: []}
 
+    let P1Gem1Visability = "show"
+    let P1Gem2Visability = "show"
 
     /* P2 variables*/
     let P2 = players
     let P2Leader = {name: "Ballista1"}
     let P2Cards = [{name: "Ballista2"}]
-    let P2LostCardsIndex = 10
     let P2Hand = []
     
     let P2TotalValue = 0
@@ -61,16 +79,10 @@
     let rangeP2 = {value: 0, rowMultiplier: 1, units: []}
     let siegeP2 = {value: 0, rowMultiplier: 1, units: []}
 
+    let P2Gem1Visability = "show"
+    let P2Gem2Visability = "show"
+
     let weather = []
-
-
-
-
-    /* 0 Player Hand Setup */
-    /* 0-----------------------------------------------------------------------------------0 */
-
-    
-    /* 0-----------------------------------------------------------------------------------0 */
 
 
 
@@ -78,378 +90,188 @@
     /* 1 Card Placing Logic*/
     /* 1-----------------------------------------------------------------------------------1 */
     function placeCard(card) {
-
-        if (turn % 2 != 0) {
-            P1Hand = P1Hand.filter(cards => cards.id !== card.id)
-            if (card.type == "unit" || card.type == "hero") {
-                if(card.ability == "none"){
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        Value(meleeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        Value(rangeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        Value(siegeP1)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "spy"){
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        Value(meleeP2)
-                        placedSpyCard()
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        Value(rangeP2)
-                        placedSpyCard()
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        Value(siegeP2)
-                        placedSpyCard()
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "tight_bond"){
-                    if (card.row == "melee") {
-                        
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        placedTightBondCard(card, meleeP1.units)
-                        Value(meleeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-        
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        placedTightBondCard(card, rangeP1.units)
-                        Value(rangeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        placedTightBondCard(card, siegeP1.units)
-                        Value(siegeP1)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "horn"){
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        placedHornCard(meleeP1)
-                        Value(meleeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        placedHornCard(rangeP1)
-                        Value(rangeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        placedHornCard(siegeP1)
-                        Value(siegeP1)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "medic"){
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        Value(meleeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        Value(rangeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        Value(siegeP1)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "muster"){
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        placedMusterCard(card, meleeP1.units)
-                        Value(meleeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        placedMusterCard(card, rangeP1.units)
-                        Value(rangeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        placedMusterCard(card, siegeP1.units)
-                        Value(siegeP1)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "morale_boost"){
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        Value(meleeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        Value(rangeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        Value(siegeP1)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "scorch"){
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        Value(meleeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        Value(rangeP1)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        Value(siegeP1)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
+        if (placedCard == false || passedTurn == true) {
+            if (placedCard = false && passedTurn == true){
+                placedCard = false
+            } else {
+                placedCard = true
             }
-                
+            if (turn % 2 == 1) {
+                P1Hand = P1Hand.filter(cards => cards.id !== card.id)
+                if (card.type == "unit" || card.type == "hero") {
+                    
+                    if(card.row == "agile") {
+                    } else if(card.row == "melee") {
+                            
+                        if (card.ability == "spy") {
+                            meleeP2.units.push(card)
+                            meleeP2.units = meleeP2.units
+                            Value(meleeP1)
+                            placedSpyCard(card)
+                            
+                        } else {
+                            meleeP1.units.push(card)
+                            meleeP1.units = meleeP1.units
+                            if(card.ability == "tight_bond"){
+                                placedTightBondCard(card, meleeP1.units)
+                            } else if(card.ability == "horn"){
+                                placedHornCard(meleeP1)
+                            } else if(card.ability == "medic"){
+                                placedMedicCard(card, meleeP1.units)
+                            } else if(card.ability == "muster"){
+                                placedMusterCard(card, meleeP1.units)
+                            } else if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, meleeP1.units, meleeP2.units)
+                            } else if(card.ability == "scorch"){
+                                placedScorchCard(meleeP2)
+                                meleeP2.units = meleeP2.units
+                            }
+                            Value(meleeP1)
+                            
+                        }
+                    } else if(card.row == "range") {
+                        if (card.ability == "spy") {
+                            rangeP2.units.push(card)
+                            rangeP2.units = rangeP2.units
+                            Value(rangeP1)
+                            placedSpyCard(card)
+                            
+                        } else {
+                            rangeP1.units.push(card)
+                            rangeP1.units = rangeP1.units
+                            if(card.ability == "tight_bond"){
+                                placedTightBondCard(card, rangeP1.units)
+                            } else if(card.ability == "horn"){
+                                placedHornCard(rangeP1)
+                            } else if(card.ability == "medic"){
+                                placedMedicCard(card, rangeP1.units)
+                            } else if(card.ability == "muster"){
+                                placedMusterCard(card, rangeP1.units)
+                            } else if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, rangeP1.units)
+                            } else if(card.ability == "scorch"){
+                                placedScorchCard(rangeP2)
+                                rangeP2.units = rangeP2.units
+                            }
+                            Value(rangeP1)
+                            
+                        }
+                    } else if(card.row == "siege") {
+                        if (card.ability == "spy") {
+                            siegeP2.units.push(card)
+                            siegeP2.units = siegeP2.units
+                            Value(siegeP1)
+                            placedSpyCard(card)
+                            
+                        } else {
+                            siegeP1.units.push(card)
+                            siegeP1.units = siegeP1.units
+                            if(card.ability == "tight_bond"){
+                                placedTightBondCard(card, siegeP1.units)
+                            } else if(card.ability == "horn"){
+                                placedHornCard(siegeP1)
+                            } else if(card.ability == "medic"){
+                                placedMedicCard(card, siegeP1.units)
+                            } else if(card.ability == "muster"){
+                                placedMusterCard(card, siegeP1.units)
+                            } else if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, siegeP1.units)
+                            } else if(card.ability == "scorch"){
+                                placedScorchCard(siegeP2)
+                                siegeP2.units = siegeP2.units
+                            }
+                            Value(siegeP1)
+                            
+                        }
+                    }            
+                }                
 
-        } else if (turn % 2 == 0) {
-            P2Hand = P2Hand.filter(cards => cards.id !== card.id)
-            if (card.type == "unit" || card.type == "hero") {
-                if(card.ability == "none"){
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        Value(meleeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        Value(rangeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        Value(siegeP2)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "spy"){
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        Value(meleeP1)
-                        placedSpyCard()
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        Value(rangeP1)
-                        placedSpyCard()
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        Value(siegeP1)
-                        placedSpyCard()
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "tight_bond"){
-                    if (card.row == "melee") {
-
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        placedTightBondCard(card, meleeP2.units)
-                        Value(meleeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        placedTightBondCard(card, rangeP2.units)
-                        Value(rangeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        placedTightBondCard(card, siegeP2.units)
-                        Value(siegeP2)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "horn"){
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        placedHornCard(meleeP2)
-                        Value(meleeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        placedHornCard(rangeP2)
-                        Value(rangeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        placedHornCard(siegeP2)
-                        Value(siegeP2)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "medic"){
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        Value(meleeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        Value(rangeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        Value(siegeP2)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "muster"){
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        placedMusterCard(card, meleeP2.units)
-                        Value(meleeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        placedMusterCard(card, rangeP2.units)
-                        Value(rangeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        placedMusterCard(card, siegeP2.units)
-                        Value(siegeP2)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "morale_boost"){
-                    if (a.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        Value(meleeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        Value(rangeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        Value(siegeP2)
-                        setTimeout(() => {turn++}, 3000)
-                    }
-                }
-
-                if(card.ability == "scorch"){
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        Value(meleeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        Value(rangeP2)
-                        setTimeout(() => {turn++}, 3000)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        Value(siegeP2)
-                        setTimeout(() => {turn++}, 3000)
+            } else if (turn % 2 == 0) {
+                P2Hand = P2Hand.filter(cards => cards.id !== card.id)
+                if (card.type == "unit" || card.type == "hero") {
+                    if(card.row == "agile") {
+                    } else if(card.row == "melee") {
+                            
+                        if (card.ability == "spy") {
+                            meleeP1.units.push(card)
+                            meleeP1.units = meleeP1.units
+                            Value(meleeP2)
+                            placedSpyCard(card)
+                            
+                        } else {
+                            meleeP2.units.push(card)
+                            meleeP2.units = meleeP2.units
+                            if(card.ability == "tight_bond"){
+                                placedTightBondCard(card, meleeP2.units)
+                            } else if(card.ability == "horn"){
+                                placedHornCard(meleeP2)
+                            } else if(card.ability == "medic"){
+                                placedMedicCard(card, meleeP2.units)
+                            } else if(card.ability == "muster"){
+                                placedMusterCard(card, meleeP2.units)
+                            } else if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, meleeP2.units)
+                            } else if(card.ability == "scorch"){
+                                placedScorchCard(meleeP1)
+                                meleeP1.units = meleeP1.units
+                            }
+                            Value(meleeP2)
+                            
+                        }
+                    } else if(card.row == "range") {
+                        if (card.ability == "spy") {
+                            rangeP1.units.push(card)
+                            rangeP1.units = rangeP1.units
+                            Value(rangeP2)
+                            placedSpyCard(card)
+                            
+                        } else {
+                            rangeP2.units.push(card)
+                            rangeP2.units = rangeP2.units
+                            if(card.ability == "tight_bond"){
+                                placedTightBondCard(card, rangeP2.units)
+                            } else if(card.ability == "horn"){
+                                placedHornCard(rangeP2)
+                            } else if(card.ability == "medic"){
+                                placedMedicCard(card, rangeP2.units)
+                            } else if(card.ability == "muster"){
+                                placedMusterCard(card, rangeP2.units)
+                            } else if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, rangeP2.units)
+                            } else if(card.ability == "scorch"){
+                                placedScorchCard(rangeP1)
+                                rangeP1.units = rangeP1.units
+                            }
+                            Value(rangeP2)
+                            
+                        }
+                    } else if(card.row == "siege") {
+                        if (card.ability == "spy") {
+                            siegeP1.units.push(card)
+                            siegeP1.units = siegeP1.units
+                            Value(siegeP2)
+                            placedSpyCard(card)
+                            
+                        } else {
+                            siegeP2.units.push(card)
+                            siegeP2.units = siegeP2.units
+                            if(card.ability == "tight_bond"){
+                                placedTightBondCard(card, siegeP2.units)
+                            } else if(card.ability == "horn"){
+                                placedHornCard(siegeP2)
+                            } else if(card.ability == "medic"){
+                                placedMedicCard(card, siegeP2.units)
+                            } else if(card.ability == "muster"){
+                                placedMusterCard(card, siegeP2.units)
+                            } else if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, siegeP2.units)
+                            } else if(card.ability == "scorch"){
+                                placedScorchCard(siegeP1)
+                                siegeP1.units = siegeP1.units
+                            }
+                            Value(siegeP2)
+                            
+                        }
                     }
                 }
             }
@@ -457,17 +279,26 @@
     }
 
     function placedSpyCard() {
-        if(turn % 2 != 0){
-            P1Hand.push(P1Cards.slice(P1LostCardsIndex, P1LostCardsIndex + 2)[0])
-            P1Hand.push(P1Cards.slice(P1LostCardsIndex, P1LostCardsIndex + 2)[1])
+        if(turn % 2 == 1){
+            let pulledCards = P1Cards.slice(0, 2)
+            P1Hand.push(pulledCards[0])
+            P1Hand.push(pulledCards[1])
+            P1Cards = P1Cards.filter(cards => cards.id != pulledCards[0].id)
+            P1Cards = P1Cards.filter(cards => cards.id != pulledCards[1].id)
+
             P1Hand = P1Hand
-            P1LostCardsIndex += 2
+            P1Cards = P1Cards
+            console.log(P1Cards)
             P1Hand = P1Hand.sort((a, b) => {return a.value - b.value})
         } else if(turn % 2 == 0){
-            P2Hand.push(P2Cards.slice(P2LostCardsIndex, P2LostCardsIndex + 2)[0])
-            P2Hand.push(P2Cards.slice(P2LostCardsIndex, P2LostCardsIndex + 2)[1])
+            let pulledCards = P2Cards.slice(0, 2)
+            P2Hand.push(pulledCards[0])
+            P2Hand.push(pulledCards[1])
+            P2Cards = P2Cards.filter(cards => cards.id != pulledCards[0].id)
+            P2Cards = P2Cards.filter(cards => cards.id != pulledCards[1].id)
+            
             P2Hand = P2Hand
-            P2LostCardsIndex += 2
+            P2Cards = P2Cards
             P2Hand = P2Hand.sort((a, b) => {return a.value - b.value})
         }
     }
@@ -493,32 +324,157 @@
     }
 
     function placedMusterCard(placedCard, row) {
-        if(turn % 2 != 0){
-            let rememberhand = P1Hand.filter(cards => cards.M_ID == placedCard.M_ID)
-            let rememberCards = P1Cards.slice(P1LostCardsIndex).filter(cards => cards.M_ID == placedCard.M_ID)
-            rememberhand.forEach(card => {
-                row.push(card)
-                P1Hand = P1Hand.filter(cards => cards.M_ID !== card.M_ID)
-                row = row
-            })
-            rememberCards.forEach(card => {
-                row.push(card)
-                row = row
-            })
+        if(turn % 2 == 1){
+            
+            if (placedCard.M_ID.endsWith("1")){
+                
+                placedCard.M_ID = placedCard.M_ID.slice(0, placedCard.M_ID.length - 1)
+
+                let rememberhand = P1Hand.filter(cards => cards.M_ID == placedCard.M_ID)
+                let rememberCards = P1Cards.filter(cards => cards.M_ID == placedCard.M_ID)
+                P1Hand = P1Hand.filter(cards => cards.M_ID != placedCard.M_ID)
+                P1Cards = P1Cards.filter(cards => cards.M_ID != placedCard.M_ID)
+                rememberhand.forEach(card => {
+                    if (card.row == "melee") {
+                        meleeP1.units.push(card)
+                        meleeP1.units = meleeP1.units
+                        Value(meleeP1)
+
+                    } else if (card.row == "range") {
+                        rangeP1.units.push(card)
+                        rangeP1.units = rangeP1.units
+                        Value(rangeP1)
+
+                    } else if (card.row == "siege") {
+                        siegeP1.units.push(card)
+                        siegeP1.units = siegeP1.units
+                        Value(siegeP1)
+                        
+                    }
+                })
+                rememberCards.forEach(card => {
+                    if (card.row == "melee") {
+                        meleeP1.units.push(card)
+                        meleeP1.units = meleeP1.units
+                        Value(meleeP1)
+
+                    } else if (card.row == "range") {
+                        rangeP1.units.push(card)
+                        rangeP1.units = rangeP1.units
+                        Value(rangeP1)
+
+                    } else if (card.row == "siege") {
+                        siegeP1.units.push(card)
+                        siegeP1.units = siegeP1.units
+                        Value(siegeP1)
+                        
+                    }
+                })
+            } else {
+                let rememberhand = P1Hand.filter(cards => cards.M_ID == placedCard.M_ID)
+                let rememberCards = P1Cards.filter(cards => cards.M_ID == placedCard.M_ID)
+                P1Hand = P1Hand.filter(cards => cards.M_ID != placedCard.M_ID)
+                P1Cards = P1Cards.filter(cards => cards.M_ID != placedCard.M_ID)
+                rememberhand.forEach(card => {
+                    row.push(card)
+                    row = row
+                })
+                rememberCards.forEach(card => {
+                    row.push(card)
+                    row = row
+                })
+            }
+            
             
         }
         else if(turn % 2 == 0){
-            let rememberhand = P2Hand.filter(cards => cards.M_ID == placedCard.M_ID)
-            let rememberCards = P2Cards.slice(P2LostCardsIndex).filter(cards => cards.M_ID == placedCard.M_ID)
-            rememberhand.forEach(card => {
-                row.push(card)
-                P2Hand = P2Hand.filter(cards => cards.M_ID !== card.M_ID)
-                row = row
+            if (placedCard.M_ID.endsWith("1")){
+                
+                placedCard.M_ID = placedCard.M_ID.slice(0, placedCard.M_ID.length - 1)
+
+                let rememberhand = P2Hand.filter(cards => cards.M_ID == placedCard.M_ID)
+                let rememberCards = P2Cards.filter(cards => cards.M_ID == placedCard.M_ID)
+                P2Hand = P2Hand.filter(cards => cards.M_ID != placedCard.M_ID)
+
+                rememberhand.forEach(card => {
+                    if (card.row == "melee") {
+                        meleeP2.units.push(card)
+                        meleeP2.units = meleeP2.units
+                        Value(meleeP2)
+
+                    } else if (card.row == "range") {
+                        rangeP2.units.push(card)
+                        rangeP2.units = rangeP2.units
+                        Value(rangeP2)
+
+                    } else if (card.row == "siege") {
+                        siegeP2.units.push(card)
+                        siegeP2.units = siegeP2.units
+                        Value(siegeP2)
+                        
+                    }
+                })
+                rememberCards.forEach(card => {
+                    if (card.row == "melee") {
+                        meleeP2.units.push(card)
+                        meleeP2.units = meleeP2.units
+                        Value(meleeP2)
+
+                    } else if (card.row == "range") {
+                        rangeP2.units.push(card)
+                        rangeP2.units = rangeP2.units
+                        Value(rangeP2)
+
+                    } else if (card.row == "siege") {
+                        siegeP2.units.push(card)
+                        siegeP2.units = siegeP2.units
+                        Value(siegeP2)
+                        
+                    }
+                })
+            } else {
+                let rememberhand = P2Hand.filter(cards => cards.M_ID == placedCard.M_ID)
+                let rememberCards = P2Cards.filter(cards => cards.M_ID == placedCard.M_ID)
+                P2Hand = P2Hand.filter(cards => cards.M_ID != placedCard.M_ID)
+                rememberhand.forEach(card => {
+                    row.push(card)
+                    row = row
+                })
+                rememberCards.forEach(card => {
+                    row.push(card)
+                    row = row
+                })
+            }
+        }
+    }
+
+    function placedMoraleBoostCard(placedCard, row) {
+        row.forEach(card => {
+            if(card.id != placedCard.id){
+                card.value += 1
+            }
+        })
+    }
+
+    function placedScorchCard(enemyRow) {
+        if (enemyRow.value >= 10){
+            let maxValue = 0
+            enemyRow.units.forEach(card => {
+                if(card.type == "unit"){
+                    if (card.value * card.ValueMultiplier * enemyRow.rowMultiplier > maxValue){
+                        maxValue = card.value * card.ValueMultiplier * enemyRow.rowMultiplier
+                    }
+                }
             })
-            rememberCards.forEach(card => {
-                row.push(card)
-                row = row
+            enemyRow.units.forEach(card => {
+                if(card.type == "unit"){
+                    if (card.value * card.ValueMultiplier * enemyRow.rowMultiplier == maxValue){
+                        enemyRow.units = enemyRow.units.filter(cards => cards.id != card.id)
+                        enemyRow.units = enemyRow.units
+                    }
+                }
             })
+            enemyRow.units = enemyRow.units
         }
     }
     /* 1-----------------------------------------------------------------------------------1 */
@@ -541,7 +497,7 @@
     }
 
     function TotalValue(){
-        if(turn % 2 != 0){
+        if(turn % 2 == 1){
             P1TotalValue = 0
             P1TotalValue += meleeP1.value + rangeP1.value + siegeP1.value
         } else if(turn % 2 == 0){
@@ -554,28 +510,42 @@
 
 
 
-    /* Keydown event listener */
-    /* -----------------------------------------------------------------------------------1 */
+    /* Turn handeling */
+    /* ----------------------------------------------------------------------------------- */
     function onKeyDown(e) {
-        if (e.key === 'Enter') {
-            console.log("Enter key pressed")
+        if (e.key === "Enter") {
+            endTurn()
+        }
+        if (e.key === "Tab"){
+            
+            if (passedTurn == true){
+
+            } else {
+                passedTurn = true 
+                endTurn()
+            }
+           
         }
     }
+    
+
+    function endTurn() {
+        turn += 0.5
+        if(popupvisability == "block"){
+            popupvisability = "none"
+        } else if(popupvisability == "none"){
+            popupvisability = "block"
+        }
+        placedCard = false
+        
+    }
     /* ----------------------------------------------------------------------------------- */
-
-
-
-    
-    
-    
-    
-    
 </script>
 
 <svelte:window on:keydown|preventDefault={onKeyDown} />
 
 <main>
-    {#if turn % 2 != 0}
+    {#if turn % 2 == 1}
         <button class="P1leader" on:click={() => {console.log("P1 Leader")}}>
             <img src="{P1Leader.name}.webp" alt="Player 1 Leader">
         </button>
@@ -597,7 +567,7 @@
     
 
     <div class="HeldCards">
-        {#if turn % 2 != 0}
+        {#if turn % 2 == 1}
                 
             {#each P1Hand as card}
                 {#if card.type == "unit"}
@@ -667,7 +637,7 @@
                 <div class="melee-special">
 
                 </div>
-                <div class="melee-units">
+                <div class="melee-units no-scrollbar">
                     {#each meleeP1.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -696,7 +666,7 @@
                 <div class="range-special">
 
                 </div>
-                <div class="range-units">
+                <div class="range-units no-scrollbar">
                     {#each rangeP1.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -725,7 +695,7 @@
                 <div class="siege-special">
 
                 </div>
-                <div class="siege-units">
+                <div class="siege-units no-scrollbar">
                     {#each siegeP1.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -750,7 +720,7 @@
 
 
 
-        {#if turn % 2 != 0}
+        {#if turn % 2 == 1}
             <div class="totalvalue">{P2TotalValue}</div>
             
             <div class="melee" style="top: 67%;">
@@ -760,7 +730,7 @@
                 <div class="melee-special">
 
                 </div>
-                <div class="melee-units">
+                <div class="melee-units no-scrollbar">
                     {#each meleeP2.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -789,7 +759,7 @@
                 <div class="range-special">
 
                 </div>
-                <div class="range-units">
+                <div class="range-units no-scrollbar">
                     {#each rangeP2.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -818,7 +788,7 @@
                 <div class="siege-special">
 
                 </div>
-                <div class="siege-units">
+                <div class="siege-units no-scrollbar">
                     {#each siegeP2.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -845,7 +815,7 @@
     </section>
 
     <section class="Board-bottom">
-        {#if turn % 2 != 0}
+        {#if turn % 2 == 1}
             <div class="totalvalue" style="top:72.3%;">{P1TotalValue}</div>
 
             <div class="melee">
@@ -855,7 +825,7 @@
                 <div class="melee-special">
 
                 </div>
-                <div class="melee-units">
+                <div class="melee-units no-scrollbar">
                     {#each meleeP1.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -885,7 +855,7 @@
                 <div class="range-special">
 
                 </div>
-                <div class="range-units">
+                <div class="range-units no-scrollbar">
                     {#each rangeP1.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -914,7 +884,7 @@
                 <div class="siege-special">
 
                 </div>
-                <div class="siege-units">
+                <div class="siege-units no-scrollbar">
                     {#each siegeP1.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -949,7 +919,7 @@
                 <div class="melee-special">
 
                 </div>
-                <div class="melee-units">
+                <div class="melee-units no-scrollbar">
                     {#each meleeP2.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -978,7 +948,7 @@
                 <div class="range-special">
 
                 </div>
-                <div class="range-units">
+                <div class="range-units no-scrollbar">
                     {#each rangeP2.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -1007,7 +977,7 @@
                 <div class="siege-special">
 
                 </div>
-                <div class="siege-units">
+                <div class="siege-units no-scrollbar">
                     {#each siegeP2.units as card}
                         {#if card.type == "unit"}
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
@@ -1032,8 +1002,70 @@
             
         
     </section>
+
+    <section class="TopPlayerStats">
+        {#if turn % 2 == 1}
+            <div class="amountofCards" style="display:inline-flex; top: 60%;">
+                
+                <img src="cards_symbol.png" alt="cardsymbol">
+                {P2Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P2Gem1Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="visability: {P2Gem2Visability};">
+            </div>
+        {/if}
+        {#if turn % 2 == 0}
+            <div class="amountofCards" style="display:inline-flex; top: 60%;">
+                
+                <img src="cards_symbol.png" alt="cardsymbol">
+                {P1Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P1Gem1Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="visability: {P1Gem2Visability};">
+            </div> 
+        {/if}
+    </section>
+
+    <section class="BottomPlayerStats">
+        {#if turn % 2 == 1}
+            <div class="amountofCards" style="display:inline-flex;">
+                
+                <img src="cards_symbol.png" alt="cardsymbol">
+                {P1Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P1Gem1Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="visability: {P1Gem2Visability};">
+            </div>
+        {/if}
+        {#if turn % 2 == 0}
+            <div class="amountofCards" style="display:inline-flex;">
+                
+                <img src="cards_symbol.png" alt="cardsymbol">
+                {P2Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P2Gem1Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="visability: {P1Gem2Visability};">
+            </div> 
+        {/if}
+    </section>
+
+    <button class="passRound" on:click|preventDefault={() => {passedTurn = true; endTurn()}}>
+        <img src="keyboard_tab_icon_outline.png" alt=enter class="enter"> Tab to pass Round
+    </button>
+
+    <button class="confirm" on:click|preventDefault={() => endTurn()}>
+        <img src="keyboard_enter_outline.png" alt=enter class="enter"> End Turn
+    </button>
         
 </main>
+
+<aside class="Ready player"> 
+    <div class="darken" style="display:{popupvisability};">
+        <div class="popup" >
+            <h1>Player ready?</h1>
+            <button class="confirm" on:click|preventDefault={() => endTurn()} style="right: 46%; bottom: 20%;">
+                <img src="keyboard_enter_outline.png" alt=enter class="enter"> Start Turn
+            </button>
+        </div>
+
+    </div>
+</aside>
 
 <style>
 
@@ -1353,6 +1385,106 @@
         justify-content: center;
         align-items: center;
     }
+
+    /* Player stats */
+    .TopPlayerStats {
+        position: absolute;
+        top: 26.5%;
+        left: 12.3%;
+        width: 11%;
+        height: 13%;
+        background-color: none;
+    }
+    .BottomPlayerStats {
+        position: absolute;
+        top: 64%;
+        left: 12.3%;
+        width: 11%;
+        height: 13%;
+        background-color: none;
+    }
+
+    .amountofCards {
+        position: absolute;
+        top: 13%;
+        left: 10%;
+        width: 70%;
+        height: 30%;
+        background-color: none;
+        justify-content: center;
+        align-items: center;
+        
+        font: 300 3vh 'Roboto', sans-serif;
+        color: #e0c760;        
+    }
+
+    .amountofCards img{
+        width: 4vh; 
+        height: 4vh; 
+    }
+    .gem{
+        margin-left: 0.3vw;
+    }
     /* 3-----------------------------------------------------------------------------------3 */
+
+    /* 4 Buttons & Popups*/
+    /* 4-----------------------------------------------------------------------------------4 */
+    .confirm{
+        display: inline-flex;
+        align-items: center;
+        position: absolute;
+        bottom: 2vh;
+        right: 3.7vw;
+        background-color: #0000007a;
+        border-radius: 2vh;
+        box-shadow: #ff9100 0 0 0.7vh;
+        padding: 0.7vh;
+    }
+    .confirm img{
+        width: 3.7vh;
+        height: 3.7vh;
+    }
+    .passRound{
+        display: inline-flex;
+        align-items: center;
+        position: absolute;
+        bottom: 37%;
+        left: 6.5%;
+        background-color: #000000cb;
+        border-radius: 1vh;
+        box-shadow: #ffaa00 0 0 0.5vh;
+        padding: 0.4vh;
+    }
+    .passRound img{
+        width: 3.2vh;
+        height: 3.2vh;
+    }
+    .darken{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #00000095;
+        z-index: 1;
+    }
+    .popup{
+        position: absolute;
+        top: 24%;
+        width: 100vw;
+        height: 50vh;
+        background-color: #000000bb;
+        box-shadow: #ff9100 0 0 0.7vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .popup h1{
+        font: 600 2.5em 'Roboto', sans-serif;
+        color: #f9eabd;
+        text-align: center;
+    }
+
 
 </style>
