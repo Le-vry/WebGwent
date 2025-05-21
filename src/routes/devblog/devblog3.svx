@@ -1,5 +1,5 @@
 ---
-title: "Devblog 2"
+title: "Devblog 3"
 date: "2025-05-07"
 ---
 

@@ -47,7 +47,7 @@
     let turn = 0.5
     let placedCard = false
     let passedTurn = false
-    let popupvisability = "block"
+    let popupvisibility = "block"
     let players = []
 
 
@@ -65,8 +65,8 @@
     let rangeP1 = {value: 0, rowMultiplier: 1, units: []}
     let siegeP1 = {value: 0, rowMultiplier: 1, units: []}
 
-    let P1Gem1Visability = "show"
-    let P1Gem2Visability = "show"
+    let P1Gem1visibility = "visible"
+    let P1Gem2visibility = "visible"
 
     /* P2 variables*/
     let P2 = players
@@ -79,8 +79,8 @@
     let rangeP2 = {value: 0, rowMultiplier: 1, units: []}
     let siegeP2 = {value: 0, rowMultiplier: 1, units: []}
 
-    let P2Gem1Visability = "show"
-    let P2Gem2Visability = "show"
+    let P2Gem1visibility = "visible"
+    let P2Gem2visibility = "visible"
 
     let weather = []
 
@@ -519,7 +519,7 @@
         if (e.key === "Tab"){
             
             if (passedTurn == true){
-
+                compareValue()
             } else {
                 passedTurn = true 
                 endTurn()
@@ -527,14 +527,42 @@
            
         }
     }
-    
+    function compareValue(){
+        
+        if(P1TotalValue > P2TotalValue){
+            if(P2Gem1visibility == "visible"){
+                
+                P2Gem1visibility = "hidden"
+            } else if(P2Gem1visibility == "hidden"){
+                P2Gem2visibility = "hidden"
+            }
+        } else if(P1TotalValue < P2TotalValue){
+            if(P1Gem1visibility == "visible"){
+                P1Gem1visibility = "hidden"
+            } else if(P1Gem1visibility == "hidden"){
+                P1Gem2visibility = "hidden"
+            }
+        } else {
+            if(P2Gem1visibility == "visible"){
+                P2Gem1visibility = "hidden"
+            } else if(P2Gem1visibility == "hidden"){
+                P2Gem2visibility = "hidden"
+            }
+            if(P1Gem1visibility == "visible"){
+                P1Gem1visibility = "hidden"
+            } else if(P1Gem1visibility == "hidden"){
+                P1Gem2visibility = "hidden"
+            }
 
+        }
+        
+    }
     function endTurn() {
         turn += 0.5
-        if(popupvisability == "block"){
-            popupvisability = "none"
-        } else if(popupvisability == "none"){
-            popupvisability = "block"
+        if(popupvisibility == "block"){
+            popupvisibility = "none"
+        } else if(popupvisibility == "none"){
+            popupvisibility = "block"
         }
         placedCard = false
         
@@ -1009,8 +1037,8 @@
                 
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {P2Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P2Gem1Visability};">
-                <img src="Gem.png" alt="gem" class="gem" style="visability: {P2Gem2Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P2Gem1visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P2Gem2visibility};">
             </div>
         {/if}
         {#if turn % 2 == 0}
@@ -1018,8 +1046,8 @@
                 
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {P1Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P1Gem1Visability};">
-                <img src="Gem.png" alt="gem" class="gem" style="visability: {P1Gem2Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P1Gem1visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P1Gem2visibility};">
             </div> 
         {/if}
     </section>
@@ -1030,8 +1058,8 @@
                 
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {P1Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P1Gem1Visability};">
-                <img src="Gem.png" alt="gem" class="gem" style="visability: {P1Gem2Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P1Gem1visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P1Gem2visibility};">
             </div>
         {/if}
         {#if turn % 2 == 0}
@@ -1039,8 +1067,8 @@
                 
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {P2Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visability: {P2Gem1Visability};">
-                <img src="Gem.png" alt="gem" class="gem" style="visability: {P1Gem2Visability};">
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P2Gem1visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P1Gem2visibility};">
             </div> 
         {/if}
     </section>
@@ -1056,7 +1084,7 @@
 </main>
 
 <aside class="Ready player"> 
-    <div class="darken" style="display:{popupvisability};">
+    <div class="darken" style="display:{popupvisibility};">
         <div class="popup" >
             <h1>Player ready?</h1>
             <button class="confirm" on:click|preventDefault={() => endTurn()} style="right: 46%; bottom: 20%;">
@@ -1424,6 +1452,7 @@
     }
     .gem{
         margin-left: 0.3vw;
+        
     }
     /* 3-----------------------------------------------------------------------------------3 */
 
