@@ -1,6 +1,6 @@
 ---
 title: "Devblog 3"
-date: "2025-05-07"
+date: "2025-05-14"
 ---
 
 Hello, this is devblog 3
