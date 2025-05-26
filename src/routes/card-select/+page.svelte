@@ -609,7 +609,7 @@
     /* 1 Background image for the entire page */
     /* 1-----------------------------------------------------------------------------------1 */
     .background{
-        background-image: url("static\Deck select background.jpg");
+        background-image: url("/static/Deck select background.jpg");
         background-size:cover;
         z-index: -1;
         left:0;
