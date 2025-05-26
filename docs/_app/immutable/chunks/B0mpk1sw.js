@@ -1,4 +1,4 @@
-import{s as p,n as i}from"./BkTvAqf4.js";import{S as f,i as g,d as l,b as r,e as c,g as h,h as v,j as m,s as b}from"./DBmetd-G.js";function y(u){let e,o="Hello, this is devblog 3",a,n,d=`This Version hasn’t really change all that much visually and most of the work that’s been done has been fixing
+import{s as p,n as i}from"./BkTvAqf4.js";import{S as f,i as g,d as l,b as r,e as c,g as h,h as v,j as m,s as b}from"./DB-EG9iK.js";function y(u){let e,o="Hello, this is devblog 3",a,n,d=`This Version hasn’t really change all that much visually and most of the work that’s been done has been fixing
 and changing the structure of the code. Aside from rebuilding the card placement and replacing the way cards
 were pulled from the deck, We made Muster Cards working properly and introduced the scorch unit
 cards abilities.

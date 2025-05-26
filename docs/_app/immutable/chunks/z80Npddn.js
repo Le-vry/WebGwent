@@ -1,4 +1,4 @@
-import{s as f,n as l}from"./BkTvAqf4.js";import{S as u,i as b,d as r,b as s,e as c,g as h,h as v,j as m,s as g}from"./DBmetd-G.js";function w(p){let e,i="Hi again",n,a,d=`After another months development a good amount of progress has been made.
+import{s as f,n as l}from"./BkTvAqf4.js";import{S as u,i as b,d as r,b as s,e as c,g as h,h as v,j as m,s as g}from"./DB-EG9iK.js";function w(p){let e,i="Hi again",n,a,d=`After another months development a good amount of progress has been made.
 If you remember from last time, the card selector works and hasn’t been improved at all since then. However,
 The gameboard wasn’t at all playable. Now the gameboard shows up fine and other improvements are as follows:
 Each player now get a hand randomly picked out for them from the cards they chose in the card selector.

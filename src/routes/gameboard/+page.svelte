@@ -43,11 +43,18 @@
     })
     
 
-
+    /* Turn Handeling*/
     let turn = 0.5
     let placedCard = false
     let passedTurn = false
     let popupvisibility = "block"
+    
+    
+
+    /*Global player Vars*/
+    let meleeSelected = false
+    let rangeSelected = false
+    let siegeSelected = false
     let players = []
 
 
@@ -61,9 +68,11 @@
 
     let P1TotalValue = 0
     
-    let meleeP1 = {value: 0, rowMultiplier: 1, units: []}
-    let rangeP1 = {value: 0, rowMultiplier: 1, units: []}
-    let siegeP1 = {value: 0, rowMultiplier: 1, units: []}
+    let meleeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
+    let rangeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
+    let siegeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
+
+
 
     let P1Gem1visibility = "visible"
     let P1Gem2visibility = "visible"
@@ -75,13 +84,18 @@
     let P2Hand = []
     
     let P2TotalValue = 0
-    let meleeP2 = {value: 0, rowMultiplier: 1, units: []}
-    let rangeP2 = {value: 0, rowMultiplier: 1, units: []}
-    let siegeP2 = {value: 0, rowMultiplier: 1, units: []}
+    let meleeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
+    let rangeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
+    let siegeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
+    
 
     let P2Gem1visibility = "visible"
     let P2Gem2visibility = "visible"
 
+    /* Weather variables*/
+    let placedFrostCard = false
+    let placedFogCard = false
+    let placedRainCard = false
     let weather = []
 
 
@@ -101,12 +115,56 @@
                 if (card.type == "unit" || card.type == "hero") {
                     
                     if(card.row == "agile") {
+                        if (meleeSelected){
+                            meleeP1.units.push(card)
+                            meleeP1.units = meleeP1.units
+                            if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, meleeP1.units)
+                            }
+                            if(placedFrostCard){
+                                meleeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFrostCard == false){
+                                meleeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
+                            UpdateWeatherCard(placedFrostCard, meleeP1)
+                            Value(meleeP1)
+                            
+                        } else if (rangeSelected) {
+                            rangeP1.units.push(card)
+                            rangeP1.units = rangeP1.units
+                            if(card.ability == "morale_boost"){
+                                placedMoraleBoostCard(card, rangeP1.units)
+                            }
+                            if(placedFogCard){
+                                rangeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFogCard == false){
+                                rangeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
+                            UpdateWeatherCard(placedFogCard, rangeP1)
+                            Value(rangeP1)
+                            
+                        }
                     } else if(card.row == "melee") {
                             
                         if (card.ability == "spy") {
                             meleeP2.units.push(card)
                             meleeP2.units = meleeP2.units
-                            Value(meleeP1)
+                            UpdateWeatherCard(placedFrostCard, meleeP2)
+                            Value(meleeP2)
                             placedSpyCard(card)
                             
                         } else {
@@ -121,18 +179,21 @@
                             } else if(card.ability == "muster"){
                                 placedMusterCard(card, meleeP1.units)
                             } else if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, meleeP1.units, meleeP2.units)
+                                placedMoraleBoostCard(card, meleeP1.units)
                             } else if(card.ability == "scorch"){
                                 placedScorchCard(meleeP2)
                                 meleeP2.units = meleeP2.units
                             }
+                            UpdateWeatherCard(placedFrostCard, meleeP1)
                             Value(meleeP1)
                             
                         }
                     } else if(card.row == "range") {
+
                         if (card.ability == "spy") {
                             rangeP2.units.push(card)
                             rangeP2.units = rangeP2.units
+                            UpdateWeatherCard(placedFogCard, rangeP2)
                             Value(rangeP1)
                             placedSpyCard(card)
                             
@@ -153,13 +214,16 @@
                                 placedScorchCard(rangeP2)
                                 rangeP2.units = rangeP2.units
                             }
+                            UpdateWeatherCard(placedFogCard, rangeP1)
                             Value(rangeP1)
                             
                         }
                     } else if(card.row == "siege") {
+
                         if (card.ability == "spy") {
                             siegeP2.units.push(card)
                             siegeP2.units = siegeP2.units
+                            UpdateWeatherCard(placedRainCard, siegeP2)
                             Value(siegeP1)
                             placedSpyCard(card)
                             
@@ -180,12 +244,52 @@
                                 placedScorchCard(siegeP2)
                                 siegeP2.units = siegeP2.units
                             }
+                            UpdateWeatherCard(placedRainCard, siegeP1)
                             Value(siegeP1)
                             
                         }
-                    }            
-                }                
-
+                    }          
+                } else if(card.type == "special") {
+                    if (card.row == "weather"){
+                        weather.push(card)
+                        weather = weather
+                        placedWeatherCard(card)
+                    }
+                    if (card.ability == "horn"){
+                        if (meleeSelected == true){
+                            if(meleeP1.special.length > 0){
+                                meleeP1.special = []
+                                meleeP1.special.push(card)
+                                meleeP1.special = meleeP1.special
+                            } else{
+                                meleeP1.special.push(card)
+                                meleeP1.special = meleeP1.special
+                            }
+                            placedHornCard(meleeP1)
+                        } else if (rangeSelected == true){
+                            if(rangeP1.special.length > 0){
+                                rangeP1.special = []
+                                rangeP1.special.push(card)
+                                rangeP1.special = rangeP1.special
+                            } else{
+                                rangeP1.special.push(card)
+                                rangeP1.special = rangeP1.special
+                            }
+                            placedHornCard(rangeP1)
+                        } else if (siegeSelected == true){
+                            if(siegeP1.special.length > 0){
+                                siegeP1.special = []
+                                siegeP1.special.push(card)
+                                siegeP1.special = siegeP1.special
+                            } else{
+                                siegeP1.special.push(card)
+                                siegeP1.special = siegeP1.special
+                            }
+                            placedHornCard(siegeP1)
+                        }
+                        
+                    }
+                }      
             } else if (turn % 2 == 0) {
                 P2Hand = P2Hand.filter(cards => cards.id !== card.id)
                 if (card.type == "unit" || card.type == "hero") {
@@ -195,7 +299,15 @@
                         if (card.ability == "spy") {
                             meleeP1.units.push(card)
                             meleeP1.units = meleeP1.units
-                            Value(meleeP2)
+                            if(placedFrostCard == true){
+                                meleeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            }
+                            UpdateWeatherCard(placedFrostCard, meleeP1)
+                            Value(meleeP1)
                             placedSpyCard(card)
                             
                         } else {
@@ -215,6 +327,21 @@
                                 placedScorchCard(meleeP1)
                                 meleeP1.units = meleeP1.units
                             }
+                            if(placedFrostCard == true){
+                                meleeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            }
+                            if (placedFrostCard == false){
+                                meleeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = card.baseValue
+                                    }
+                                })
+                            }
+                            UpdateWeatherCard(placedFrostCard, meleeP2)
                             Value(meleeP2)
                             
                         }
@@ -222,6 +349,14 @@
                         if (card.ability == "spy") {
                             rangeP1.units.push(card)
                             rangeP1.units = rangeP1.units
+                            if(placedFrostCard == true){
+                                rangeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            }
+                            UpdateWeatherCard(placedFrostCard, rangeP1)
                             Value(rangeP2)
                             placedSpyCard(card)
                             
@@ -242,6 +377,28 @@
                                 placedScorchCard(rangeP1)
                                 rangeP1.units = rangeP1.units
                             }
+                            if(placedFogCard == true){
+                                rangeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            }
+                            if (placedFogCard == false){
+                                rangeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = card.baseValue
+                                    }
+                                })
+                            }
+                            if(placedFrostCard == true){
+                                meleeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            }
+                            UpdateWeatherCard(placedFrostCard, rangeP2)
                             Value(rangeP2)
                             
                         }
@@ -249,6 +406,14 @@
                         if (card.ability == "spy") {
                             siegeP1.units.push(card)
                             siegeP1.units = siegeP1.units
+                            if(placedFrostCard == true){
+                                siegeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            }
+                            UpdateWeatherCard(placedFrostCard, siegeP1)
                             Value(siegeP2)
                             placedSpyCard(card)
                             
@@ -269,15 +434,166 @@
                                 placedScorchCard(siegeP1)
                                 siegeP1.units = siegeP1.units
                             }
+                            if(placedRainCard == true){
+                                siegeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            }
+                            if (placedRainCard == false){
+                                siegeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = card.baseValue
+                                    }
+                                })
+                            }
+                            UpdateWeatherCard(placedRainCard, siegeP2)
                             Value(siegeP2)
                             
                         }
+                    } 
+                } else if(card.type == "special") {
+                    if (card.row == "weather"){
+                        weather.push(card)
+                        weather = weather
+                        placedWeatherCard(card)
                     }
-                }
+
+                    if (card.ability == "horn"){
+                        if (meleeSelected == true){
+                            if(meleeP2.special.length > 0){
+                                meleeP2.special = []
+                                meleeP2.special.push(card)
+                                meleeP2.special = meleeP2.special
+                            } else{
+                                meleeP2.special.push(card)
+                                meleeP2.special = meleeP2.special
+                            }
+                            placedHornCard(meleeP2)
+                        } else if (rangeSelected == true){
+                            if(rangeP2.special.length > 0){
+                                rangeP2.special = []
+                                rangeP2.special.push(card)
+                                rangeP2.special = rangeP2.special
+                            } else{
+                                rangeP2.special.push(card)
+                                rangeP2.special = rangeP2.special
+                            }
+                            placedHornCard(rangeP2)
+                        } else if (siegeSelected == true){
+                            if(siegeP2.special.length > 0){
+                                siegeP2.special = []
+                                siegeP2.special.push(card)
+                                siegeP2.special = siegeP2.special
+                            } else{
+                                siegeP2.special.push(card)
+                                siegeP2.special = siegeP2.special
+                            }
+                            placedHornCard(siegeP2)
+                        }
+                        
+                    }
+                }      
             }
+        }
+        TotalValue()
+    }
+
+    /* Weather Card placement*/
+    function placedWeatherCard(card) {
+    
+        if (card.ability == "W1"){
+            placedFrostCard = true
+            UpdateWeatherCard(placedFrostCard, meleeP1)
+            UpdateWeatherCard(placedFrostCard, meleeP2)
+            Value(meleeP1)
+            Value(meleeP2)
+            meleeP1 = meleeP1
+            meleeP2 = meleeP2
+            TotalValue()
+        } else if (card.ability == "W2"){
+            placedFogCard = true
+            UpdateWeatherCard(placedFogCard, rangeP1)
+            UpdateWeatherCard(placedFogCard, rangeP2)
+            Value(rangeP1)
+            Value(rangeP2)
+            rangeP1 = rangeP1
+            rangeP2 = rangeP2
+            TotalValue()
+        } else if (card.ability == "W3"){
+            placedRainCard = true
+            UpdateWeatherCard(placedRainCard, siegeP1)
+            UpdateWeatherCard(placedRainCard, siegeP2)
+            Value(siegeP1)
+            Value(siegeP2)
+            siegeP1 = siegeP1
+            siegeP2 = siegeP2
+            TotalValue()
+        } else if (card.ability == "W4"){
+            placedFogCard = true
+            UpdateWeatherCard(placedFogCard, rangeP1)
+            UpdateWeatherCard(placedFogCard, rangeP2)
+            Value(rangeP1)
+            Value(rangeP2)
+            rangeP1 = rangeP1
+            rangeP2 = rangeP2
+
+            placedRainCard = true
+            UpdateWeatherCard(placedRainCard, siegeP1)
+            UpdateWeatherCard(placedRainCard, siegeP2)
+            Value(siegeP1)
+            Value(siegeP2)
+            siegeP1 = siegeP1
+            siegeP2 = siegeP2
+            TotalValue()
+        } else if (card.ability == "W5"){
+            placedFrostCard = false
+            UpdateWeatherCard(placedFrostCard, meleeP1)
+            UpdateWeatherCard(placedFrostCard, meleeP2)
+            Value(meleeP1)
+            Value(meleeP2)
+            meleeP1 = meleeP1
+            meleeP2 = meleeP2
+
+            placedFogCard = false
+            UpdateWeatherCard(placedFogCard, rangeP1)
+            UpdateWeatherCard(placedFogCard, rangeP2)
+            Value(rangeP1)
+            Value(rangeP2)
+            rangeP1 = rangeP1
+            rangeP2 = rangeP2
+
+            placedRainCard = false
+            UpdateWeatherCard(placedRainCard, siegeP1)
+            UpdateWeatherCard(placedRainCard, siegeP2)
+            Value(siegeP1)
+            Value(siegeP2)
+            siegeP1 = siegeP1
+            siegeP2 = siegeP2
+            TotalValue()
+
+            weather = []
         }
     }
 
+    function UpdateWeatherCard(weatherBool, row){
+        if(weatherBool){
+            row.units.forEach(card => {
+                if(card.type == "unit"){
+                    card.value = 1
+                }
+            })
+           
+        } 
+        if(!weatherBool){
+            row.units.forEach(card => {
+                card.value = card.Basevalue
+            })
+        }
+    }
+
+    /*Unit card ability placement*/
     function placedSpyCard() {
         if(turn % 2 == 1){
             let pulledCards = P1Cards.slice(0, 2)
@@ -338,16 +654,52 @@
                     if (card.row == "melee") {
                         meleeP1.units.push(card)
                         meleeP1.units = meleeP1.units
+                        if(placedFrostCard){
+                                meleeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFrostCard == false){
+                                meleeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(meleeP1)
 
                     } else if (card.row == "range") {
                         rangeP1.units.push(card)
                         rangeP1.units = rangeP1.units
+                        if(placedFogCard){
+                                rangeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFogCard == false){
+                                rangeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(rangeP1)
 
                     } else if (card.row == "siege") {
                         siegeP1.units.push(card)
                         siegeP1.units = siegeP1.units
+                        if(placedRainCard){
+                                siegeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedRainCard == false){
+                                siegeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(siegeP1)
                         
                     }
@@ -356,16 +708,52 @@
                     if (card.row == "melee") {
                         meleeP1.units.push(card)
                         meleeP1.units = meleeP1.units
+                        if(placedFrostCard){
+                                meleeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFrostCard == false){
+                                meleeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(meleeP1)
 
                     } else if (card.row == "range") {
                         rangeP1.units.push(card)
                         rangeP1.units = rangeP1.units
+                        if(placedFogCard){
+                                rangeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFogCard == false){
+                                rangeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(rangeP1)
 
                     } else if (card.row == "siege") {
                         siegeP1.units.push(card)
                         siegeP1.units = siegeP1.units
+                        if(placedRainCard){
+                                siegeP1.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedRainCard == false){
+                                siegeP1.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(siegeP1)
                         
                     }
@@ -400,16 +788,52 @@
                     if (card.row == "melee") {
                         meleeP2.units.push(card)
                         meleeP2.units = meleeP2.units
+                        if(placedFrostCard){
+                                meleeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFrostCard == false){
+                                meleeP2.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(meleeP2)
 
                     } else if (card.row == "range") {
                         rangeP2.units.push(card)
                         rangeP2.units = rangeP2.units
+                        if(placedFogCard){
+                                rangeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFogCard == false){
+                                rangeP2.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(rangeP2)
 
                     } else if (card.row == "siege") {
                         siegeP2.units.push(card)
                         siegeP2.units = siegeP2.units
+                        if(placedRainCard){
+                                siegeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedRainCard == false){
+                                siegeP2.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(siegeP2)
                         
                     }
@@ -418,16 +842,52 @@
                     if (card.row == "melee") {
                         meleeP2.units.push(card)
                         meleeP2.units = meleeP2.units
+                        if(placedFrostCard){
+                                meleeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFrostCard == false){
+                                meleeP2.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(meleeP2)
 
                     } else if (card.row == "range") {
                         rangeP2.units.push(card)
                         rangeP2.units = rangeP2.units
+                        if(placedFogCard){
+                                rangeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedFogCard == false){
+                                rangeP2.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(rangeP2)
 
                     } else if (card.row == "siege") {
                         siegeP2.units.push(card)
                         siegeP2.units = siegeP2.units
+                        if(placedRainCard){
+                                siegeP2.units.forEach(card => {
+                                    if(card.type == "unit"){
+                                        card.value = 1
+                                    }
+                                })
+                            } 
+                            if(placedRainCard == false){
+                                siegeP2.units.forEach(card => {
+                                    card.value = card.Basevalue
+                                })
+                            }
                         Value(siegeP2)
                         
                     }
@@ -471,10 +931,33 @@
                     if (card.value * card.ValueMultiplier * enemyRow.rowMultiplier == maxValue){
                         enemyRow.units = enemyRow.units.filter(cards => cards.id != card.id)
                         enemyRow.units = enemyRow.units
+                        Value(enemyRow)
                     }
                 }
             })
             enemyRow.units = enemyRow.units
+        }
+    }
+
+    function placedMedicCard(placedCard, row) {
+        null
+    }
+
+
+    /*Special card ability placement*/
+    function selectRow(row){
+        if(row == "melee"){
+            meleeSelected = true
+            rangeSelected = false
+            siegeSelected = false
+        } else if (row == "range"){
+            meleeSelected = false
+            rangeSelected = true
+            siegeSelected = false
+        } else if (row == "siege"){
+            meleeSelected = false
+            rangeSelected = false
+            siegeSelected = true
         }
     }
     /* 1-----------------------------------------------------------------------------------1 */
@@ -497,13 +980,12 @@
     }
 
     function TotalValue(){
-        if(turn % 2 == 1){
-            P1TotalValue = 0
-            P1TotalValue += meleeP1.value + rangeP1.value + siegeP1.value
-        } else if(turn % 2 == 0){
-            P2TotalValue = 0
-            P2TotalValue += meleeP2.value + rangeP2.value + siegeP2.value
-        }     
+        P1TotalValue = 0
+        P1TotalValue += meleeP1.value + rangeP1.value + siegeP1.value
+    
+        P2TotalValue = 0
+        P2TotalValue += meleeP2.value + rangeP2.value + siegeP2.value
+      
     }
     /* 1-----------------------------------------------------------------------------------1 */
 
@@ -520,6 +1002,20 @@
             
             if (passedTurn == true){
                 compareValue()
+                P1TotalValue = 0
+                meleeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
+                rangeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
+                siegeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
+
+
+                P2TotalValue = 0
+                meleeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
+                rangeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
+                siegeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
+
+                weather = []
+                endTurn()
+                passedTurn = false
             } else {
                 passedTurn = true 
                 endTurn()
@@ -531,10 +1027,10 @@
         
         if(P1TotalValue > P2TotalValue){
             if(P2Gem1visibility == "visible"){
-                
                 P2Gem1visibility = "hidden"
             } else if(P2Gem1visibility == "hidden"){
                 P2Gem2visibility = "hidden"
+                alert("Player 1 wins!")
             }
         } else if(P1TotalValue < P2TotalValue){
             if(P1Gem1visibility == "visible"){
@@ -552,6 +1048,7 @@
                 P1Gem1visibility = "hidden"
             } else if(P1Gem1visibility == "hidden"){
                 P1Gem2visibility = "hidden"
+                alert("Player 2 wins!")
             }
 
         }
@@ -650,9 +1147,9 @@
                 {/if}
             {/each}
         {/if}
-
-
     </div>
+
+
 
     <section class="Board-top">
         {#if turn % 2 == 0}
@@ -663,7 +1160,11 @@
                 <div class="melee-value" style="top:35%;">{meleeP1.value}</div>
 
                 <div class="melee-special">
-
+                    {#each meleeP1.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="melee-units no-scrollbar">
                     {#each meleeP1.units as card}
@@ -671,9 +1172,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * meleeP1.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -684,6 +1196,10 @@
                             </button>
                         {/if}
                     {/each}
+                </div>
+
+                <div>
+                    <img src="Frost Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFrostCard ? 'visible' : 'hidden'}">
                 </div>
             </div>
 
@@ -692,7 +1208,11 @@
                 <div class="range-value" style="top:32%;">{rangeP1.value}</div>
 
                 <div class="range-special">
-
+                    {#each rangeP1.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="range-units no-scrollbar">
                     {#each rangeP1.units as card}
@@ -700,9 +1220,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier>= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * rangeP1.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -713,6 +1244,10 @@
                             </button>
                         {/if}
                     {/each}
+                </div>
+
+                <div>
+                    <img src="Fog Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFogCard ? 'visible' : 'hidden'}">
                 </div>
             </div>
 
@@ -721,7 +1256,11 @@
                 <div class="siege-value">{siegeP1.value}</div>
 
                 <div class="siege-special">
-
+                    {#each siegeP1.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="siege-units no-scrollbar">
                     {#each siegeP1.units as card}
@@ -729,9 +1268,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * siegeP1.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -743,9 +1293,12 @@
                         {/if}
                     {/each}
                 </div>
+
+                <div>
+                    <img src="Rain Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedRainCard ? 'visible' : 'hidden'}">
+                </div>
             </div>
         {/if}
-
 
 
         {#if turn % 2 == 1}
@@ -756,7 +1309,11 @@
                 <div class="melee-value" style="top:35%;">{meleeP2.value}</div>
 
                 <div class="melee-special">
-
+                    {#each meleeP2.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="melee-units no-scrollbar">
                     {#each meleeP2.units as card}
@@ -764,9 +1321,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * meleeP2.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -777,6 +1345,10 @@
                             </button>
                         {/if}
                     {/each}
+                </div>
+
+                <div>
+                    <img src="Frost Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFrostCard ? 'visible' : 'hidden'}">
                 </div>
             </div>
 
@@ -785,7 +1357,11 @@
                 <div class="range-value" style="top:32%;">{rangeP2.value}</div>
 
                 <div class="range-special">
-
+                    {#each rangeP2.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="range-units no-scrollbar">
                     {#each rangeP2.units as card}
@@ -793,9 +1369,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * rangeP2.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -806,6 +1393,10 @@
                             </button>
                         {/if}
                     {/each}
+                </div>
+
+                <div>
+                    <img src="Fog Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFogCard ? 'visible' : 'hidden'}">
                 </div>
             </div>
 
@@ -814,7 +1405,11 @@
                 <div class="siege-value">{siegeP2.value}</div>
 
                 <div class="siege-special">
-
+                    {#each siegeP2.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="siege-units no-scrollbar">
                     {#each siegeP2.units as card}
@@ -822,9 +1417,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * siegeP2.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -835,6 +1441,10 @@
                             </button>
                         {/if}
                     {/each}
+                </div>
+
+                <div>
+                    <img src="Rain Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedRainCard ? 'visible' : 'hidden'}">
                 </div>
             </div>
         {/if}
@@ -846,12 +1456,16 @@
         {#if turn % 2 == 1}
             <div class="totalvalue" style="top:72.3%;">{P1TotalValue}</div>
 
-            <div class="melee">
+            <button class="melee" on:click={() => selectRow("melee")} style="box-shadow: {meleeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
                 <div class="melee-value">{meleeP1.value}</div>
 
                 <div class="melee-special">
-
+                    {#each meleeP1.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="melee-units no-scrollbar">
                     {#each meleeP1.units as card}
@@ -859,9 +1473,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier>= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * meleeP1.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -869,19 +1494,26 @@
                         
                         {#if card.type == "hero"}
                             <button class="card" on:click={() => {placeCard(card)}}>
-                            <img src="{card.name}.webp" alt="{card.name}">
+                                <img src="{card.name}.webp" alt="{card.name}">
                             </button>
                         {/if}
                     {/each}
                 </div>
-            </div>
+                <div>
+                    <img src="Frost Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFrostCard ? 'visible' : 'hidden'}">
+                </div>
+            </button>
 
-            <div class="range">
+            <button class="range" on:click={() => selectRow("range")} style="box-shadow: {rangeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
                 <div class="range-value">{rangeP1.value}</div>
 
                 <div class="range-special">
-
+                    {#each rangeP1.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="range-units no-scrollbar">
                     {#each rangeP1.units as card}
@@ -889,9 +1521,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * rangeP1.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -903,14 +1546,22 @@
                         {/if}
                     {/each}
                 </div>
-            </div>
 
-            <div class="siege">
+                <div>
+                    <img src="Fog Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFogCard ? 'visible' : 'hidden'}">
+                </div>
+            </button>
+
+            <button class="siege" on:click={() => selectRow("siege")} style="box-shadow: {siegeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
                 <div class="siege-value">{siegeP1.value}</div>
 
                 <div class="siege-special">
-
+                    {#each siegeP1.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="siege-units no-scrollbar">
                     {#each siegeP1.units as card}
@@ -918,9 +1569,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * siegeP1.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -932,7 +1594,11 @@
                         {/if}
                     {/each}
                 </div>
-            </div>
+
+                <div>
+                    <img src="Rain Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedRainCard ? 'visible' : 'hidden'}">
+                </div>
+            </button>
         {/if}
 
 
@@ -940,12 +1606,16 @@
         {#if turn % 2 == 0}
             <div class="totalvalue" style="top:72%;">{P2TotalValue}</div>
 
-            <div class="melee">
+            <button class="melee" on:click={() => selectRow("melee")} style="box-shadow: {meleeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
                 <div class="melee-value">{meleeP2.value}</div>
 
                 <div class="melee-special">
-
+                    {#each meleeP2.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="melee-units no-scrollbar">
                     {#each meleeP2.units as card}
@@ -953,9 +1623,20 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {/if}
+
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * meleeP2.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -967,14 +1648,22 @@
                         {/if}
                     {/each}
                 </div>
-            </div>
 
-            <div class="range">
+                <div>
+                    <img src="Frost Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFrostCard ? 'visible' : 'hidden'}">
+                </div>
+            </button>
+
+            <button class="range" on:click={() => selectRow("range")} style="box-shadow: {rangeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
                 <div class="range-value">{rangeP2.value}</div>
 
                 <div class="range-special">
-
+                    {#each rangeP2.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="range-units no-scrollbar">
                     {#each rangeP2.units as card}
@@ -982,9 +1671,19 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {/if}
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * rangeP2.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -996,14 +1695,22 @@
                         {/if}
                     {/each}
                 </div>
-            </div>
 
-            <div class="siege">
+                <div>
+                    <img src="Fog Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedFogCard ? 'visible' : 'hidden'}">
+                </div>
+            </button>
+
+            <button class="siege" on:click={() => selectRow("siege")} style="box-shadow: {siegeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
                 <div class="siege-value">{siegeP2.value}</div>
 
                 <div class="siege-special">
-
+                    {#each siegeP2.special as special}
+                        <div class="card">
+                        <img src="{special.name}.webp" alt="{special.name}">
+                        </div>
+                    {/each}
                 </div>
                 <div class="siege-units no-scrollbar">
                     {#each siegeP2.units as card}
@@ -1011,9 +1718,19 @@
                             <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier >= 10}
-                                <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="left:8.5%; color:green;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {/if}
                             {:else}
-                                <p class="unit_value">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
+                                    <p class="unit_value" style="color:green;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {:else if card.value * card.ValueMultiplier * siegeP2.rowMultiplier < card.Basevalue}
+                                    <p class="unit_value" style="color:red;">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {:else}
+                                    <p class="unit_value">{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}</p>
+                                {/if}
                             {/if}
                             </button>       
                         {/if} 
@@ -1025,16 +1742,26 @@
                         {/if}
                     {/each}
                 </div>
-            </div>
+
+                <div>
+                    <img src="Rain Symbol.png" alt="Weather" class="weatherSymbol" style="visibility:{placedRainCard ? 'visible' : 'hidden'}">
+                </div>
+            </button>
         {/if}
             
         
     </section>
 
+
+
     <section class="TopPlayerStats">
         {#if turn % 2 == 1}
+            <div class="PlayerInfo">
+                <h1>P2</h1>
+                <p>{P2[2].name}</p>
+            </div>
+
             <div class="amountofCards" style="display:inline-flex; top: 60%;">
-                
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {P2Hand.length}
                 <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P2Gem1visibility};">
@@ -1042,8 +1769,12 @@
             </div>
         {/if}
         {#if turn % 2 == 0}
+            <div class="PlayerInfo">
+                <h1>P1</h1>
+                <p>{P1[2].name}</p>
+            </div>
+
             <div class="amountofCards" style="display:inline-flex; top: 60%;">
-                
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {P1Hand.length}
                 <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P1Gem1visibility};">
@@ -1054,8 +1785,12 @@
 
     <section class="BottomPlayerStats">
         {#if turn % 2 == 1}
+            <div class="PlayerInfo" style="margin-top: 40%;">
+                <h1>P1</h1>
+                <p>{P1[2].name}</p>
+            </div>
+
             <div class="amountofCards" style="display:inline-flex;">
-                
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {P1Hand.length}
                 <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P1Gem1visibility};">
@@ -1063,6 +1798,11 @@
             </div>
         {/if}
         {#if turn % 2 == 0}
+            <div class="PlayerInfo" style="margin-top: 40%;">
+                <h1>P2</h1>
+                <p>{P2[2].name}</p>
+            </div>
+
             <div class="amountofCards" style="display:inline-flex;">
                 
                 <img src="cards_symbol.png" alt="cardsymbol">
@@ -1072,6 +1812,14 @@
             </div> 
         {/if}
     </section>
+
+    <div class="weather">
+        {#each weather as card}
+            <button class="card" on:click={() => {placeCard(card)}}>
+                <img src="{card.name}.webp" alt="{card.name}">
+            </button>
+        {/each}
+    </div>
 
     <button class="passRound" on:click|preventDefault={() => {passedTurn = true; endTurn()}}>
         <img src="keyboard_tab_icon_outline.png" alt=enter class="enter"> Tab to pass Round
@@ -1105,7 +1853,6 @@
             height: 100vh;
             width: 100vw;
     }
-
     main {
         
         background-image: url("Board.png");
@@ -1127,7 +1874,6 @@
 
     /* 1 Leader cards styling and positioning */
     /* 1-----------------------------------------------------------------------------------1 */
-
     .P1leader {
         background-color: transparent;
         border: none;
@@ -1139,13 +1885,11 @@
         height: 13%;
         overflow: hidden;
     }
-
     .P1leader img {
         width: 100%;
         height: 20vh;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
-
     .P2leader {
         background-color: transparent;
         border: none;
@@ -1157,7 +1901,6 @@
         height: 13%;
         overflow: hidden;
     }
-
     .P2leader img {
         width: 100%;
         height: 20vh;
@@ -1198,18 +1941,18 @@
         left: 13.5%;
         z-index: 1;
         color: black;
+        
+        
     }
     .card img {
         width: 100%;
         height: 16vh;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
-
     .card:hover{
         transform: scale(1.025);
         transition: all 0.2s ease-in-out;
     }
-
     .card:active{
         transform: scale(1.01);
         transition: all 0.2s ease-in-out;
@@ -1263,6 +2006,14 @@
                 0px -2px 2px #ffffff,
                 0px 2px 2px #ffffff;
     }
+    .weatherSymbol {
+        position: absolute;
+        top: 23%;
+        right: -8%;
+        width: 6.5%;
+        height: 50%;
+        background-color: none;
+    }
     
     /* Melee row */
     .melee {
@@ -1300,6 +2051,7 @@
         width: 12.5%;
         height: 92%;
         background-color: none;
+        justify-items: center;
     }
     .melee-units {
         position: absolute;
@@ -1350,6 +2102,7 @@
         width: 12.5%;
         height: 92%;
         background-color: none;
+        justify-content: center;
     }
     .range-units {
         position: absolute;
@@ -1400,6 +2153,7 @@
         width: 12.5%;
         height: 92%;
         background-color: none;
+        justify-content: center;
     }
     .siege-units {
         position: absolute;
@@ -1413,6 +2167,23 @@
         justify-content: center;
         align-items: center;
     }
+
+    /* Weather row */
+    .weather {
+        position: absolute;
+        top: 43.1%;
+        left: 7.35%;
+        width: 14.6%;
+        height: 13.4%;
+        background-color: none;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: center;
+    }
+
+
+
 
     /* Player stats */
     .TopPlayerStats {
@@ -1431,7 +2202,12 @@
         height: 13%;
         background-color: none;
     }
-
+    .PlayerInfo{
+        font: 300 1.7vh 'Roboto', sans-serif;
+        color: #e0c760;
+        margin-top: 5%;
+        margin-left: 5%;
+    }
     .amountofCards {
         position: absolute;
         top: 13%;
@@ -1445,16 +2221,17 @@
         font: 300 3vh 'Roboto', sans-serif;
         color: #e0c760;        
     }
-
     .amountofCards img{
         width: 4vh; 
         height: 4vh; 
     }
     .gem{
         margin-left: 0.3vw;
-        
     }
     /* 3-----------------------------------------------------------------------------------3 */
+
+
+
 
     /* 4 Buttons & Popups*/
     /* 4-----------------------------------------------------------------------------------4 */

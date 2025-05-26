@@ -29,68 +29,68 @@
         {id: 22, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
         {id: 23, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
         {id: 24, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
-        {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
-        {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
-        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, ValueMultiplier: 1, ability: "medic"},
-        {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, ValueMultiplier: 1, ability: "none"},
-        {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, ValueMultiplier: 1, ability: "spy"},
-        {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 30, name: "Vesemir", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 31, name: "Villentretenmerth", type: "unit", row: "melee", value: 7, ValueMultiplier: 1, ability: "scorch"},
-        {id: 32, name: "Dandelion", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "horn"},
-        {id: 33, name: "Zoltan Chivay", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 34, name: "Olgierd von Everec", type: "unit", row: "agile", value: 6, ValueMultiplier: 1, ability: "morale_boost"},
-        {id: 35, name: "Gaunter O'Dimm", type: "unit", row: "siege", value: 2, ValueMultiplier: 1, ability: "muster", M_ID: "GOD1"},
-        {id: 36, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
-        {id: 37, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
-        {id: 38, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, Basevalue: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
+        {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, Basevalue: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
+        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "medic"},
+        {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "none"},
+        {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, Basevalue: 0, ValueMultiplier: 1, ability: "spy"},
+        {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 30, name: "Vesemir", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 31, name: "Villentretenmerth", type: "unit", row: "melee", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "scorch"},
+        {id: 32, name: "Dandelion", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "horn"},
+        {id: 33, name: "Zoltan Chivay", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 34, name: "Olgierd von Everec", type: "unit", row: "agile", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "morale_boost"},
+        {id: 35, name: "Gaunter O'Dimm", type: "unit", row: "siege", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "muster", M_ID: "GOD1"},
+        {id: 36, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 37, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 38, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
 
-        {id: 39, name: "Arachas1", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "ARC"},
-        {id: 40, name: "Arachas2", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "ARC"},
-        {id: 41, name: "Arachas3", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "ARC"},
-        {id: 42, name: "Arachas Behemoth", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "muster", M_ID: "ARC1"},
-        {id: 43, name: "Botchling", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "none"},
-        {id: 44, name: "Celaeno Harpy", type: "unit", row: "agile", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 45, name: "Cockatrice", type: "unit", row: "range", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 46, name: "Crone Brewess", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "muster", M_ID: "Crone"},
-        {id: 47, name: "Crone Weavess", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "muster", M_ID: "Crone"},
-        {id: 48, name: "Crone Whispess", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "muster", M_ID: "Crone"},
-        {id: 49, name: "Draug", type: "hero", row: "melee", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 50, name: "Earth Elemental", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 51, name: "Endrega", type: "unit", row: "range", value: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 39, name: "Arachas1", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "ARC"},
+        {id: 40, name: "Arachas2", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "ARC"},
+        {id: 41, name: "Arachas3", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "ARC"},
+        {id: 42, name: "Arachas Behemoth", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "muster", M_ID: "ARC1"},
+        {id: 43, name: "Botchling", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "none"},
+        {id: 44, name: "Celaeno Harpy", type: "unit", row: "agile", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 45, name: "Cockatrice", type: "unit", row: "range", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 46, name: "Crone Brewess", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "muster", M_ID: "Crone"},
+        {id: 47, name: "Crone Weavess", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "muster", M_ID: "Crone"},
+        {id: 48, name: "Crone Whispess", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "muster", M_ID: "Crone"},
+        {id: 49, name: "Draug", type: "hero", row: "melee", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 50, name: "Earth Elemental", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 51, name: "Endrega", type: "unit", row: "range", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
         {id: 52, name: "Eredin Bréacc Glas The Treacherous", type: "leader", ability: "Mo1"},
         {id: 53, name: "Eredin Bringer of Death", type: "leader", ability: "Mo2"},
         {id: 54, name: "Eredin Commander of the Red Riders", type: "leader", ability: "Mo3"},
         {id: 55, name: "Eredin Destroyer of Worlds", type: "leader", ability: "Mo4"},
         {id: 56, name: "Eredin King of the Wild Hunt", type: "leader", ability: "Mo5"},
-        {id: 57, name: "Fiend", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 58, name: "Fire Elemental", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 59, name: "Foglet", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 60, name: "Forktail", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 61, name: "Frightener", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 62, name: "Gargoyle", type: "unit", row: "range", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 63, name: "Ghoul1", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "muster", M_ID: "Ghoul"},
-        {id: 64, name: "Ghoul2", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "muster", M_ID: "Ghoul"},
-        {id: 65, name: "Ghoul3", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "muster", M_ID: "Ghoul"},
-        {id: 66, name: "Grave Hag", type: "unit", row: "range", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 67, name: "Griffin", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 68, name: "Harpy", type: "unit", row: "agile", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 69, name: "Ice Giant", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 70, name: "Imlerith", type: "hero", row: "melee", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 71, name: "Kayran", type: "hero", row: "agile", value: 8, ValueMultiplier: 1, ability: "morale_boost"},
-        {id: 72, name: "Leshen", type: "hero", row: "range", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 73, name: "Nekker1", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "muster", M_ID: "Nekker"},
-        {id: 74, name: "Nekker2", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "muster", M_ID: "Nekker"},
-        {id: 75, name: "Nekker3", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "muster", M_ID: "Nekker"},
-        {id: 76, name: "Plague Maiden", type: "unit", row: "range", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 77, name: "Toad", type: "unit", row: "range", value: 7, ValueMultiplier: 1, ability: "scorch"},
-        {id: 78, name: "Vampire Bruxa", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
-        {id: 79, name: "Vampire Ekimmara", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
-        {id: 80, name: "Vampire Fleder", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
-        {id: 81, name: "Vampire Garkain", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
-        {id: 82, name: "Vampire Katakan", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
-        {id: 83, name: "Werewolf", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 84, name: "Wyvern", type: "unit", row: "range", value: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 57, name: "Fiend", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 58, name: "Fire Elemental", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 59, name: "Foglet", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 60, name: "Forktail", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 61, name: "Frightener", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 62, name: "Gargoyle", type: "unit", row: "range", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 63, name: "Ghoul1", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "muster", M_ID: "Ghoul"},
+        {id: 64, name: "Ghoul2", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "muster", M_ID: "Ghoul"},
+        {id: 65, name: "Ghoul3", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "muster", M_ID: "Ghoul"},
+        {id: 66, name: "Grave Hag", type: "unit", row: "range", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 67, name: "Griffin", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 68, name: "Harpy", type: "unit", row: "agile", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 69, name: "Ice Giant", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 70, name: "Imlerith", type: "hero", row: "melee", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 71, name: "Kayran", type: "hero", row: "agile", value: 8, Basevalue: 8, ValueMultiplier: 1, ability: "morale_boost"},
+        {id: 72, name: "Leshen", type: "hero", row: "range", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 73, name: "Nekker1", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "muster", M_ID: "Nekker"},
+        {id: 74, name: "Nekker2", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "muster", M_ID: "Nekker"},
+        {id: 75, name: "Nekker3", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "muster", M_ID: "Nekker"},
+        {id: 76, name: "Plague Maiden", type: "unit", row: "range", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 77, name: "Toad", type: "unit", row: "range", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "scorch"},
+        {id: 78, name: "Vampire Bruxa", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
+        {id: 79, name: "Vampire Ekimmara", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
+        {id: 80, name: "Vampire Fleder", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
+        {id: 81, name: "Vampire Garkain", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
+        {id: 82, name: "Vampire Katakan", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "muster", M_ID: "Vampire"},
+        {id: 83, name: "Werewolf", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 84, name: "Wyvern", type: "unit", row: "range", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
     ]
 
     let Base_NGE_Deck = [
@@ -118,63 +118,63 @@
         {id: 22, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
         {id: 23, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
         {id: 24, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
-        {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
-        {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
-        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, ValueMultiplier: 1, ability: "medic"},
-        {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, ValueMultiplier: 1, ability: "none"},
-        {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, ValueMultiplier: 1, ability: "spy"},
-        {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 30, name: "Vesemir", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 31, name: "Villentretenmerth", type: "unit", row: "melee", value: 7, ValueMultiplier: 1, ability: "scorch"},
-        {id: 32, name: "Dandelion", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "horn"},
-        {id: 33, name: "Zoltan Chivay", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 34, name: "Olgierd von Everec", type: "unit", row: "agile", value: 6, ValueMultiplier: 1, ability: "morale_boost"},
-        {id: 35, name: "Gaunter O'Dimm", type: "unit", row: "siege", value: 2, ValueMultiplier: 1, ability: "muster", M_ID: "GOD1"},
-        {id: 36, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
-        {id: 37, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
-        {id: 38, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, Basevalue: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
+        {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, Basevalue: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
+        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "medic"},
+        {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "none"},
+        {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, Basevalue: 0, ValueMultiplier: 1, ability: "spy"},
+        {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 30, name: "Vesemir", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 31, name: "Villentretenmerth", type: "unit", row: "melee", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "scorch"},
+        {id: 32, name: "Dandelion", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "horn"},
+        {id: 33, name: "Zoltan Chivay", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 34, name: "Olgierd von Everec", type: "unit", row: "agile", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "morale_boost"},
+        {id: 35, name: "Gaunter O'Dimm", type: "unit", row: "siege", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "muster", M_ID: "GOD1"},
+        {id: 36, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 37, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 38, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
 
-        {id: 39, name: "Albrich", type: "unit", row: "range", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 40, name: "Assire var Anahid", type: "unit", row: "range", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 41, name: "Black Infantry Archer1", type: "unit", row: "range", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 42, name: "Black Infantry Archer2", type: "unit", row: "range", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 43, name: "Cahir Mawr Dyffryn aep Ceallach", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 44, name: "Cynthia", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "none"},
+        {id: 39, name: "Albrich", type: "unit", row: "range", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 40, name: "Assire var Anahid", type: "unit", row: "range", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 41, name: "Black Infantry Archer1", type: "unit", row: "range", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 42, name: "Black Infantry Archer2", type: "unit", row: "range", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 43, name: "Cahir Mawr Dyffryn aep Ceallach", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 44, name: "Cynthia", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "none"},
         {id: 45, name: "Emhyr var Emreis Emperor of Nilfgaard", type: "leader", ability: "NGE1"},
         {id: 46, name: "Emhyr var Emreis His Imperial Majesty", type: "leader", ability: "NGE2"},
         {id: 47, name: "Emhyr var Emreis Invader of the North", type: "leader", ability: "NGE3"},
         {id: 48, name: "Emhyr var Emreis the Relentless", type: "leader", ability: "NGE4"},
         {id: 49, name: "Emhyr var Emreis the White Flame", type: "leader", ability: "NGE5"},
-        {id: 50, name: "Etolian Auxiliary Archers1", type: "unit", row: "range", value: 1, ValueMultiplier: 1, ability: "medic"},
-        {id: 51, name: "Etolian Auxiliary Archers2", type: "unit", row: "range", value: 1, ValueMultiplier: 1, ability: "medic"},
-        {id: 52, name: "Fringilla Vigo", type: "unit", row: "range", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 53, name: "Heavy Zerrikanian Fire Scorpion", type: "unit", row: "siege", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 54, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
-        {id: 55, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
-        {id: 56, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
-        {id: 57, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
-        {id: 58, name: "Letho of Gulet", type: "hero", row: "melee", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 59, name: "Menno Coehoorn", type: "hero", row: "melee", value: 10, ValueMultiplier: 1, ability: "medic"},
-        {id: 60, name: "Morteisen", type: "unit", row: "melee", value: 3, ValueMultiplier: 1, ability: "none"},
-        {id: 61, name: "Morvran Voorhis", type: "hero", row: "siege", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 62, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Nausicaa Cavalry Rider"},
-        {id: 63, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Nausicaa Cavalry Rider"},
-        {id: 64, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Nausicaa Cavalry Rider"},
-        {id: 65, name: "Puttkammer", type: "unit", row: "range", value: 3, ValueMultiplier: 1, ability: "none"},
-        {id: 66, name: "Rainfarn", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "none"},
-        {id: 67, name: "Rotten Mangonel", type: "unit", row: "siege", value: 4, ValueMultiplier: 1, ability: "none"},
-        {id: 68, name: "Shilard Fitz-Oesterlen", type: "unit", row: "melee", value: 7, ValueMultiplier: 1, ability: "spy"},
-        {id: 69, name: "Siege Engineer", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 70, name: "Siege Technician", type: "unit", row: "siege", value: 0, ValueMultiplier: 1, ability: "medic"},
-        {id: 71, name: "Stefan Skellen", type: "unit", row: "melee", value: 9, ValueMultiplier: 1, ability: "spy"},
-        {id: 72, name: "Sweers", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 73, name: "Tibor Eggebracht", type: "hero", row: "range", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 74, name: "Vanhemar", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "none"},
-        {id: 75, name: "Vattier de Rideaux", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "spy"},
-        {id: 76, name: "Vreemde", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "none"},
-        {id: 77, name: "Young Emissary1", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Young Emissary"},
-        {id: 78, name: "Young Emissary2", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Young Emissary"},
-        {id: 79, name: "Zerrikanian Fire Scorpion", type: "unit", row: "siege", value: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 50, name: "Etolian Auxiliary Archers1", type: "unit", row: "range", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "medic"},
+        {id: 51, name: "Etolian Auxiliary Archers2", type: "unit", row: "range", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "medic"},
+        {id: 52, name: "Fringilla Vigo", type: "unit", row: "range", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 53, name: "Heavy Zerrikanian Fire Scorpion", type: "unit", row: "siege", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 54, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, Basevalue: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
+        {id: 55, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, Basevalue: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
+        {id: 56, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, Basevalue: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
+        {id: 57, name: "Impera Brigade Guard", type: "unit", row: "melee", value: 3, Basevalue: 3, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Impera Brigade Guard"},
+        {id: 58, name: "Letho of Gulet", type: "hero", row: "melee", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 59, name: "Menno Coehoorn", type: "hero", row: "melee", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "medic"},
+        {id: 60, name: "Morteisen", type: "unit", row: "melee", value: 3, Basevalue: 3, ValueMultiplier: 1, ability: "none"},
+        {id: 61, name: "Morvran Voorhis", type: "hero", row: "siege", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 62, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Nausicaa Cavalry Rider"},
+        {id: 63, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Nausicaa Cavalry Rider"},
+        {id: 64, name: "Nausicaa Cavalry Rider", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Nausicaa Cavalry Rider"},
+        {id: 65, name: "Puttkammer", type: "unit", row: "range", value: 3, Basevalue: 3, ValueMultiplier: 1, ability: "none"},
+        {id: 66, name: "Rainfarn", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "none"},
+        {id: 67, name: "Rotten Mangonel", type: "unit", row: "siege", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "none"},
+        {id: 68, name: "Shilard Fitz-Oesterlen", type: "unit", row: "melee", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "spy"},
+        {id: 69, name: "Siege Engineer", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 70, name: "Siege Technician", type: "unit", row: "siege", value: 0, Basevalue: 0, ValueMultiplier: 1, ability: "medic"},
+        {id: 71, name: "Stefan Skellen", type: "unit", row: "melee", value: 9, Basevalue: 9, ValueMultiplier: 1, ability: "spy"},
+        {id: 72, name: "Sweers", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 73, name: "Tibor Eggebracht", type: "hero", row: "range", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 74, name: "Vanhemar", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "none"},
+        {id: 75, name: "Vattier de Rideaux", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "spy"},
+        {id: 76, name: "Vreemde", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 77, name: "Young Emissary1", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Young Emissary"},
+        {id: 78, name: "Young Emissary2", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Young Emissary"},
+        {id: 79, name: "Zerrikanian Fire Scorpion", type: "unit", row: "siege", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
     ]
 
     let Base_NR_Deck = [
@@ -202,65 +202,64 @@
         {id: 22, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
         {id: 23, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
         {id: 24, name: "Scorch", type: "special", row: "none", value: 0, ability: "scorch"},
-        {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, ValueMultiplier: 1,  ability: "muster", M_ID: "Roach1"},
-        {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
+        {id: 25, name: "Cirilla Fiona Elen Riannon", type: "hero", row: "melee", value: 15, Basevalue: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
+        {id: 26, name: "Geralt of Rivia", type: "hero", row: "melee", value: 15, Basevalue: 15, ValueMultiplier: 1, ability: "muster", M_ID: "Roach1"},
+        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "medic"},
+        {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "none"},
+        {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, Basevalue: 0, ValueMultiplier: 1, ability: "spy"},
+        {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 30, name: "Vesemir", type: "unit", row: "melee", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 31, name: "Villentretenmerth", type: "unit", row: "melee", value: 7, Basevalue: 7, ValueMultiplier: 1, ability: "scorch"},
+        {id: 32, name: "Dandelion", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "horn"},
+        {id: 33, name: "Zoltan Chivay", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 34, name: "Olgierd von Everec", type: "unit", row: "agile", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "morale_boost"},
+        {id: 35, name: "Gaunter O'Dimm", type: "unit", row: "siege", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "muster", M_ID: "GOD1"},
+        {id: 36, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 37, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
+        {id: 38, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
 
-        {id: 27, name: "Yennefer of Vengerberg", type: "hero", row: "range", value: 7, ValueMultiplier: 1, ability: "medic"},
-        {id: 28, name: "Triss Merigold", type: "hero", row: "melee", value: 7, ValueMultiplier: 1, ability: "none"},
-        {id: 29, name: "Mysterious Elf", type: "hero", row: "melee", value: 0, ValueMultiplier: 1, ability: "spy"},
-        {id: 29, name: "Emiel Regis Rohellec Terzieff", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 30, name: "Vesemir", type: "unit", row: "melee", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 31, name: "Villentretenmerth", type: "unit", row: "melee", value: 7, ValueMultiplier: 1, ability: "scorch"},
-        {id: 32, name: "Dandelion", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "horn"},
-        {id: 33, name: "Zoltan Chivay", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 34, name: "Olgierd von Everec", type: "unit", row: "agile", value: 6, ValueMultiplier: 1, ability: "morale_boost"},
-        {id: 35, name: "Gaunter O'Dimm", type: "unit", row: "siege", value: 2, ValueMultiplier: 1, ability: "muster", M_ID: "GOD1"},
-        {id: 36, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
-        {id: 37, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
-        {id: 38, name: "Gaunter O'Dimm Darkness", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "muster", M_ID: "GOD"},
-
-        {id: 39, name: "Ballista1", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 40, name: "Ballista2", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 41, name: "Blue Stripes Commando", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Blue Stripes Commando"},
-        {id: 42, name: "Blue Stripes Commando", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Blue Stripes Commando"},
-        {id: 43, name: "Blue Stripes Commando", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Blue Stripes Commando"},
-        {id: 44, name: "Catapult", type: "unit", row: "siege", value: 8, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Catapult"},
-        {id: 45, name: "Catapult", type: "unit", row: "siege", value: 8, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Catapult"},
-        {id: 46, name: "Crinfrid Reavers Dragon Hunter", type: "unit", row: "range", value: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Crinfrid Reavers Dragon Hunter"},
-        {id: 47, name: "Crinfrid Reavers Dragon Hunter", type: "unit", row: "range", value: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Crinfrid Reavers Dragon Hunter"},
-        {id: 48, name: "Crinfrid Reavers Dragon Hunter", type: "unit", row: "range", value: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Crinfrid Reavers Dragon Hunter"},
-        {id: 49, name: "Dethmold", type: "unit", row: "range", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 50, name: "Dun Banner Medic", type: "unit", row: "siege", value: 5, ValueMultiplier: 1, ability: "medic"},
-        {id: 51, name: "Esterad Thyssen", type: "hero", row: "melee", value: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 39, name: "Ballista1", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 40, name: "Ballista2", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 41, name: "Blue Stripes Commando", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Blue Stripes Commando"},
+        {id: 42, name: "Blue Stripes Commando", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Blue Stripes Commando"},
+        {id: 43, name: "Blue Stripes Commando", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Blue Stripes Commando"},
+        {id: 44, name: "Catapult", type: "unit", row: "siege", value: 8, Basevalue: 8, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Catapult"},
+        {id: 45, name: "Catapult", type: "unit", row: "siege", value: 8, Basevalue: 8, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Catapult"},
+        {id: 46, name: "Crinfrid Reavers Dragon Hunter", type: "unit", row: "range", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Crinfrid Reavers Dragon Hunter"},
+        {id: 47, name: "Crinfrid Reavers Dragon Hunter", type: "unit", row: "range", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Crinfrid Reavers Dragon Hunter"},
+        {id: 48, name: "Crinfrid Reavers Dragon Hunter", type: "unit", row: "range", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Crinfrid Reavers Dragon Hunter"},
+        {id: 49, name: "Dethmold", type: "unit", row: "range", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 50, name: "Dun Banner Medic", type: "unit", row: "siege", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "medic"},
+        {id: 51, name: "Esterad Thyssen", type: "hero", row: "melee", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
         {id: 52, name: "Foltest King of Temeria", type: "leader", ability: "NR1"},
         {id: 53, name: "Foltest Lord Commander of the North", type: "leader", ability: "NR2"},
         {id: 54, name: "Foltest Son of Medell", type: "leader", ability: "NR3"},
         {id: 55, name: "Foltest The Siegemaster", type: "leader", ability: "NR4"},
         {id: 56, name: "Foltest The Steel-Forged", type: "leader", ability: "NR5"},
-        {id: 57, name: "John Natalis", type: "hero", row: "melee", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 58, name: "Kaedwani Siege Expert", type: "unit", row: "siege", value: 1, ValueMultiplier: 1, ability: "morale_boost"},
-        {id: 59, name: "Kaedwani Siege Expert", type: "unit", row: "siege", value: 1, ValueMultiplier: 1, ability: "morale_boost"},
-        {id: 60, name: "Kaedwani Siege Expert", type: "unit", row: "siege", value: 1, ValueMultiplier: 1, ability: "morale_boost"},
-        {id: 61, name: "Keira Metz", type: "unit", row: "range", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 62, name: "Philippa Eilhart", type: "hero", row: "range", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 63, name: "Poor Fucking Infantry", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Poor Fucking Infantry"},
-        {id: 64, name: "Poor Fucking Infantry", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Poor Fucking Infantry"},
-        {id: 65, name: "Poor Fucking Infantry", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Poor Fucking Infantry"},
-        {id: 66, name: "Prince Stennis", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "spy"},
-        {id: 67, name: "Redanian Foot Soldier1", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "none"},
-        {id: 68, name: "Redanian Foot Soldier2", type: "unit", row: "melee", value: 1, ValueMultiplier: 1, ability: "none"},
-        {id: 69, name: "Sabrina Glevissig", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "none"},
-        {id: 70, name: "Sheldon Skaggs", type: "unit", row: "range", value: 4, ValueMultiplier: 1, ability: "none"},
-        {id: 71, name: "Siege Tower", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 72, name: "Siegfried of Denesle", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 73, name: "Sigismund Dijkstra", type: "unit", row: "melee", value: 4, ValueMultiplier: 1, ability: "spy"},
-        {id: 74, name: "Síle de Tansarville", type: "unit", row: "range", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 75, name: "Thaler", type: "unit", row: "siege", value: 1, ValueMultiplier: 1, ability: "spy"},
-        {id: 76, name: "Trebuchet1", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 77, name: "Trebuchet2", type: "unit", row: "siege", value: 6, ValueMultiplier: 1, ability: "none"},
-        {id: 78, name: "Vernon Roche", type: "hero", row: "melee", value: 10, ValueMultiplier: 1, ability: "none"},
-        {id: 79, name: "Ves", type: "unit", row: "melee", value: 5, ValueMultiplier: 1, ability: "none"},
-        {id: 80, name: "Yarpen Zigrin", type: "unit", row: "melee", value: 2, ValueMultiplier: 1, ability: "none"},
+        {id: 57, name: "John Natalis", type: "hero", row: "melee", value: 10 , Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 58, name: "Kaedwani Siege Expert", type: "unit", row: "siege", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "morale_boost"},
+        {id: 59, name: "Kaedwani Siege Expert", type: "unit", row: "siege", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "morale_boost"},
+        {id: 60, name: "Kaedwani Siege Expert", type: "unit", row: "siege", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "morale_boost"},
+        {id: 61, name: "Keira Metz", type: "unit", row: "range", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 62, name: "Philippa Eilhart", type: "hero", row: "range", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 63, name: "Poor Fucking Infantry", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Poor Fucking Infantry"},
+        {id: 64, name: "Poor Fucking Infantry", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Poor Fucking Infantry"},
+        {id: 65, name: "Poor Fucking Infantry", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "tight_bond", TB_ID: "Poor Fucking Infantry"},
+        {id: 66, name: "Prince Stennis", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "spy"},
+        {id: 67, name: "Redanian Foot Soldier1", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "none"},
+        {id: 68, name: "Redanian Foot Soldier2", type: "unit", row: "melee", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "none"},
+        {id: 69, name: "Sabrina Glevissig", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "none"},
+        {id: 70, name: "Sheldon Skaggs", type: "unit", row: "range", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "none"},
+        {id: 71, name: "Siege Tower", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 72, name: "Siegfried of Denesle", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 73, name: "Sigismund Dijkstra", type: "unit", row: "melee", value: 4, Basevalue: 4, ValueMultiplier: 1, ability: "spy"},
+        {id: 74, name: "Síle de Tansarville", type: "unit", row: "range", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 75, name: "Thaler", type: "unit", row: "siege", value: 1, Basevalue: 1, ValueMultiplier: 1, ability: "spy"},
+        {id: 76, name: "Trebuchet1", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 77, name: "Trebuchet2", type: "unit", row: "siege", value: 6, Basevalue: 6, ValueMultiplier: 1, ability: "none"},
+        {id: 78, name: "Vernon Roche", type: "hero", row: "melee", value: 10, Basevalue: 10, ValueMultiplier: 1, ability: "none"},
+        {id: 79, name: "Ves", type: "unit", row: "melee", value: 5, Basevalue: 5, ValueMultiplier: 1, ability: "none"},
+        {id: 80, name: "Yarpen Zigrin", type: "unit", row: "melee", value: 2, Basevalue: 2, ValueMultiplier: 1, ability: "none"},
     ]
 
     
@@ -339,7 +338,6 @@
         deckSetUp()
         selectFaction()
     }
-
     function cycleright () {
         if(selected == 4){
             selected = 0
@@ -353,7 +351,6 @@
         deckSetUp()
         selectFaction()
     }
-
     function selectFaction () {
         if(selected == 0){
             color1 = "#ffe100"
@@ -413,7 +410,6 @@
         selected_deck = selected_deck
         shownDeck = shownDeck
     }
-
     function removeCard (a){
         shownDeck.push(a)
         selected_deck = selected_deck.filter(card => card.id != a.id)
@@ -421,7 +417,6 @@
         shownDeck.sort((a, b) => a.id - b.id)
         shownDeck = shownDeck
     }
-
     function switchLeader () {
         if (count == shownLeaders.length - 1){
             count = 0
@@ -441,7 +436,6 @@
             confirm()
         }
     }
-    
     function confirm(){
         if (player == "P1"){
             
@@ -596,7 +590,6 @@
 		height: 100vh;
 		width: 100vw;
 	} 
-    
     main{
         display: flex;
         position: relative;
@@ -641,38 +634,32 @@
         width: 100vw;
         height: 17vh;
     }
-
     .header_center{
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-end;
     }
-
     .headerContainer img{
         height: 7vh;
         margin: 0 1vw;
         margin-bottom: 1vh;
 
     }
-
     .imgHolder{
         display: flex;
         align-items: center;
         margin-right: 4vh;
     }
-
     h1{
         font: 200 2em 'Roboto', sans-serif;
         margin-bottom: 1.3vh;
         color: #f6efda;
     }
-    
     .indicators{
         display: flex;
         justify-content: center;
     }
-
     span{
         background-color: #464030;
         height: 1vh;
@@ -680,13 +667,11 @@
         border-radius: 1cm;
         margin: 0 0.5vw;
     }
-
     .ability_text{
         font: 200 0.85em 'Roboto', sans-serif;
         color: #b3ad9c;
         margin: 1vh 0;
     }
-
     .left{
         position: absolute;
         left: 31vw;
@@ -695,7 +680,6 @@
         margin-bottom: 5vh;
         color: #d1c39d;
     }
-
     .right{
         position: absolute;
         left: 63vw;
@@ -704,7 +688,6 @@
         margin-bottom: 5vh;
         color: #d1c39d;
     }
-
     .playerID{
         position: absolute;
         left: 2vw;
@@ -736,13 +719,11 @@
         background-color: #00000060;
     
     }
-
     section{
         background-color: #0000002d;
         height: 83%;
         overflow-x: hidden;
     }
-
     .baseDeck{
         display: grid;
         overflow-y: scroll;
@@ -752,7 +733,6 @@
         grid-gap: 1%;
         height: 94%;
     }
-
     .chosenDeck{
         display: grid;
         overflow-y: scroll;
@@ -774,7 +754,6 @@
         background: #ffffff00;
         max-height: 100%;
     }
-    
     .unit_value{
         position: absolute;
         font: 500 1.45em 'Roboto', sans-serif;
@@ -784,26 +763,22 @@
         color: black;
         
     }
-
     .card img{
         width: 100%;
         height: 100%;
         border-radius: 1vh;
         
     }
-
     .card:hover{
         box-shadow: #ff9100 0 0 1vh;
         transform: scale(1.025);
         transition: all 0.2s ease-in-out;
     }
-
     .card:active{
         box-shadow: #ff9100 0 0 0.5vh;
         transform: scale(1.01);
         transition: all 0.2s ease-in-out;
     }
-
     .card:focus{
         box-shadow: #ff9100 0 0 0.5vh;
         transform: scale(1.01);
@@ -827,33 +802,29 @@
         box-shadow: #ff9100 0 0 0.7vh;
         padding: 0.5em;
     }
-    
     .confirm img{
         width: 3vh;
         height: 3vh;
     }
-
     .confirm:hover{
         background-color: #0000009a;
         box-shadow: #ff9100 0 0 1vh;
     }
-
     .confirm:active{
         background-color: #0000007a;
         box-shadow: #ff9100 0 0 0.5vh;
     }
-
     .confirm:focus{
         background-color: #0000007a;
         box-shadow: #ff9100 0 0 0.5vh;
     }
-    /* 3.2-----------------------------------------------------------------------------------3.1 */
-
-
-
-
-    /* 3.2 information about the deck and leader */
     /* 3.2-----------------------------------------------------------------------------------3.2 */
+
+
+
+
+    /* 3.3 information about the deck and leader */
+    /* 3.3-----------------------------------------------------------------------------------3.3 */
     .info{
         display: flex;
         flex-direction: column;
@@ -863,30 +834,26 @@
         border-radius: 1vh;
         font: 100 1em 'Roboto', sans-serif;
     }
-
     .info h2{
         color: #e9bd39;
         margin: 0.7vh 0;
         font-weight: 100;
     }
-
     .info h3{
         color: #e9bd39;
         margin: 0.7vh 0;
         font-weight: 100;
     }
-
     .info p {
         color: #e9bd39;
         margin: 0.7vh 0;
         font-weight: 50;
     }
-
     .leader{
         width: 45%;
         height: 40%;
         border-radius: 1vh;
 
     }
-    /* 3.2-----------------------------------------------------------------------------------3.2 */
+    /* 3.3-----------------------------------------------------------------------------------3.3 */
 </style>
