@@ -19,7 +19,7 @@
 
 	{:else}
 		<div class= "mobile-warning">
-			<h1>Gwent is not supported on mobile devices.</h1>
+			<h1>WebGwent is not supported on mobile devices.</h1>
 			<p>Please use a desktop or laptop computer to play.</p>
 		</div>
 	{/if}
