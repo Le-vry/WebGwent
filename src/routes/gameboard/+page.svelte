@@ -1855,7 +1855,7 @@
     }
     main {
         
-        background-image: url("/static/Board.png");
+        background-image: url("/Board.png");
         background-size: cover;
         display: flex;
         position: relative;
