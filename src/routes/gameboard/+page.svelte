@@ -1069,6 +1069,8 @@
 
 <svelte:window on:keydown|preventDefault={onKeyDown} />
 
+<audio src="Gwent Music.mp3" autoplay loop></audio>
+
 <main>
     {#if turn % 2 == 1}
         <button class="P1leader" on:click={() => {console.log("P1 Leader")}}>
