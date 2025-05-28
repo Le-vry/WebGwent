@@ -266,6 +266,7 @@
                                 meleeP1.special = meleeP1.special
                             }
                             placedHornCard(meleeP1)
+                            Value(meleeP1)
                         } else if (rangeSelected == true){
                             if(rangeP1.special.length > 0){
                                 rangeP1.special = []
@@ -276,6 +277,7 @@
                                 rangeP1.special = rangeP1.special
                             }
                             placedHornCard(rangeP1)
+                            Value(rangeP1)
                         } else if (siegeSelected == true){
                             if(siegeP1.special.length > 0){
                                 siegeP1.special = []
@@ -286,6 +288,7 @@
                                 siegeP1.special = siegeP1.special
                             }
                             placedHornCard(siegeP1)
+                            Value(siegeP1)
                         }
                         
                     }
@@ -471,6 +474,7 @@
                                 meleeP2.special = meleeP2.special
                             }
                             placedHornCard(meleeP2)
+                            Value(meleeP2)
                         } else if (rangeSelected == true){
                             if(rangeP2.special.length > 0){
                                 rangeP2.special = []
@@ -481,6 +485,7 @@
                                 rangeP2.special = rangeP2.special
                             }
                             placedHornCard(rangeP2)
+                            Value(rangeP2)
                         } else if (siegeSelected == true){
                             if(siegeP2.special.length > 0){
                                 siegeP2.special = []
@@ -491,6 +496,7 @@
                                 siegeP2.special = siegeP2.special
                             }
                             placedHornCard(siegeP2)
+                            Value(siegeP2)
                         }
                         
                     }
@@ -635,8 +641,7 @@
 
     function placedHornCard(row) {
         row.rowMultiplier = 2
-        row = row
-
+        TotalValue()
     }
 
     function placedMusterCard(placedCard, row) {
