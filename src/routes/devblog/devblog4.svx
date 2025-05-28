@@ -1,0 +1,17 @@
+---
+title: "Devblog 4"
+date: "2025-05-26"
+---
+
+Hi, again.
+
+So from last time some importand changes have been made. First of I discoverd that the system
+I was using to keep track of who was winning or loosing was broken, and it's now been fixed.
+Weather cards have now also been indroduced and they are a fairly large part of the game.
+I did however make a huge oversight when I started. I didn't think about the fact that most if not 
+all who will be playing this game don't know what Gwent is. As a result I didn't think to include 
+any descriptions of abilities or how the game works. Aside from that I discoverd that morale boost 
+cards completly breaks with the new placement system. You can however place agile cards now.
+and commanders horn special cards work as intended. Things to fix would be the afore mentioned 
+morale boost cards not working, implementing leader abilities, making decoy and scorch cards work,
+medic cards and add the last two decks: Scoia'tael and Skellige.

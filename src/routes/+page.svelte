@@ -15,6 +15,10 @@
 	<main>
 		<img src="Gwent header.png" alt="Gwent header">
 		<a href="{base}/card-select">Play Gwent</a>
+		<article class="about">
+		<p>WebGwent is a fan-made project and is not affiliated with CD Projekt Red.</p>
+		<p>All rights to music and images are owned by CD Project Red <br> and are NOT made or owned by me</p>
+		</article>
 	</main>
 
 	{:else}
@@ -54,5 +58,16 @@
 		color: #000000;
 		text-align: center;
 		padding: 20px;
+	}
+
+	.about {
+		position: absolute;
+		top: 80%;
+		left: 2%;
+		padding: 20px;
+		border-radius: 10px;
+		margin-top: 20px;
+		font-size: small;
+		
 	}
 </style>
