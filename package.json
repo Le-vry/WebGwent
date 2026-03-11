@@ -34,8 +34,10 @@
   "type": "module",
   "dependencies": {
     "@floating-ui/dom": "1.6.13",
+    "@prisma/client": "^7.4.2",
     "@sveltejs/adapter-static": "^3.0.8",
     "highlight.js": "11.11.1",
-    "mdsvex": "^0.12.3"
+    "mdsvex": "^0.12.3",
+    "prisma": "^7.4.2"
   }
 }

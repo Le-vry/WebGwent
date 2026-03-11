@@ -948,7 +948,6 @@
         null
     }
 
-
     /*Special card ability placement*/
     function selectRow(row){
         if(row == "melee"){
@@ -966,7 +965,6 @@
         }
     }
     /* 1-----------------------------------------------------------------------------------1 */
-
 
 
 
@@ -993,7 +991,6 @@
       
     }
     /* 1-----------------------------------------------------------------------------------1 */
-
 
 
 
@@ -1028,6 +1025,7 @@
            
         }
     }
+
     function compareValue(){
         
         if(P1TotalValue > P2TotalValue){
@@ -1059,6 +1057,7 @@
         }
         
     }
+    
     function endTurn() {
         turn += 0.5
         if(popupvisibility == "block"){
