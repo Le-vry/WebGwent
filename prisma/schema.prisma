@@ -49,10 +49,13 @@ model Game {
   user2 User? @relation("Player2", fields: [user2Id], references: [id], onDelete: Cascade)
   user2Id String?
 
-  player Player[] @relation("gamePlayer")
+  player1   Player  @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player1Id Int     @unique
+  player2   Player? @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
+  player2Id Int?    @unique
 
-  boardState BoardState @relation("gameBoard", fields: [boardStateId], references: [id], onDelete: Cascade)
-  boardStateId Int
+  boardState   BoardState @relation("gameBoard", fields: [boardStateId], references: [id], onDelete: Cascade)
+  boardStateId Int        @unique
 }
 
 model Player {
@@ -63,12 +66,14 @@ model Player {
   deck     String  @default("[]")  
   hand     String  @default("[]")
 
-  game Game? @relation("gamePlayer", fields: [gameId], references: [id], onDelete: Cascade)
-  gameId Int?
+  gameAsPlayer1 Game? @relation("GamePlayer1")
+  gameAsPlayer2 Game? @relation("GamePlayer2")
 }
 
 model BoardState {
   id     Int    @id @default(autoincrement())
+
+  game Game? @relation("gameBoard")
 
   p1Melee String @default("[]")
   p1Range String @default("[]")
