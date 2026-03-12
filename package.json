@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:prod": "vite build --mode production",
     "preview": "vite preview",
     "lint": "prettier --check . && eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "analyze": "vite build --analyze"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "2.11.0",

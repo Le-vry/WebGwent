@@ -15,12 +15,14 @@ const config = {
 		adapter: adapter({
 			pages: 'docs',
 			assets: 'docs',
-			fallback: "404.html"
+			fallback: "404.html",
+			// Enable precompression for faster file serving
+			precompress: {
+				brotli: true,
+				gzip: true,
+			},
 		}),
-		
 	},
 };
 
 export default config;
-			
-			

@@ -1,19 +1,14 @@
 <script>
 	import '../app.postcss';
 
-	// Highlight JS
+	// Highlight JS - only register languages that are actually used
 	import hljs from 'highlight.js/lib/core';
 	import 'highlight.js/styles/github-dark.css';
 	import { storeHighlightJs } from '@skeletonlabs/skeleton';
-	import xml from 'highlight.js/lib/languages/xml'; // for HTML
-	import css from 'highlight.js/lib/languages/css';
 	import javascript from 'highlight.js/lib/languages/javascript';
-	import typescript from 'highlight.js/lib/languages/typescript';
 
-	hljs.registerLanguage('xml', xml); // for HTML
-	hljs.registerLanguage('css', css);
+	// Register only commonly used language
 	hljs.registerLanguage('javascript', javascript);
-	hljs.registerLanguage('typescript', typescript);
 	storeHighlightJs.set(hljs);
 
 	// Floating UI for Popups

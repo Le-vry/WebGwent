@@ -1,45 +1,26 @@
-<script>
+﻿<script>
     import { onMount } from 'svelte'
     import { players_store } from "$lib/players.js"
-    
+
     onMount(() => {
     
         if($players_store.length > 0){
             players = JSON.parse($players_store)
         }
 
-        P1 = players[0]
-        P2 = players[1]
+        p1 = players[0]
+        p2 = players[1]
         
 
-        P1Leader = P1[1]
-        P1Cards = P1[0]
-        P1Cards.sort(() => .5- Math.random())
-        P1Hand = P1Cards.slice(0, 10)
-        P1Hand = P1Hand.sort((a, b) => {return a.value - b.value})
-        P1Cards.forEach(card => {
-            P1Hand.forEach(hand => {
-                if(card.id == hand.id){
-                    P1Cards = P1Cards.filter(cards => cards.id != card.id)
-                    P1Cards = P1Cards
-                    
-                }
-            })
-        });
+        p1Leader = p1[1]
+        const p1Init = initializePlayerHand(p1[0]);
+        p1Cards = p1Init.deck;
+        p1Hand = p1Init.hand;
 
-        P2Leader = P2[1]
-        P2Cards = P2[0]
-        P2Cards.sort(() => .5- Math.random())
-        P2Hand = P2Cards.slice(0, 10)
-        P2Hand = P2Hand.sort((a, b) => {return a.value - b.value})
-        P2Cards.forEach(card => {
-            P2Hand.forEach(hand => {
-                if(card.id == hand.id){
-                    P2Cards = P2Cards.filter(cards => cards.id != card.id)
-                    P2Cards = P2Cards
-                }
-            })
-        })
+        p2Leader = p2[1]
+        const p2Init = initializePlayerHand(p2[0]);
+        p2Cards = p2Init.deck;
+        p2Hand = p2Init.hand;
     })
     
 
@@ -47,7 +28,7 @@
     let turn = 0.5
     let placedCard = false
     let passedTurn = false
-    let popupvisibility = "block"
+    let popupVisibility = "block"
     
     
 
@@ -59,14 +40,14 @@
 
 
 
-    /* P2 variables */
-    let P1 = players
-    let P1Leader = {name: "Ballista1"}
-    let P1Cards = [{name: "Ballista2"}]
+    /* p2 variables */
+    let p1 = players
+    let p1Leader = {name: "Ballista1"}
+    let p1Cards = [{name: "Ballista2"}]
     
-    let P1Hand = []
+    let p1Hand = []
 
-    let P1TotalValue = 0
+    let p1TotalValue = 0
     
     let meleeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
     let rangeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
@@ -74,23 +55,23 @@
 
 
 
-    let P1Gem1visibility = "visible"
-    let P1Gem2visibility = "visible"
+    let p1Gem1Visibility = "visible"
+    let p1Gem2Visibility = "visible"
 
-    /* P2 variables*/
-    let P2 = players
-    let P2Leader = {name: "Ballista1"}
-    let P2Cards = [{name: "Ballista2"}]
-    let P2Hand = []
+    /* p2 variables*/
+    let p2 = players
+    let p2Leader = {name: "Ballista1"}
+    let p2Cards = [{name: "Ballista2"}]
+    let p2Hand = []
     
-    let P2TotalValue = 0
+    let p2TotalValue = 0
     let meleeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
     let rangeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
     let siegeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
     
 
-    let P2Gem1visibility = "visible"
-    let P2Gem2visibility = "visible"
+    let p2Gem1Visibility = "visible"
+    let p2Gem2Visibility = "visible"
 
     /* Weather variables*/
     let placedFrostCard = false
@@ -99,818 +80,245 @@
     let weather = []
 
 
+    /* Helper functions */
+
+    // Fisher-Yates shuffle algorithm - O(n) instead of O(n*m) sorting
+    function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // Initialize player hands efficiently
+    function initializePlayerHand(cards) {
+        const shuffled = shuffleArray(cards);
+        const hand = shuffled.slice(0, 10).sort((a, b) => a.value - b.value);
+        const handIds = new Set(hand.map(c => c.id));
+        const deck = shuffled.filter(c => !handIds.has(c.id));
+        return { hand, deck };
+    }
+
+    // Returns the row objects for a given player (1 = p1, 2 = p2)
+    function getPlayerRows(player) {
+        return player === 1
+            ? { melee: meleeP1, range: rangeP1, siege: siegeP1 }
+            : { melee: meleeP2, range: rangeP2, siege: siegeP2 };
+    }
+
+    // Returns the weather flag for a given row type
+    function getWeatherForRow(rowType) {
+        if (rowType === "melee") return placedFrostCard;
+        if (rowType === "range")  return placedFogCard;
+        if (rowType === "siege")  return placedRainCard;
+        return false;
+    }
+
+    // Returns the currently-selected row name
+    function getSelectedRow() {
+        if (meleeSelected) return "melee";
+        if (rangeSelected) return "range";
+        if (siegeSelected) return "siege";
+        return null;
+    }
+
+    // Force Svelte to pick up nested board/array mutations immediately
+    function syncBoardState() {
+        meleeP1 = { ...meleeP1 };
+        rangeP1 = { ...rangeP1 };
+        siegeP1 = { ...siegeP1 };
+        meleeP2 = { ...meleeP2 };
+        rangeP2 = { ...rangeP2 };
+        siegeP2 = { ...siegeP2 };
+
+        p1Hand = [...p1Hand];
+        p2Hand = [...p2Hand];
+        p1Cards = [...p1Cards];
+        p2Cards = [...p2Cards];
+        weather = [...weather];
+    }
 
 
     /* 1 Card Placing Logic*/
     /* 1-----------------------------------------------------------------------------------1 */
+
+    /* Placement */
+    function selectRow(row) {
+        meleeSelected = row === "melee";
+        rangeSelected = row === "range";
+        siegeSelected = row === "siege";
+    }
+
     function placeCard(card) {
-        if (placedCard == false || passedTurn == true) {
-            if (placedCard = false && passedTurn == true){
-                placedCard = false
-            } else {
-                placedCard = true
-            }
-            if (turn % 2 == 1) {
-                P1Hand = P1Hand.filter(cards => cards.id !== card.id)
-                if (card.type == "unit" || card.type == "hero") {
-                    
-                    if(card.row == "agile") {
-                        if (meleeSelected){
-                            meleeP1.units.push(card)
-                            meleeP1.units = meleeP1.units
-                            if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, meleeP1.units)
-                            }
-                            if(placedFrostCard){
-                                meleeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFrostCard == false){
-                                meleeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                            UpdateWeatherCard(placedFrostCard, meleeP1)
-                            Value(meleeP1)
-                            
-                        } else if (rangeSelected) {
-                            rangeP1.units.push(card)
-                            rangeP1.units = rangeP1.units
-                            if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, rangeP1.units)
-                            }
-                            if(placedFogCard){
-                                rangeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFogCard == false){
-                                rangeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                            UpdateWeatherCard(placedFogCard, rangeP1)
-                            Value(rangeP1)
-                            
-                        }
-                    } else if(card.row == "melee") {
-                            
-                        if (card.ability == "spy") {
-                            meleeP2.units.push(card)
-                            meleeP2.units = meleeP2.units
-                            UpdateWeatherCard(placedFrostCard, meleeP2)
-                            Value(meleeP2)
-                            placedSpyCard(card)
-                            
-                        } else {
-                            meleeP1.units.push(card)
-                            meleeP1.units = meleeP1.units
-                            if(card.ability == "tight_bond"){
-                                placedTightBondCard(card, meleeP1.units)
-                            } else if(card.ability == "horn"){
-                                placedHornCard(meleeP1)
-                            } else if(card.ability == "medic"){
-                                placedMedicCard(card, meleeP1.units)
-                            } else if(card.ability == "muster"){
-                                placedMusterCard(card, meleeP1.units)
-                            } else if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, meleeP1.units)
-                            } else if(card.ability == "scorch"){
-                                placedScorchCard(meleeP2)
-                                meleeP2.units = meleeP2.units
-                            }
-                            UpdateWeatherCard(placedFrostCard, meleeP1)
-                            Value(meleeP1)
-                            
-                        }
-                    } else if(card.row == "range") {
+        if (!placedCard || passedTurn) {
+            const activePlayer  = (turn % 2 === 1) ? 1 : 2;
+            const enemyPlayer   = activePlayer === 1 ? 2 : 1;
+            const ownRows       = getPlayerRows(activePlayer);
+            const enemyRows     = getPlayerRows(enemyPlayer);
 
-                        if (card.ability == "spy") {
-                            rangeP2.units.push(card)
-                            rangeP2.units = rangeP2.units
-                            UpdateWeatherCard(placedFogCard, rangeP2)
-                            Value(rangeP1)
-                            placedSpyCard(card)
-                            
-                        } else {
-                            rangeP1.units.push(card)
-                            rangeP1.units = rangeP1.units
-                            if(card.ability == "tight_bond"){
-                                placedTightBondCard(card, rangeP1.units)
-                            } else if(card.ability == "horn"){
-                                placedHornCard(rangeP1)
-                            } else if(card.ability == "medic"){
-                                placedMedicCard(card, rangeP1.units)
-                            } else if(card.ability == "muster"){
-                                placedMusterCard(card, rangeP1.units)
-                            } else if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, rangeP1.units)
-                            } else if(card.ability == "scorch"){
-                                placedScorchCard(rangeP2)
-                                rangeP2.units = rangeP2.units
-                            }
-                            UpdateWeatherCard(placedFogCard, rangeP1)
-                            Value(rangeP1)
-                            
-                        }
-                    } else if(card.row == "siege") {
-
-                        if (card.ability == "spy") {
-                            siegeP2.units.push(card)
-                            siegeP2.units = siegeP2.units
-                            UpdateWeatherCard(placedRainCard, siegeP2)
-                            Value(siegeP1)
-                            placedSpyCard(card)
-                            
-                        } else {
-                            siegeP1.units.push(card)
-                            siegeP1.units = siegeP1.units
-                            if(card.ability == "tight_bond"){
-                                placedTightBondCard(card, siegeP1.units)
-                            } else if(card.ability == "horn"){
-                                placedHornCard(siegeP1)
-                            } else if(card.ability == "medic"){
-                                placedMedicCard(card, siegeP1.units)
-                            } else if(card.ability == "muster"){
-                                placedMusterCard(card, siegeP1.units)
-                            } else if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, siegeP1.units)
-                            } else if(card.ability == "scorch"){
-                                placedScorchCard(siegeP2)
-                                siegeP2.units = siegeP2.units
-                            }
-                            UpdateWeatherCard(placedRainCard, siegeP1)
-                            Value(siegeP1)
-                            
-                        }
-                    }          
-                } else if(card.type == "special") {
-                    if (card.row == "weather"){
-                        weather.push(card)
-                        weather = weather
-                        placedWeatherCard(card)
-                    }
-                    if (card.ability == "horn"){
-                        if (meleeSelected == true){
-                            if(meleeP1.special.length > 0){
-                                meleeP1.special = []
-                                meleeP1.special.push(card)
-                                meleeP1.special = meleeP1.special
-                            } else{
-                                meleeP1.special.push(card)
-                                meleeP1.special = meleeP1.special
-                            }
-                            placedHornCard(meleeP1)
-                            Value(meleeP1)
-                        } else if (rangeSelected == true){
-                            if(rangeP1.special.length > 0){
-                                rangeP1.special = []
-                                rangeP1.special.push(card)
-                                rangeP1.special = rangeP1.special
-                            } else{
-                                rangeP1.special.push(card)
-                                rangeP1.special = rangeP1.special
-                            }
-                            placedHornCard(rangeP1)
-                            Value(rangeP1)
-                        } else if (siegeSelected == true){
-                            if(siegeP1.special.length > 0){
-                                siegeP1.special = []
-                                siegeP1.special.push(card)
-                                siegeP1.special = siegeP1.special
-                            } else{
-                                siegeP1.special.push(card)
-                                siegeP1.special = siegeP1.special
-                            }
-                            placedHornCard(siegeP1)
-                            Value(siegeP1)
-                        }
-                        
-                    }
-                }      
-            } else if (turn % 2 == 0) {
-                P2Hand = P2Hand.filter(cards => cards.id !== card.id)
-                if (card.type == "unit" || card.type == "hero") {
-                    if(card.row == "agile") {
-                    } else if(card.row == "melee") {
-                            
-                        if (card.ability == "spy") {
-                            meleeP1.units.push(card)
-                            meleeP1.units = meleeP1.units
-                            if(placedFrostCard == true){
-                                meleeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            }
-                            UpdateWeatherCard(placedFrostCard, meleeP1)
-                            Value(meleeP1)
-                            placedSpyCard(card)
-                            
-                        } else {
-                            meleeP2.units.push(card)
-                            meleeP2.units = meleeP2.units
-                            if(card.ability == "tight_bond"){
-                                placedTightBondCard(card, meleeP2.units)
-                            } else if(card.ability == "horn"){
-                                placedHornCard(meleeP2)
-                            } else if(card.ability == "medic"){
-                                placedMedicCard(card, meleeP2.units)
-                            } else if(card.ability == "muster"){
-                                placedMusterCard(card, meleeP2.units)
-                            } else if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, meleeP2.units)
-                            } else if(card.ability == "scorch"){
-                                placedScorchCard(meleeP1)
-                                meleeP1.units = meleeP1.units
-                            }
-                            if(placedFrostCard == true){
-                                meleeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            }
-                            if (placedFrostCard == false){
-                                meleeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = card.baseValue
-                                    }
-                                })
-                            }
-                            UpdateWeatherCard(placedFrostCard, meleeP2)
-                            Value(meleeP2)
-                            
-                        }
-                    } else if(card.row == "range") {
-                        if (card.ability == "spy") {
-                            rangeP1.units.push(card)
-                            rangeP1.units = rangeP1.units
-                            if(placedFrostCard == true){
-                                rangeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            }
-                            UpdateWeatherCard(placedFrostCard, rangeP1)
-                            Value(rangeP2)
-                            placedSpyCard(card)
-                            
-                        } else {
-                            rangeP2.units.push(card)
-                            rangeP2.units = rangeP2.units
-                            if(card.ability == "tight_bond"){
-                                placedTightBondCard(card, rangeP2.units)
-                            } else if(card.ability == "horn"){
-                                placedHornCard(rangeP2)
-                            } else if(card.ability == "medic"){
-                                placedMedicCard(card, rangeP2.units)
-                            } else if(card.ability == "muster"){
-                                placedMusterCard(card, rangeP2.units)
-                            } else if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, rangeP2.units)
-                            } else if(card.ability == "scorch"){
-                                placedScorchCard(rangeP1)
-                                rangeP1.units = rangeP1.units
-                            }
-                            if(placedFogCard == true){
-                                rangeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            }
-                            if (placedFogCard == false){
-                                rangeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = card.baseValue
-                                    }
-                                })
-                            }
-                            if(placedFrostCard == true){
-                                meleeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            }
-                            UpdateWeatherCard(placedFrostCard, rangeP2)
-                            Value(rangeP2)
-                            
-                        }
-                    } else if(card.row == "siege") {
-                        if (card.ability == "spy") {
-                            siegeP1.units.push(card)
-                            siegeP1.units = siegeP1.units
-                            if(placedFrostCard == true){
-                                siegeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            }
-                            UpdateWeatherCard(placedFrostCard, siegeP1)
-                            Value(siegeP2)
-                            placedSpyCard(card)
-                            
-                        } else {
-                            siegeP2.units.push(card)
-                            siegeP2.units = siegeP2.units
-                            if(card.ability == "tight_bond"){
-                                placedTightBondCard(card, siegeP2.units)
-                            } else if(card.ability == "horn"){
-                                placedHornCard(siegeP2)
-                            } else if(card.ability == "medic"){
-                                placedMedicCard(card, siegeP2.units)
-                            } else if(card.ability == "muster"){
-                                placedMusterCard(card, siegeP2.units)
-                            } else if(card.ability == "morale_boost"){
-                                placedMoraleBoostCard(card, siegeP2.units)
-                            } else if(card.ability == "scorch"){
-                                placedScorchCard(siegeP1)
-                                siegeP1.units = siegeP1.units
-                            }
-                            if(placedRainCard == true){
-                                siegeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            }
-                            if (placedRainCard == false){
-                                siegeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = card.baseValue
-                                    }
-                                })
-                            }
-                            UpdateWeatherCard(placedRainCard, siegeP2)
-                            Value(siegeP2)
-                            
-                        }
-                    } 
-                } else if(card.type == "special") {
-                    if (card.row == "weather"){
-                        weather.push(card)
-                        weather = weather
-                        placedWeatherCard(card)
-                    }
-
-                    if (card.ability == "horn"){
-                        if (meleeSelected == true){
-                            if(meleeP2.special.length > 0){
-                                meleeP2.special = []
-                                meleeP2.special.push(card)
-                                meleeP2.special = meleeP2.special
-                            } else{
-                                meleeP2.special.push(card)
-                                meleeP2.special = meleeP2.special
-                            }
-                            placedHornCard(meleeP2)
-                            Value(meleeP2)
-                        } else if (rangeSelected == true){
-                            if(rangeP2.special.length > 0){
-                                rangeP2.special = []
-                                rangeP2.special.push(card)
-                                rangeP2.special = rangeP2.special
-                            } else{
-                                rangeP2.special.push(card)
-                                rangeP2.special = rangeP2.special
-                            }
-                            placedHornCard(rangeP2)
-                            Value(rangeP2)
-                        } else if (siegeSelected == true){
-                            if(siegeP2.special.length > 0){
-                                siegeP2.special = []
-                                siegeP2.special.push(card)
-                                siegeP2.special = siegeP2.special
-                            } else{
-                                siegeP2.special.push(card)
-                                siegeP2.special = siegeP2.special
-                            }
-                            placedHornCard(siegeP2)
-                            Value(siegeP2)
-                        }
-                        
-                    }
-                }      
-            }
-        }
-        TotalValue()
-    }
-
-    /* Weather Card placement*/
-    function placedWeatherCard(card) {
-    
-        if (card.ability == "W1"){
-            placedFrostCard = true
-            UpdateWeatherCard(placedFrostCard, meleeP1)
-            UpdateWeatherCard(placedFrostCard, meleeP2)
-            Value(meleeP1)
-            Value(meleeP2)
-            meleeP1 = meleeP1
-            meleeP2 = meleeP2
-            TotalValue()
-        } else if (card.ability == "W2"){
-            placedFogCard = true
-            UpdateWeatherCard(placedFogCard, rangeP1)
-            UpdateWeatherCard(placedFogCard, rangeP2)
-            Value(rangeP1)
-            Value(rangeP2)
-            rangeP1 = rangeP1
-            rangeP2 = rangeP2
-            TotalValue()
-        } else if (card.ability == "W3"){
-            placedRainCard = true
-            UpdateWeatherCard(placedRainCard, siegeP1)
-            UpdateWeatherCard(placedRainCard, siegeP2)
-            Value(siegeP1)
-            Value(siegeP2)
-            siegeP1 = siegeP1
-            siegeP2 = siegeP2
-            TotalValue()
-        } else if (card.ability == "W4"){
-            placedFogCard = true
-            UpdateWeatherCard(placedFogCard, rangeP1)
-            UpdateWeatherCard(placedFogCard, rangeP2)
-            Value(rangeP1)
-            Value(rangeP2)
-            rangeP1 = rangeP1
-            rangeP2 = rangeP2
-
-            placedRainCard = true
-            UpdateWeatherCard(placedRainCard, siegeP1)
-            UpdateWeatherCard(placedRainCard, siegeP2)
-            Value(siegeP1)
-            Value(siegeP2)
-            siegeP1 = siegeP1
-            siegeP2 = siegeP2
-            TotalValue()
-        } else if (card.ability == "W5"){
-            placedFrostCard = false
-            UpdateWeatherCard(placedFrostCard, meleeP1)
-            UpdateWeatherCard(placedFrostCard, meleeP2)
-            Value(meleeP1)
-            Value(meleeP2)
-            meleeP1 = meleeP1
-            meleeP2 = meleeP2
-
-            placedFogCard = false
-            UpdateWeatherCard(placedFogCard, rangeP1)
-            UpdateWeatherCard(placedFogCard, rangeP2)
-            Value(rangeP1)
-            Value(rangeP2)
-            rangeP1 = rangeP1
-            rangeP2 = rangeP2
-
-            placedRainCard = false
-            UpdateWeatherCard(placedRainCard, siegeP1)
-            UpdateWeatherCard(placedRainCard, siegeP2)
-            Value(siegeP1)
-            Value(siegeP2)
-            siegeP1 = siegeP1
-            siegeP2 = siegeP2
-            TotalValue()
-
-            weather = []
-        }
-    }
-
-    function UpdateWeatherCard(weatherBool, row){
-        if(weatherBool){
-            row.units.forEach(card => {
-                if(card.type == "unit"){
-                    card.value = 1
+            // Agile cards must be placed in the currently selected melee/range row.
+            // If no valid row is selected, keep the card in hand and do not consume the turn.
+            if ((card.type === "unit" || card.type === "hero") && card.row === "agile") {
+                const selectedRow = getSelectedRow();
+                if (selectedRow !== "melee" && selectedRow !== "range") {
+                    alert("Select Melee or Range row before placing an agile card.");
+                    return;
                 }
-            })
-           
-        } 
-        if(!weatherBool){
-            row.units.forEach(card => {
-                card.value = card.Basevalue
-            })
+            }
+
+            // Commander's Horn must have a row selected before placing.
+            if (card.type === "special" && card.ability === "horn") {
+                if (!getSelectedRow()) {
+                    alert("Select a row before placing a Commander's Horn.");
+                    return;
+                }
+            }
+
+            placedCard = !passedTurn;
+
+            // Remove card from active player's hand
+            if (activePlayer === 1) p1Hand = p1Hand.filter(c => c.id !== card.id);
+            else                    p2Hand = p2Hand.filter(c => c.id !== card.id);
+
+            if (card.type === "unit" || card.type === "hero") {
+                if (card.row === "agile") {
+                    // Agile cards only support morale_boost, no spy
+                    const rowName = getSelectedRow();
+                    if (rowName === "melee" || rowName === "range") {
+                        const row = ownRows[rowName];
+                        row.units.push(card);
+                        if (card.ability === "morale_boost") placedMoraleBoostCard(card, row.units);
+                        updateWeatherCard(getWeatherForRow(rowName), row);
+                        updateRowValue(row);
+                    }
+                } else {
+                    // melee / range / siege
+                    const rowName = card.row;
+                    placeUnitInRow(card, ownRows[rowName], enemyRows[rowName], getWeatherForRow(rowName));
+                }
+            } else if (card.type === "special") {
+                if (card.row === "weather") {
+                    weather = [...weather, card];
+                    placedWeatherCard(card);
+                }
+                if (card.ability === "horn") {
+                    placeHornSpecial(card, ownRows);
+                }
+                if (card.ability === "scorch") {
+                    placedSpecialScorchCard();
+                }
+            }
+        }
+        updateTotalValue();
+        syncBoardState();
+    }
+
+    // Place a unit into a row and handle its ability, then revalue
+    function placeUnitInRow(card, ownRow, enemyRow, weather) {
+        if (card.ability === "spy") {
+            enemyRow.units.push(card);
+            updateWeatherCard(weather, enemyRow);
+            updateRowValue(enemyRow);
+            placedSpyCard();
+        } else {
+            ownRow.units.push(card);
+            switch (card.ability) {
+                case "tight_bond":   placedTightBondCard(card, ownRow.units); break;
+                case "horn":         placedHornCard(ownRow); break;
+                case "medic":        placedMedicCard(card, ownRow.units); break;
+                case "muster":       placedMusterCard(card, ownRow.units); break;
+                case "morale_boost": placedMoraleBoostCard(card, ownRow.units); break;
+                case "scorch":       placedScorchCard(enemyRow); break;
+            }
+            updateWeatherCard(weather, ownRow);
+            updateRowValue(ownRow);
         }
     }
 
-    /*Unit card ability placement*/
+    /* Abilities */
     function placedSpyCard() {
-        if(turn % 2 == 1){
-            let pulledCards = P1Cards.slice(0, 2)
-            P1Hand.push(pulledCards[0])
-            P1Hand.push(pulledCards[1])
-            P1Cards = P1Cards.filter(cards => cards.id != pulledCards[0].id)
-            P1Cards = P1Cards.filter(cards => cards.id != pulledCards[1].id)
-
-            P1Hand = P1Hand
-            P1Cards = P1Cards
-            console.log(P1Cards)
-            P1Hand = P1Hand.sort((a, b) => {return a.value - b.value})
-        } else if(turn % 2 == 0){
-            let pulledCards = P2Cards.slice(0, 2)
-            P2Hand.push(pulledCards[0])
-            P2Hand.push(pulledCards[1])
-            P2Cards = P2Cards.filter(cards => cards.id != pulledCards[0].id)
-            P2Cards = P2Cards.filter(cards => cards.id != pulledCards[1].id)
-            
-            P2Hand = P2Hand
-            P2Cards = P2Cards
-            P2Hand = P2Hand.sort((a, b) => {return a.value - b.value})
+        // Spy card draws 2 cards for the active player
+        if (turn % 2 === 1) {
+            const pulled = p1Cards.slice(0, 2);
+            const pulledIds = new Set(pulled.map(c => c.id));
+            p1Hand = [...p1Hand, ...pulled].sort((a, b) => a.value - b.value);
+            p1Cards = p1Cards.filter(c => !pulledIds.has(c.id));
+        } else {
+            const pulled = p2Cards.slice(0, 2);
+            const pulledIds = new Set(pulled.map(c => c.id));
+            p2Hand = [...p2Hand, ...pulled].sort((a, b) => a.value - b.value);
+            p2Cards = p2Cards.filter(c => !pulledIds.has(c.id));
         }
     }
 
     function placedTightBondCard(placedCard, row) {
-        let multiplier = 0
+        // Count and apply in a single pass
+        const multiplier = row.filter(c => c.TB_ID === placedCard.TB_ID).length;
         row.forEach(card => {
-            if(card.TB_ID == placedCard.TB_ID){
-                multiplier += 1
-            }
-        })
-        row.forEach(card => {
-            if(card.TB_ID == placedCard.TB_ID){
-                card.ValueMultiplier = multiplier
-            }
-        })
+            if (card.TB_ID === placedCard.TB_ID) card.ValueMultiplier = multiplier;
+        });
     }
 
     function placedHornCard(row) {
         row.rowMultiplier = 2
-        TotalValue()
+        updateTotalValue()
+    }
+
+    // Place a horn special card into the selected row for a player
+    function placeHornSpecial(card, playerRows) {
+        const rowName = getSelectedRow();
+        if (!rowName) return;
+        const row = playerRows[rowName];
+        row.special = [card];
+        placedHornCard(row);
+        updateRowValue(row);
+    }
+
+    function placedMedicCard(placedCard, row) {
+        null
+    }
+
+    // Place a single muster card into the correct row, respecting current weather
+    function musterPlaceCard(card, playerRows) {
+        const rowName = card.row;
+        if (rowName !== "melee" && rowName !== "range" && rowName !== "siege") return;
+        const row = playerRows[rowName];
+        row.units.push(card);
+        updateWeatherCard(getWeatherForRow(rowName), row);
+        updateRowValue(row);
     }
 
     function placedMusterCard(placedCard, row) {
-        if(turn % 2 == 1){
-            
-            if (placedCard.M_ID.endsWith("1")){
-                
-                placedCard.M_ID = placedCard.M_ID.slice(0, placedCard.M_ID.length - 1)
+        const isP1 = turn % 2 === 1;
+        let hand  = isP1 ? p1Hand  : p2Hand;
+        let deck  = isP1 ? p1Cards : p2Cards;
+        const playerRows = getPlayerRows(isP1 ? 1 : 2);
 
-                let rememberhand = P1Hand.filter(cards => cards.M_ID == placedCard.M_ID)
-                let rememberCards = P1Cards.filter(cards => cards.M_ID == placedCard.M_ID)
-                P1Hand = P1Hand.filter(cards => cards.M_ID != placedCard.M_ID)
-                P1Cards = P1Cards.filter(cards => cards.M_ID != placedCard.M_ID)
-                rememberhand.forEach(card => {
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        if(placedFrostCard){
-                                meleeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFrostCard == false){
-                                meleeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(meleeP1)
+        // M_ID ending in "1" means this is the leader card — gather all variants
+        const isLeader = placedCard.M_ID.endsWith("1");
+        const baseId   = isLeader
+            ? placedCard.M_ID.slice(0, -1)
+            : placedCard.M_ID;
 
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        if(placedFogCard){
-                                rangeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFogCard == false){
-                                rangeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(rangeP1)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        if(placedRainCard){
-                                siegeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedRainCard == false){
-                                siegeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(siegeP1)
-                        
-                    }
-                })
-                rememberCards.forEach(card => {
-                    if (card.row == "melee") {
-                        meleeP1.units.push(card)
-                        meleeP1.units = meleeP1.units
-                        if(placedFrostCard){
-                                meleeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFrostCard == false){
-                                meleeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(meleeP1)
-
-                    } else if (card.row == "range") {
-                        rangeP1.units.push(card)
-                        rangeP1.units = rangeP1.units
-                        if(placedFogCard){
-                                rangeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFogCard == false){
-                                rangeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(rangeP1)
-
-                    } else if (card.row == "siege") {
-                        siegeP1.units.push(card)
-                        siegeP1.units = siegeP1.units
-                        if(placedRainCard){
-                                siegeP1.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedRainCard == false){
-                                siegeP1.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(siegeP1)
-                        
-                    }
-                })
-            } else {
-                let rememberhand = P1Hand.filter(cards => cards.M_ID == placedCard.M_ID)
-                let rememberCards = P1Cards.filter(cards => cards.M_ID == placedCard.M_ID)
-                P1Hand = P1Hand.filter(cards => cards.M_ID != placedCard.M_ID)
-                P1Cards = P1Cards.filter(cards => cards.M_ID != placedCard.M_ID)
-                rememberhand.forEach(card => {
-                    row.push(card)
-                    row = row
-                })
-                rememberCards.forEach(card => {
-                    row.push(card)
-                    row = row
-                })
-            }
-            
-            
+        if (isLeader) {
+            if (isLeader) placedCard.M_ID = baseId;
+            const fromHand = hand.filter(c => c.M_ID === baseId);
+            const fromDeck = deck.filter(c => c.M_ID === baseId);
+            hand = hand.filter(c => c.M_ID !== baseId);
+            deck = deck.filter(c => c.M_ID !== baseId);
+            [...fromHand, ...fromDeck].forEach(c => musterPlaceCard(c, playerRows));
+        } else {
+            const fromHand = hand.filter(c => c.M_ID === baseId);
+            const fromDeck = deck.filter(c => c.M_ID === baseId);
+            hand = hand.filter(c => c.M_ID !== baseId);
+            deck = deck.filter(c => c.M_ID !== baseId);
+            [...fromHand, ...fromDeck].forEach(c => row.push(c));
         }
-        else if(turn % 2 == 0){
-            if (placedCard.M_ID.endsWith("1")){
-                
-                placedCard.M_ID = placedCard.M_ID.slice(0, placedCard.M_ID.length - 1)
 
-                let rememberhand = P2Hand.filter(cards => cards.M_ID == placedCard.M_ID)
-                let rememberCards = P2Cards.filter(cards => cards.M_ID == placedCard.M_ID)
-                P2Hand = P2Hand.filter(cards => cards.M_ID != placedCard.M_ID)
-
-                rememberhand.forEach(card => {
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        if(placedFrostCard){
-                                meleeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFrostCard == false){
-                                meleeP2.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(meleeP2)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        if(placedFogCard){
-                                rangeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFogCard == false){
-                                rangeP2.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(rangeP2)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        if(placedRainCard){
-                                siegeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedRainCard == false){
-                                siegeP2.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(siegeP2)
-                        
-                    }
-                })
-                rememberCards.forEach(card => {
-                    if (card.row == "melee") {
-                        meleeP2.units.push(card)
-                        meleeP2.units = meleeP2.units
-                        if(placedFrostCard){
-                                meleeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFrostCard == false){
-                                meleeP2.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(meleeP2)
-
-                    } else if (card.row == "range") {
-                        rangeP2.units.push(card)
-                        rangeP2.units = rangeP2.units
-                        if(placedFogCard){
-                                rangeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedFogCard == false){
-                                rangeP2.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(rangeP2)
-
-                    } else if (card.row == "siege") {
-                        siegeP2.units.push(card)
-                        siegeP2.units = siegeP2.units
-                        if(placedRainCard){
-                                siegeP2.units.forEach(card => {
-                                    if(card.type == "unit"){
-                                        card.value = 1
-                                    }
-                                })
-                            } 
-                            if(placedRainCard == false){
-                                siegeP2.units.forEach(card => {
-                                    card.value = card.Basevalue
-                                })
-                            }
-                        Value(siegeP2)
-                        
-                    }
-                })
-            } else {
-                let rememberhand = P2Hand.filter(cards => cards.M_ID == placedCard.M_ID)
-                let rememberCards = P2Cards.filter(cards => cards.M_ID == placedCard.M_ID)
-                P2Hand = P2Hand.filter(cards => cards.M_ID != placedCard.M_ID)
-                rememberhand.forEach(card => {
-                    row.push(card)
-                    row = row
-                })
-                rememberCards.forEach(card => {
-                    row.push(card)
-                    row = row
-                })
-            }
-        }
+        if (isP1) { p1Hand = hand; p1Cards = deck; }
+        else      { p2Hand = hand; p2Cards = deck; }
     }
 
     function placedMoraleBoostCard(placedCard, row) {
@@ -922,55 +330,112 @@
     }
 
     function placedScorchCard(enemyRow) {
-        if (enemyRow.value >= 10){
-            let maxValue = 0
-            enemyRow.units.forEach(card => {
-                if(card.type == "unit"){
-                    if (card.value * card.ValueMultiplier * enemyRow.rowMultiplier > maxValue){
-                        maxValue = card.value * card.ValueMultiplier * enemyRow.rowMultiplier
-                    }
-                }
-            })
-            enemyRow.units.forEach(card => {
-                if(card.type == "unit"){
-                    if (card.value * card.ValueMultiplier * enemyRow.rowMultiplier == maxValue){
-                        enemyRow.units = enemyRow.units.filter(cards => cards.id != card.id)
-                        enemyRow.units = enemyRow.units
-                        Value(enemyRow)
-                    }
-                }
-            })
-            enemyRow.units = enemyRow.units
+        if (enemyRow.value < 10) return;
+        const unitScore = c => c.value * c.ValueMultiplier * enemyRow.rowMultiplier;
+        const maxValue = enemyRow.units
+            .filter(c => c.type === "unit")
+            .reduce((max, c) => Math.max(max, unitScore(c)), 0);
+        enemyRow.units = enemyRow.units.filter(c => c.type !== "unit" || unitScore(c) !== maxValue);
+        updateRowValue(enemyRow);
+    }
+
+    function placedSpecialScorchCard() {
+        const allRows = [meleeP1, rangeP1, siegeP1, meleeP2, rangeP2, siegeP2];
+        let maxStrength = 0;
+        allRows.forEach(row => {
+            row.units.forEach(card => {
+                if (card.type === "unit") maxStrength = Math.max(maxStrength, card.value);
+            });
+        });
+        if (maxStrength === 0) return;
+        allRows.forEach(row => {
+            const before = row.units.length;
+            row.units = row.units.filter(c => c.type !== "unit" || c.value !== maxStrength);
+            if (row.units.length !== before) updateRowValue(row);
+        });
+    }
+
+    /* Weather */
+    function getBaseCardValue(card) {
+        if (typeof card.Basevalue === "number") return card.Basevalue;
+        if (typeof card.baseValue === "number") {
+            card.Basevalue = card.baseValue;
+            return card.Basevalue;
+        }
+        // Capture original value once so later weather/morale recalculations are stable.
+        card.Basevalue = card.value;
+        return card.Basevalue;
+    }
+
+    function updateWeatherCard(weatherBool, row) {
+        const moraleBoosters = row.units.filter(c => c.ability === "morale_boost").length;
+
+        row.units.forEach(card => {
+            if (card.type === "unit") {
+                const baseValue = getBaseCardValue(card);
+                const weatherValue = weatherBool ? 1 : baseValue;
+                const moraleBonus = moraleBoosters - (card.ability === "morale_boost" ? 1 : 0);
+                card.value = weatherValue + Math.max(0, moraleBonus);
+            } else if (card.type === "hero") {
+                // Keep hero cards anchored to their base value.
+                card.value = getBaseCardValue(card);
+            }
+        });
+    }
+
+    function placedWeatherCard(card) {
+        // Helper function to apply weather to rows
+        const applyWeather = (weatherFlag, rows) => {
+            rows.forEach(row => {
+                updateWeatherCard(weatherFlag, row);
+                updateRowValue(row);
+                row = row;
+            });
+        };
+
+        const weatherActions = {
+            "W1": () => {
+                placedFrostCard = true;
+                applyWeather(placedFrostCard, [meleeP1, meleeP2]);
+            },
+            "W2": () => {
+                placedFogCard = true;
+                applyWeather(placedFogCard, [rangeP1, rangeP2]);
+            },
+            "W3": () => {
+                placedRainCard = true;
+                applyWeather(placedRainCard, [siegeP1, siegeP2]);
+            },
+            "W4": () => {
+                placedFogCard = true;
+                applyWeather(placedFogCard, [rangeP1, rangeP2]);
+                placedRainCard = true;
+                applyWeather(placedRainCard, [siegeP1, siegeP2]);
+            },
+            "W5": () => {
+                placedFrostCard = false;
+                applyWeather(placedFrostCard, [meleeP1, meleeP2]);
+                placedFogCard = false;
+                applyWeather(placedFogCard, [rangeP1, rangeP2]);
+                placedRainCard = false;
+                applyWeather(placedRainCard, [siegeP1, siegeP2]);
+                weather = [];
+            }
+        };
+
+        if (weatherActions[card.ability]) {
+            weatherActions[card.ability]();
+            updateTotalValue();
         }
     }
 
-    function placedMedicCard(placedCard, row) {
-        null
-    }
-
-    /*Special card ability placement*/
-    function selectRow(row){
-        if(row == "melee"){
-            meleeSelected = true
-            rangeSelected = false
-            siegeSelected = false
-        } else if (row == "range"){
-            meleeSelected = false
-            rangeSelected = true
-            siegeSelected = false
-        } else if (row == "siege"){
-            meleeSelected = false
-            rangeSelected = false
-            siegeSelected = true
-        }
-    }
     /* 1-----------------------------------------------------------------------------------1 */
 
 
 
     /* 1 Value handeling */
     /* 1-----------------------------------------------------------------------------------1 */
-    function Value(row){
+    function updateRowValue(row){
         row.value = 0
         row.units.forEach(card => {
             if(card.type == "unit"){
@@ -979,15 +444,15 @@
                 row.value += card.value
             }
         });
-        TotalValue()
+        updateTotalValue()
     }
 
-    function TotalValue(){
-        P1TotalValue = 0
-        P1TotalValue += meleeP1.value + rangeP1.value + siegeP1.value
+    function updateTotalValue(){
+        p1TotalValue = 0
+        p1TotalValue += meleeP1.value + rangeP1.value + siegeP1.value
     
-        P2TotalValue = 0
-        P2TotalValue += meleeP2.value + rangeP2.value + siegeP2.value
+        p2TotalValue = 0
+        p2TotalValue += meleeP2.value + rangeP2.value + siegeP2.value
       
     }
     /* 1-----------------------------------------------------------------------------------1 */
@@ -1004,13 +469,13 @@
             
             if (passedTurn == true){
                 compareValue()
-                P1TotalValue = 0
+                p1TotalValue = 0
                 meleeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
                 rangeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
                 siegeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
 
 
-                P2TotalValue = 0
+                p2TotalValue = 0
                 meleeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
                 rangeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
                 siegeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
@@ -1028,29 +493,29 @@
 
     function compareValue(){
         
-        if(P1TotalValue > P2TotalValue){
-            if(P2Gem1visibility == "visible"){
-                P2Gem1visibility = "hidden"
-            } else if(P2Gem1visibility == "hidden"){
-                P2Gem2visibility = "hidden"
+        if(p1TotalValue > p2TotalValue){
+            if(p2Gem1Visibility == "visible"){
+                p2Gem1Visibility = "hidden"
+            } else if(p2Gem1Visibility == "hidden"){
+                p2Gem2Visibility = "hidden"
                 alert("Player 1 wins!")
             }
-        } else if(P1TotalValue < P2TotalValue){
-            if(P1Gem1visibility == "visible"){
-                P1Gem1visibility = "hidden"
-            } else if(P1Gem1visibility == "hidden"){
-                P1Gem2visibility = "hidden"
+        } else if(p1TotalValue < p2TotalValue){
+            if(p1Gem1Visibility == "visible"){
+                p1Gem1Visibility = "hidden"
+            } else if(p1Gem1Visibility == "hidden"){
+                p1Gem2Visibility = "hidden"
             }
         } else {
-            if(P2Gem1visibility == "visible"){
-                P2Gem1visibility = "hidden"
-            } else if(P2Gem1visibility == "hidden"){
-                P2Gem2visibility = "hidden"
+            if(p2Gem1Visibility == "visible"){
+                p2Gem1Visibility = "hidden"
+            } else if(p2Gem1Visibility == "hidden"){
+                p2Gem2Visibility = "hidden"
             }
-            if(P1Gem1visibility == "visible"){
-                P1Gem1visibility = "hidden"
-            } else if(P1Gem1visibility == "hidden"){
-                P1Gem2visibility = "hidden"
+            if(p1Gem1Visibility == "visible"){
+                p1Gem1Visibility = "hidden"
+            } else if(p1Gem1Visibility == "hidden"){
+                p1Gem2Visibility = "hidden"
                 alert("Player 2 wins!")
             }
 
@@ -1060,10 +525,10 @@
     
     function endTurn() {
         turn += 0.5
-        if(popupvisibility == "block"){
-            popupvisibility = "none"
-        } else if(popupvisibility == "none"){
-            popupvisibility = "block"
+        if(popupVisibility == "block"){
+            popupVisibility = "none"
+        } else if(popupVisibility == "none"){
+            popupVisibility = "block"
         }
         placedCard = false
         
@@ -1077,22 +542,22 @@
 
 <main>
     {#if turn % 2 == 1}
-        <button class="P1leader" on:click={() => {console.log("P1 Leader")}}>
-            <img src="{P1Leader.name}.webp" alt="Player 1 Leader">
+        <button class="P1leader" on:click={() => {console.log("p1 Leader")}}>
+            <img src="{p1Leader.name}.webp" alt="Player 1 Leader" loading="lazy" decoding="async">
         </button>
 
-        <button class="P2leader" on:click={() => {console.log("P2 Leader")}}>
-            <img src="{P2Leader.name}.webp" alt="Player 2 Leader">
+        <button class="P2leader" on:click={() => {console.log("p2 Leader")}}>
+            <img src="{p2Leader.name}.webp" alt="Player 2 Leader" loading="lazy" decoding="async">
         </button>
     {/if}
 
     {#if turn % 2 == 0}
-        <button class="P1leader" on:click={() => {console.log("P1 Leader")}}>
-            <img src="{P2Leader.name}.webp" alt="Player 1 Leader">
+        <button class="P1leader" on:click={() => {console.log("p1 Leader")}}>
+            <img src="{p2Leader.name}.webp" alt="Player 1 Leader" loading="lazy" decoding="async">
         </button>
 
-        <button class="P2leader" on:click={() => {console.log("P2 Leader")}}>
-            <img src="{P1Leader.name}.webp" alt="Player 2 Leader">
+        <button class="P2leader" on:click={() => {console.log("p2 Leader")}}>
+            <img src="{p1Leader.name}.webp" alt="Player 2 Leader" loading="lazy" decoding="async">
         </button>
     {/if}
     
@@ -1100,10 +565,10 @@
     <div class="HeldCards">
         {#if turn % 2 == 1}
                 
-            {#each P1Hand as card}
+            {#each p1Hand as card}
                 {#if card.type == "unit"}
                     <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
-                    <img src="{card.name}.webp" alt="{card.name}">
+                    <img src="{card.name}.webp" alt="{card.name}" loading="lazy" decoding="async">
                     {#if card.value >= 10}
                         <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier}</p>
                     {:else}
@@ -1114,13 +579,13 @@
 
                 {#if card.type == "hero"}
                     <button class="card" on:click={() => {placeCard(card)}}>
-                    <img src="{card.name}.webp" alt="{card.name}">
+                    <img src="{card.name}.webp" alt="{card.name}" loading="lazy" decoding="async">
                     </button>
                 {/if}
 
                 {#if card.type == "special"}
                     <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
-                    <img src="{card.name}.webp" alt="{card.name}">
+                    <img src="{card.name}.webp" alt="{card.name}" loading="lazy" decoding="async">
                     </button>
                 {/if}
             {/each}
@@ -1128,10 +593,10 @@
 
         {#if turn % 2 == 0}
                 
-            {#each P2Hand as card}
+            {#each p2Hand as card}
                 {#if card.type == "unit"}
                     <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
-                    <img src="{card.name}.webp" alt="{card.name}">
+                    <img src="{card.name}.webp" alt="{card.name}" loading="lazy" decoding="async">
                     {#if card.value  >= 10}
                         <p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier}</p>
                     {:else}
@@ -1142,13 +607,13 @@
 
                 {#if card.type == "hero"}
                     <button class="card" on:click={() => {placeCard(card)}}>
-                    <img src="{card.name}.webp" alt="{card.name}">
+                    <img src="{card.name}.webp" alt="{card.name}" loading="lazy" decoding="async">
                     </button>
                 {/if}
 
                 {#if card.type == "special"}
                     <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
-                    <img src="{card.name}.webp" alt="{card.name}">
+                    <img src="{card.name}.webp" alt="{card.name}" loading="lazy" decoding="async">
                     </button>
                 {/if}
             {/each}
@@ -1159,7 +624,7 @@
 
     <section class="Board-top">
         {#if turn % 2 == 0}
-            <div class="totalvalue">{P1TotalValue}</div>
+            <div class="totalvalue">{p1TotalValue}</div>
 
             <div class="melee" style="top: 67%;">
 
@@ -1308,7 +773,7 @@
 
 
         {#if turn % 2 == 1}
-            <div class="totalvalue">{P2TotalValue}</div>
+            <div class="totalvalue">{p2TotalValue}</div>
             
             <div class="melee" style="top: 67%;">
 
@@ -1460,7 +925,7 @@
 
     <section class="Board-bottom">
         {#if turn % 2 == 1}
-            <div class="totalvalue" style="top:72.3%;">{P1TotalValue}</div>
+            <div class="totalvalue" style="top:72.3%;">{p1TotalValue}</div>
 
             <button class="melee" on:click={() => selectRow("melee")} style="box-shadow: {meleeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
@@ -1610,7 +1075,7 @@
 
 
         {#if turn % 2 == 0}
-            <div class="totalvalue" style="top:72%;">{P2TotalValue}</div>
+            <div class="totalvalue" style="top:72%;">{p2TotalValue}</div>
 
             <button class="melee" on:click={() => selectRow("melee")} style="box-shadow: {meleeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
 
@@ -1764,27 +1229,27 @@
         {#if turn % 2 == 1}
             <div class="PlayerInfo">
                 <h1>P2</h1>
-                <p>{P2[2].name}</p>
+                <p>{p2[2].name}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex; top: 60%;">
                 <img src="cards_symbol.png" alt="cardsymbol">
-                {P2Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P2Gem1visibility};">
-                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P2Gem2visibility};">
+                {p2Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {p2Gem1Visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {p2Gem2Visibility};">
             </div>
         {/if}
         {#if turn % 2 == 0}
             <div class="PlayerInfo">
                 <h1>P1</h1>
-                <p>{P1[2].name}</p>
+                <p>{p1[2].name}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex; top: 60%;">
                 <img src="cards_symbol.png" alt="cardsymbol">
-                {P1Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P1Gem1visibility};">
-                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P1Gem2visibility};">
+                {p1Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {p1Gem1Visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {p1Gem2Visibility};">
             </div> 
         {/if}
     </section>
@@ -1793,28 +1258,28 @@
         {#if turn % 2 == 1}
             <div class="PlayerInfo" style="margin-top: 40%;">
                 <h1>P1</h1>
-                <p>{P1[2].name}</p>
+                <p>{p1[2].name}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex;">
                 <img src="cards_symbol.png" alt="cardsymbol">
-                {P1Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P1Gem1visibility};">
-                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P1Gem2visibility};">
+                {p1Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {p1Gem1Visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {p1Gem2Visibility};">
             </div>
         {/if}
         {#if turn % 2 == 0}
             <div class="PlayerInfo" style="margin-top: 40%;">
                 <h1>P2</h1>
-                <p>{P2[2].name}</p>
+                <p>{p2[2].name}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex;">
                 
                 <img src="cards_symbol.png" alt="cardsymbol">
-                {P2Hand.length}
-                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {P2Gem1visibility};">
-                <img src="Gem.png" alt="gem" class="gem" style="visibility: {P1Gem2visibility};">
+                {p2Hand.length}
+                <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {p2Gem1Visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {p1Gem2Visibility};">
             </div> 
         {/if}
     </section>
@@ -1838,7 +1303,7 @@
 </main>
 
 <aside class="Ready player"> 
-    <div class="darken" style="display:{popupvisibility};">
+    <div class="darken" style="display:{popupVisibility};">
         <div class="popup" >
             <h1>Player ready?</h1>
             <button class="confirm" on:click|preventDefault={() => endTurn()} style="right: 46%; bottom: 20%;">
