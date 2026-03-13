@@ -1,0 +1,111 @@
+<script lang="ts">
+	export let form;
+</script>
+
+<main>
+	<section class="card">
+		<h1>Login</h1>
+
+		{#if form?.error}
+			<p class="error">{form.error}</p>
+		{/if}
+
+		<form method="POST" action="?/login">
+			<div class="form-group">
+				<label for="username">Username</label>
+				<input id="username" name="username" type="text" required />
+			</div>
+			<div class="form-group">
+				<label for="password">Password</label>
+				<input id="password" name="password" type="password" required />
+			</div>
+			<div class="form-group form-group--checkbox">
+				<label>
+					<input type="checkbox" name="rememberMe" />
+					Remember me for 90 days
+				</label>
+			</div>
+			<button type="submit">Login</button>
+			<p>Don't have an account? <a href="/register">Register</a></p>
+		</form>
+	</section>
+</main>
+
+<style>
+	main {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+	}
+
+	.card {
+		width: 100%;
+		max-width: 360px;
+		padding: 1rem;
+		border: 1px solid #d1d5db;
+		border-radius: 0.5rem;
+		background: #fff;
+	}
+
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	h1 {
+		margin-top: 0;
+		font-size: 1.4rem;
+	}
+
+	button {
+		padding: 0.45rem 0.7rem;
+		border: 1px solid #d1d5db;
+		background: #fff;
+		border-radius: 0.35rem;
+		cursor: pointer;
+	}
+
+	.error {
+		color: #b91c1c;
+		margin: 0;
+	}
+
+	.form-group {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		gap: 0.35rem;
+	}
+
+	.form-group--checkbox {
+		flex-direction: row;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.form-group--checkbox label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		cursor: pointer;
+	}
+
+	.form-group--checkbox input[type='checkbox'] {
+		width: auto;
+		padding: 0;
+	}
+
+	input {
+		width: 100%;
+		padding: 0.45rem 0.6rem;
+		border: 1px solid #d1d5db;
+		border-radius: 0.35rem;
+	}
+
+	p {
+		margin: 0;
+	}
+</style>
