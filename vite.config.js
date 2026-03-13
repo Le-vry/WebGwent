@@ -12,16 +12,6 @@ export default defineConfig({
 				drop_console: false, // Set to true in production to remove console logs
 			},
 		},
-		// Chunk size and code splitting optimizations
-		rollupOptions: {
-			output: {
-				// Manual chunk optimization
-				manualChunks: {
-					'highlight': ['highlight.js'],
-					'skeleton': ['@skeletonlabs/skeleton'],
-				},
-			},
-		},
 		// Target modern browsers for better compression
 		target: 'ES2020',
 		// Enable sourcemaps for debugging in production (optional)

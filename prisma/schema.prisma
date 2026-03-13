@@ -2,8 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -11,67 +10,67 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(uuid())
-  username String @unique
-  salt     String // Unikt för varje användare
-  hash     String  // Lösenord + salt, hashat
+  id             String   @id @default(uuid())
+  username       String   @unique
+  salt           String // Unikt för varje användare
+  hash           String // Lösenord + salt, hashat
   profilePicture String? //Base64 encoded string
-  email    String? @unique
-  createdAt DateTime @default(now())
-  
-  games Game[] @relation("Player1")
-  games2 Game[] @relation("Player2")
+  email          String?  @unique
+  createdAt      DateTime @default(now())
+
+  games    Game[]    @relation("Player1")
+  games2   Game[]    @relation("Player2")
   sessions Session[]
 }
 
 model Session {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  createdAt DateTime @default(now())
-  lastUsed  DateTime @default(now())
-  expiresAt DateTime
-  userAgent String?
-  ipAddress String?
+  id         String   @id @default(uuid())
+  token      String   @unique
+  createdAt  DateTime @default(now())
+  lastUsed   DateTime @default(now())
+  expiresAt  DateTime
+  userAgent  String?
+  ipAddress  String?
   deviceName String?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 }
 
 model Game {
   id          String @id @default(cuid())
-  gameCode    String @unique      
+  gameCode    String @unique
   status      String @default("waiting")
   currentTurn Int    @default(0)
 
-  user1 User @relation("Player1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user1   User    @relation("Player1", fields: [user1Id], references: [id], onDelete: Cascade)
   user1Id String
-  user2 User? @relation("Player2", fields: [user2Id], references: [id], onDelete: Cascade)
+  user2   User?   @relation("Player2", fields: [user2Id], references: [id], onDelete: Cascade)
   user2Id String?
 
-  player1   Player  @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
-  player1Id Int     @unique
-  player2   Player? @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
-  player2Id Int?    @unique
+  player1   Player @relation("GamePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player1Id Int    @unique
+  player2   Player @relation("GamePlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
+  player2Id Int    @unique
 
   boardState   BoardState @relation("gameBoard", fields: [boardStateId], references: [id], onDelete: Cascade)
   boardStateId Int        @unique
 }
 
 model Player {
-  id           Int     @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  gems     Int     @default(2)     
-  passed   Boolean @default(false) 
-  deck     String  @default("[]")  
-  hand     String  @default("[]")
+  gems   Int     @default(2)
+  passed Boolean @default(false)
+  deck   String  @default("[]")
+  hand   String  @default("[]")
 
   gameAsPlayer1 Game? @relation("GamePlayer1")
   gameAsPlayer2 Game? @relation("GamePlayer2")
 }
 
 model BoardState {
-  id     Int    @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   game Game? @relation("gameBoard")
 

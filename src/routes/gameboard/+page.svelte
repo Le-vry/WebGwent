@@ -215,7 +215,6 @@
         syncBoardState();
     }
 
-    // Place a unit into a row and handle its ability, then revalue
     function placeUnitInRow(card, ownRow, enemyRow, weather) {
         if (card.ability === "spy") {
             enemyRow.units.push(card);
@@ -266,7 +265,6 @@
         updateTotalValue()
     }
 
-    // Place a horn special card into the selected row for a player
     function placeHornSpecial(card, playerRows) {
         const rowName = getSelectedRow();
         if (!rowName) return;
@@ -280,7 +278,6 @@
         null
     }
 
-    // Place a single muster card into the correct row, respecting current weather
     function musterPlaceCard(card, playerRows) {
         const rowName = card.row;
         if (rowName !== "melee" && rowName !== "range" && rowName !== "siege") return;
