@@ -1,9 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import type { Actions, RequestEvent } from '@sveltejs/kit';
-import { prisma } from '$lib';
+import { getPrismaClient } from '$lib/server/prisma';
 import { validateSession } from '$lib/server/session';
 
 export const load = async ({ cookies }: RequestEvent) => {
+	const prisma = getPrismaClient();
 	const sessionToken = cookies.get('sessionToken');
 	const currentSession = await validateSession(sessionToken);
 
@@ -24,6 +25,7 @@ export const load = async ({ cookies }: RequestEvent) => {
 
 export const actions: Actions = {
 	revokeSession: async ({ request, cookies }) => {
+		const prisma = getPrismaClient();
 		const sessionToken = cookies.get('sessionToken');
 		const currentSession = await validateSession(sessionToken);
 		if (!currentSession) {
@@ -44,6 +46,7 @@ export const actions: Actions = {
 	},
 
 	revokeAllSessions: async ({ cookies }) => {
+		const prisma = getPrismaClient();
 		const sessionToken = cookies.get('sessionToken');
 		const currentSession = await validateSession(sessionToken);
 

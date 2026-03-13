@@ -1,8 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { prisma } from '$lib';
 import type { Actions, ServerLoad } from '@sveltejs/kit';
+import { getPrismaClient } from '$lib/server/prisma';
 
 export const load: ServerLoad = async ({ locals }) => {
+  const prisma = getPrismaClient();
   const profile = await prisma.user.findUnique({
     where: { id: locals.user!.id },
     select: {
@@ -26,6 +27,7 @@ export const load: ServerLoad = async ({ locals }) => {
 // Din uppgift: Implementera upload-logiken
 export const actions: Actions = {
   upload: async ({ request, locals }) => {
+    const prisma = getPrismaClient();
     const data = await request.formData();
     const file = data.get('image');
 

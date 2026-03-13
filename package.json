@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:render": "node scripts/render-build.mjs",
     "build:prod": "vite build --mode production",
     "start": "node build",
     "preview": "vite preview",
     "prisma:generate": "prisma generate",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy:if-present": "node scripts/render-build.mjs --migrate-only",
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
     "analyze": "vite build --analyze"

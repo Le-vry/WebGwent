@@ -1,9 +1,10 @@
 import { redirect } from '@sveltejs/kit';
-import { prisma } from '$lib';
 import type { Actions } from '@sveltejs/kit';
+import { getPrismaClient } from '$lib/server/prisma';
 
 export const actions: Actions = {
 	default: async ({ cookies }) => {
+		const prisma = getPrismaClient();
 		const sessionToken = cookies.get('sessionToken');
 
 		if (sessionToken) {
