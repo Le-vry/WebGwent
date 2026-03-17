@@ -106,7 +106,7 @@ export async function loginAction({ request, cookies, getClientAddress }: any) {
     maxAge: 60 * 60 * 24 * sessionDays
   });
 
-  throw redirect(303, '/card-select');
+  throw redirect(303, '/');
 }
 
 export async function registerAction({ request, cookies, getClientAddress }: any) {
@@ -154,7 +154,7 @@ export async function registerAction({ request, cookies, getClientAddress }: any
     maxAge: 60 * 60 * 24 * 14
   });
 
-  throw redirect(303, '/card-select');
+  throw redirect(303, '/');
 }
 
 // Din uppgift: Implementera denna funktion
