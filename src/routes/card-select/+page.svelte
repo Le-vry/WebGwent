@@ -302,6 +302,14 @@
     let count = 0
 
     let start = "Find Match"
+    let deckStatus = ''
+    let deckStatusError = false
+    let findingMatch = false
+
+    function setDeckStatus(message, isError = false) {
+        deckStatus = message
+        deckStatusError = isError
+    }
 
     
     let color1
@@ -398,16 +406,18 @@
         if (selected_deck.filter(card => card.type == "special").length == 10){
             
             if (a.type == "special"){
-                alert("You can only have 10 special cards in your deck")
+                setDeckStatus('You can only have 10 special cards in your deck.', true)
             } else {
                 selected_deck.push(a)
                 shownDeck = shownDeck.filter(card => card.id != a.id)
                 selected_deck.sort((a, b) => a.id - b.id)
+                setDeckStatus('')
             }
         } else {
             selected_deck.push(a)
             shownDeck = shownDeck.filter(card => card.id != a.id)
             selected_deck.sort((a, b) => a.id - b.id)
+            setDeckStatus('')
         }
         selected_deck = selected_deck
         shownDeck = shownDeck
@@ -439,14 +449,16 @@
         }
     }
     async function confirm(){
+        if (findingMatch) return;
+
         if (!selected_deck.length) {
-            alert("Select cards before entering matchmaking.");
+            setDeckStatus('Select cards before entering matchmaking.', true)
             return;
         }
 
         const leader = shownLeaders[count];
         if (!leader) {
-            alert("Select a leader before entering matchmaking.");
+            setDeckStatus('Select a leader before entering matchmaking.', true)
             return;
         }
 
@@ -457,6 +469,10 @@
         };
 
         try {
+            findingMatch = true
+            start = 'Finding Match...'
+            setDeckStatus('Searching for an opponent...', false)
+
             const res = await fetch('/api/matchmaking/join', {
                 method: 'POST',
                 headers: {
@@ -467,18 +483,20 @@
 
             const result = await res.json();
             if (!res.ok) {
-                alert(result?.error ?? 'Could not join matchmaking.');
+                setDeckStatus(result?.error ?? 'Could not join matchmaking.', true)
+                findingMatch = false
+                start = 'Find Match'
                 return;
             }
 
-            if (result.status === 'waiting') {
-                alert('Matchmaking started. Waiting for another player to join.');
-            }
+            setDeckStatus('Match found. Joining board...', false)
 
             goto(base + `/gameboard?gameCode=${encodeURIComponent(result.gameCode)}`);
         } catch (error) {
             console.error('Matchmaking error:', error);
-            alert('Network error while joining matchmaking.');
+            setDeckStatus('Network error while joining matchmaking.', true)
+            findingMatch = false
+            start = 'Find Match'
         }
     }
     /* 4-----------------------------------------------------------------------------------4 */
@@ -585,7 +603,11 @@
         </section>
     </div>
 
-    <button class="confirm" on:click|preventDefault={() => confirm()}>
+    {#if deckStatus}
+        <div class="deck-status" class:deck-status--error={deckStatusError}>{deckStatus}</div>
+    {/if}
+
+    <button class="confirm" disabled={findingMatch} on:click|preventDefault={() => confirm()}>
         <img src="keyboard_enter_outline.png" alt=enter class="enter"> {start}
     </button>
 </main>
@@ -842,6 +864,29 @@
     .confirm:focus{
         background-color: #0000007a;
         box-shadow: #ff9100 0 0 0.5vh;
+    }
+    .confirm:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .deck-status {
+        position: absolute;
+        bottom: 2.2vh;
+        left: 2vw;
+        max-width: 55vw;
+        padding: 0.45rem 0.8rem;
+        border-radius: 0.6rem;
+        background: rgba(17, 52, 17, 0.82);
+        border: 1px solid rgba(127, 215, 127, 0.55);
+        color: #e8ffe8;
+        font: 500 0.95rem 'Roboto', sans-serif;
+    }
+
+    .deck-status--error {
+        background: rgba(75, 8, 8, 0.82);
+        border-color: rgba(255, 120, 120, 0.5);
+        color: #ffe8e8;
     }
     /* 3.2-----------------------------------------------------------------------------------3.2 */
 

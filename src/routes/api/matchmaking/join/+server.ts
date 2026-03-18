@@ -51,6 +51,7 @@ export const POST = async ({ locals, request }: RequestEvent) => {
 	});
 
 	if (waitingGame) {
+		const firstTurn = Math.random() < 0.5 ? 1 : 2;
 		await prisma.$transaction([
 			prisma.player.update({
 				where: { id: waitingGame.player2Id },
@@ -60,12 +61,13 @@ export const POST = async ({ locals, request }: RequestEvent) => {
 				where: { id: waitingGame.id },
 				data: {
 					status: 'active',
-					user2Id: userId
+					user2Id: userId,
+					currentTurn: firstTurn
 				}
 			})
 		]);
 
-		return json({ gameCode: waitingGame.gameCode, status: 'active' });
+		return json({ gameCode: waitingGame.gameCode, status: 'active', currentTurn: firstTurn });
 	}
 
 	const gameCode = await createUniqueCode(prisma);
@@ -84,7 +86,7 @@ export const POST = async ({ locals, request }: RequestEvent) => {
 				player1Id: p1.id,
 				player2Id: p2.id,
 				boardStateId: board.id,
-				currentTurn: 1
+				currentTurn: 0
 			},
 			select: { gameCode: true }
 		});

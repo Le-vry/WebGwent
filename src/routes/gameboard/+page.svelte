@@ -6,6 +6,28 @@
     let matchmakingStatus = ''
     let matchmakingError = ''
     let gameCode = ''
+    let myRole = ''
+    let sseConnection = null
+    let syncTimer = null
+    let suppressStateSync = false
+    let p1Username = 'Player 1'
+    let p2Username = 'Player 2'
+    let actionNotice = ''
+
+    function roleToPlayerNumber(role) {
+        return role === 'p2' ? 2 : 1;
+    }
+
+    function getTurnPlayer(value) {
+        return value === 2 ? 2 : 1;
+    }
+
+    function setActionNotice(message) {
+        actionNotice = message;
+        window.setTimeout(() => {
+            if (actionNotice === message) actionNotice = '';
+        }, 2200);
+    }
 
     function initializeFromPlayers(playersData) {
         if (!Array.isArray(playersData) || playersData.length < 2) {
@@ -29,6 +51,149 @@
         return true;
     }
 
+    function exportMatchState() {
+        return {
+            __version: 1,
+            players,
+            turn,
+            placedCard,
+            passedTurn,
+            popupVisibility,
+            meleeSelected,
+            rangeSelected,
+            siegeSelected,
+            p1Leader,
+            p1Cards,
+            p1Hand,
+            p1TotalValue,
+            meleeP1,
+            rangeP1,
+            siegeP1,
+            p1Gem1Visibility,
+            p1Gem2Visibility,
+            p2Leader,
+            p2Cards,
+            p2Hand,
+            p2TotalValue,
+            meleeP2,
+            rangeP2,
+            siegeP2,
+            p2Gem1Visibility,
+            p2Gem2Visibility,
+            placedFrostCard,
+            placedFogCard,
+            placedRainCard,
+            weather
+        };
+    }
+
+    function applyMatchState(state) {
+        if (!state || typeof state !== 'object') return;
+
+        suppressStateSync = true;
+
+        players = Array.isArray(state.players) ? state.players : players;
+        p1 = players[0] ?? p1;
+        p2 = players[1] ?? p2;
+
+        turn = typeof state.turn === 'number' ? getTurnPlayer(Math.round(state.turn)) : turn;
+        placedCard = typeof state.placedCard === 'boolean' ? state.placedCard : placedCard;
+        passedTurn = typeof state.passedTurn === 'boolean' ? state.passedTurn : passedTurn;
+        popupVisibility = typeof state.popupVisibility === 'string' ? state.popupVisibility : popupVisibility;
+
+        meleeSelected = Boolean(state.meleeSelected);
+        rangeSelected = Boolean(state.rangeSelected);
+        siegeSelected = Boolean(state.siegeSelected);
+
+        p1Leader = state.p1Leader ?? p1Leader;
+        p1Cards = Array.isArray(state.p1Cards) ? state.p1Cards : p1Cards;
+        p1Hand = Array.isArray(state.p1Hand) ? state.p1Hand : p1Hand;
+        p1TotalValue = typeof state.p1TotalValue === 'number' ? state.p1TotalValue : p1TotalValue;
+
+        meleeP1 = state.meleeP1 ?? meleeP1;
+        rangeP1 = state.rangeP1 ?? rangeP1;
+        siegeP1 = state.siegeP1 ?? siegeP1;
+        p1Gem1Visibility = state.p1Gem1Visibility ?? p1Gem1Visibility;
+        p1Gem2Visibility = state.p1Gem2Visibility ?? p1Gem2Visibility;
+
+        p2Leader = state.p2Leader ?? p2Leader;
+        p2Cards = Array.isArray(state.p2Cards) ? state.p2Cards : p2Cards;
+        p2Hand = Array.isArray(state.p2Hand) ? state.p2Hand : p2Hand;
+        p2TotalValue = typeof state.p2TotalValue === 'number' ? state.p2TotalValue : p2TotalValue;
+
+        meleeP2 = state.meleeP2 ?? meleeP2;
+        rangeP2 = state.rangeP2 ?? rangeP2;
+        siegeP2 = state.siegeP2 ?? siegeP2;
+        p2Gem1Visibility = state.p2Gem1Visibility ?? p2Gem1Visibility;
+        p2Gem2Visibility = state.p2Gem2Visibility ?? p2Gem2Visibility;
+
+        placedFrostCard = Boolean(state.placedFrostCard);
+        placedFogCard = Boolean(state.placedFogCard);
+        placedRainCard = Boolean(state.placedRainCard);
+        weather = Array.isArray(state.weather) ? state.weather : weather;
+
+        suppressStateSync = false;
+    }
+
+    async function pushStateToServer() {
+        if (!gameCode || matchmakingStatus !== 'active' || !isMyTurn) return;
+
+        try {
+            await fetch(`/api/matchmaking/state/${encodeURIComponent(gameCode)}`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    state: exportMatchState(),
+                    role: myRole
+                })
+            });
+        } catch (error) {
+            console.error('Failed to sync match state:', error);
+        }
+    }
+
+    function queueStateSync() {
+        if (suppressStateSync || !gameCode || matchmakingStatus !== 'active' || !isMyTurn) return;
+        if (syncTimer) window.clearTimeout(syncTimer);
+        syncTimer = window.setTimeout(() => {
+            pushStateToServer();
+            syncTimer = null;
+        }, 250);
+    }
+
+    function startSseStream(code) {
+        if (sseConnection) sseConnection.close();
+
+        sseConnection = new EventSource(`/api/matchmaking/stream/${encodeURIComponent(code)}`);
+        sseConnection.addEventListener('game', (event) => {
+            try {
+                const meta = JSON.parse(event.data);
+                if (typeof meta.currentTurn === 'number') {
+                    turn = getTurnPlayer(Math.round(meta.currentTurn));
+                }
+
+                if (meta.status === 'active' && matchmakingStatus !== 'active') {
+                    fetchMatchGameState(code).catch((error) => {
+                        console.error('Failed to hydrate active match state:', error);
+                    });
+                } else if (meta.status === 'waiting') {
+                    matchmakingStatus = 'waiting';
+                }
+            } catch (error) {
+                console.error('Failed to parse SSE game meta:', error);
+            }
+        });
+        sseConnection.addEventListener('state', (event) => {
+            try {
+                const next = JSON.parse(event.data);
+                applyMatchState(next);
+                syncBoardState();
+            } catch (error) {
+                console.error('Failed to parse SSE state:', error);
+            }
+        });
+    }
+
     async function fetchMatchGameState(code) {
         const res = await fetch(`/api/matchmaking/game/${encodeURIComponent(code)}`);
         const result = await res.json();
@@ -40,11 +205,22 @@
 
         if (result.status === 'waiting') {
             matchmakingStatus = 'waiting';
+            myRole = result.role ?? myRole;
             return { ready: false };
         }
 
         matchmakingStatus = 'active';
+        myRole = result.role ?? myRole;
+        if (result.playerNames) {
+            p1Username = result.playerNames.p1 ?? p1Username;
+            p2Username = result.playerNames.p2 ?? p2Username;
+        }
         initializeFromPlayers(result.players);
+        if (result.state) {
+            applyMatchState(result.state);
+        } else if (typeof result.currentTurn === 'number') {
+            turn = getTurnPlayer(Math.round(result.currentTurn));
+        }
         $players_store = JSON.stringify(result.players);
         return { ready: true };
     }
@@ -57,17 +233,14 @@
             gameCode = params.get('gameCode') ?? '';
 
             if (gameCode) {
+                startSseStream(gameCode);
                 const first = await fetchMatchGameState(gameCode);
-                if (first.ready) return;
-
-                if (!matchmakingError) {
-                    poller = window.setInterval(async () => {
-                        const next = await fetchMatchGameState(gameCode);
-                        if (next.ready && poller) {
-                            clearInterval(poller);
-                            poller = undefined;
-                        }
-                    }, 3000);
+                if (first.ready) {
+                    if (!players.length && $players_store.length > 0) {
+                        initializeFromPlayers(JSON.parse($players_store));
+                    }
+                    queueStateSync();
+                    return;
                 }
                 return;
             }
@@ -81,15 +254,25 @@
 
         return () => {
             if (poller) clearInterval(poller);
+            if (syncTimer) clearTimeout(syncTimer);
+            if (sseConnection) {
+                sseConnection.close();
+                sseConnection = null;
+            }
         };
     })
     
 
     /* Turn Handeling*/
-    let turn = 0.5
+    let turn = 1
     let placedCard = false
     let passedTurn = false
-    let popupVisibility = "block"
+    let popupVisibility = "none"
+
+    $: isP1Perspective = myRole !== 'p2'
+    $: myPlayerNumber = roleToPlayerNumber(myRole)
+    $: activePlayerNumber = getTurnPlayer(turn)
+    $: isMyTurn = matchmakingStatus === 'active' && activePlayerNumber === myPlayerNumber
     
     
 
@@ -199,6 +382,8 @@
         p1Cards = [...p1Cards];
         p2Cards = [...p2Cards];
         weather = [...weather];
+
+        queueStateSync();
     }
 
 
@@ -207,24 +392,35 @@
 
     /* Placement */
     function selectRow(row) {
+        if (!isMyTurn) return;
         meleeSelected = row === "melee";
         rangeSelected = row === "range";
         siegeSelected = row === "siege";
     }
 
     function placeCard(card) {
+        if (!isMyTurn) {
+            return;
+        }
+
         if (!placedCard || passedTurn) {
-            const activePlayer  = (turn % 2 === 1) ? 1 : 2;
+            const activePlayer  = activePlayerNumber;
             const enemyPlayer   = activePlayer === 1 ? 2 : 1;
             const ownRows       = getPlayerRows(activePlayer);
             const enemyRows     = getPlayerRows(enemyPlayer);
+            const activeHand    = activePlayer === 1 ? p1Hand : p2Hand;
+
+            // Only cards currently in the active hand can be played.
+            if (!activeHand.some((handCard) => handCard.id === card.id)) {
+                return;
+            }
 
             // Agile cards must be placed in the currently selected melee/range row.
             // If no valid row is selected, keep the card in hand and do not consume the turn.
             if ((card.type === "unit" || card.type === "hero") && card.row === "agile") {
                 const selectedRow = getSelectedRow();
                 if (selectedRow !== "melee" && selectedRow !== "range") {
-                    alert("Select Melee or Range row before placing an agile card.");
+                    setActionNotice('Select Melee or Range row before placing an agile card.');
                     return;
                 }
             }
@@ -232,7 +428,7 @@
             // Commander's Horn must have a row selected before placing.
             if (card.type === "special" && card.ability === "horn") {
                 if (!getSelectedRow()) {
-                    alert("Select a row before placing a Commander's Horn.");
+                    setActionNotice("Select a row before placing a Commander's Horn.");
                     return;
                 }
             }
@@ -300,7 +496,7 @@
     /* Abilities */
     function placedSpyCard() {
         // Spy card draws 2 cards for the active player
-        if (turn % 2 === 1) {
+        if (activePlayerNumber === 1) {
             const pulled = p1Cards.slice(0, 2);
             const pulledIds = new Set(pulled.map(c => c.id));
             p1Hand = [...p1Hand, ...pulled].sort((a, b) => a.value - b.value);
@@ -349,7 +545,7 @@
     }
 
     function placedMusterCard(placedCard, row) {
-        const isP1 = turn % 2 === 1;
+        const isP1 = activePlayerNumber === 1;
         let hand  = isP1 ? p1Hand  : p2Hand;
         let deck  = isP1 ? p1Cards : p2Cards;
         const playerRows = getPlayerRows(isP1 ? 1 : 2);
@@ -520,6 +716,10 @@
     /* Turn handeling */
     /* ----------------------------------------------------------------------------------- */
     function onKeyDown(e) {
+        if (!isMyTurn) {
+            return;
+        }
+
         if (e.key === "Enter") {
             endTurn()
         }
@@ -556,7 +756,7 @@
                 p2Gem1Visibility = "hidden"
             } else if(p2Gem1Visibility == "hidden"){
                 p2Gem2Visibility = "hidden"
-                alert("Player 1 wins!")
+                setActionNotice('Player 1 wins!')
             }
         } else if(p1TotalValue < p2TotalValue){
             if(p1Gem1Visibility == "visible"){
@@ -574,7 +774,7 @@
                 p1Gem1Visibility = "hidden"
             } else if(p1Gem1Visibility == "hidden"){
                 p1Gem2Visibility = "hidden"
-                alert("Player 2 wins!")
+                setActionNotice('Player 2 wins!')
             }
 
         }
@@ -582,12 +782,11 @@
     }
     
     function endTurn() {
-        turn += 0.5
-        if(popupVisibility == "block"){
-            popupVisibility = "none"
-        } else if(popupVisibility == "none"){
-            popupVisibility = "block"
+        if (!isMyTurn) {
+            return;
         }
+
+        turn = activePlayerNumber === 1 ? 2 : 1
         placedCard = false
         
     }
@@ -603,9 +802,15 @@
         <div class="match-status match-status--error">{matchmakingError}</div>
     {:else if matchmakingStatus === 'waiting'}
         <div class="match-status">Waiting for an opponent to join match {gameCode}...</div>
+    {:else if matchmakingStatus === 'active' && !isMyTurn}
+        <div class="match-status">Opponent is making their move...</div>
     {/if}
 
-    {#if turn % 2 == 1}
+    {#if actionNotice}
+        <div class="match-status match-status--info">{actionNotice}</div>
+    {/if}
+
+    {#if isP1Perspective}
         <button class="P1leader" on:click={() => {console.log("p1 Leader")}}>
             <img src="{p1Leader.name}.webp" alt="Player 1 Leader" loading="lazy" decoding="async">
         </button>
@@ -615,7 +820,7 @@
         </button>
     {/if}
 
-    {#if turn % 2 == 0}
+    {#if !isP1Perspective}
         <button class="P1leader" on:click={() => {console.log("p1 Leader")}}>
             <img src="{p2Leader.name}.webp" alt="Player 1 Leader" loading="lazy" decoding="async">
         </button>
@@ -627,7 +832,7 @@
     
 
     <div class="HeldCards">
-        {#if turn % 2 == 1}
+        {#if isP1Perspective}
                 
             {#each p1Hand as card}
                 {#if card.type == "unit"}
@@ -655,7 +860,7 @@
             {/each}
         {/if}
 
-        {#if turn % 2 == 0}
+        {#if !isP1Perspective}
                 
             {#each p2Hand as card}
                 {#if card.type == "unit"}
@@ -687,7 +892,7 @@
 
 
     <section class="Board-top">
-        {#if turn % 2 == 0}
+        {#if !isP1Perspective}
             <div class="totalvalue">{p1TotalValue}</div>
 
             <div class="melee" style="top: 67%;">
@@ -836,7 +1041,7 @@
         {/if}
 
 
-        {#if turn % 2 == 1}
+        {#if isP1Perspective}
             <div class="totalvalue">{p2TotalValue}</div>
             
             <div class="melee" style="top: 67%;">
@@ -988,7 +1193,7 @@
     </section>
 
     <section class="Board-bottom">
-        {#if turn % 2 == 1}
+        {#if isP1Perspective}
             <div class="totalvalue" style="top:72.3%;">{p1TotalValue}</div>
 
             <button class="melee" on:click={() => selectRow("melee")} style="box-shadow: {meleeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
@@ -1138,7 +1343,7 @@
 
 
 
-        {#if turn % 2 == 0}
+        {#if !isP1Perspective}
             <div class="totalvalue" style="top:72%;">{p2TotalValue}</div>
 
             <button class="melee" on:click={() => selectRow("melee")} style="box-shadow: {meleeSelected ? "#ff9100" : "#ff910000"} 0 0 1vh;">
@@ -1290,9 +1495,9 @@
 
 
     <section class="TopPlayerStats">
-        {#if turn % 2 == 1}
+        {#if isP1Perspective}
             <div class="PlayerInfo">
-                <h1>P2</h1>
+                <h1>{p2Username}</h1>
                 <p>{p2[2].name}</p>
             </div>
 
@@ -1303,9 +1508,9 @@
                 <img src="Gem.png" alt="gem" class="gem" style="visibility: {p2Gem2Visibility};">
             </div>
         {/if}
-        {#if turn % 2 == 0}
+        {#if !isP1Perspective}
             <div class="PlayerInfo">
-                <h1>P1</h1>
+                <h1>{p1Username}</h1>
                 <p>{p1[2].name}</p>
             </div>
 
@@ -1319,9 +1524,9 @@
     </section>
 
     <section class="BottomPlayerStats">
-        {#if turn % 2 == 1}
+        {#if isP1Perspective}
             <div class="PlayerInfo" style="margin-top: 40%;">
-                <h1>P1</h1>
+                <h1>{p1Username}</h1>
                 <p>{p1[2].name}</p>
             </div>
 
@@ -1332,9 +1537,9 @@
                 <img src="Gem.png" alt="gem" class="gem" style="visibility: {p1Gem2Visibility};">
             </div>
         {/if}
-        {#if turn % 2 == 0}
+        {#if !isP1Perspective}
             <div class="PlayerInfo" style="margin-top: 40%;">
-                <h1>P2</h1>
+                <h1>{p2Username}</h1>
                 <p>{p2[2].name}</p>
             </div>
 
@@ -1356,11 +1561,11 @@
         {/each}
     </div>
 
-    <button class="passRound" on:click|preventDefault={() => {passedTurn = true; endTurn()}}>
+    <button class="passRound" disabled={!isMyTurn} style="opacity: {isMyTurn ? 1 : 0.45};" on:click|preventDefault={() => {passedTurn = true; endTurn()}}>
         <img src="keyboard_tab_icon_outline.png" alt=enter class="enter"> Tab to pass Round
     </button>
 
-    <button class="confirm" on:click|preventDefault={() => endTurn()}>
+    <button class="confirm" disabled={!isMyTurn} style="opacity: {isMyTurn ? 1 : 0.45};" on:click|preventDefault={() => endTurn()}>
         <img src="keyboard_enter_outline.png" alt=enter class="enter"> End Turn
     </button>
         
@@ -1421,6 +1626,13 @@
         background: rgba(75, 8, 8, 0.82);
         border-color: rgba(255, 120, 120, 0.5);
         color: #ffe8e8;
+    }
+
+    .match-status--info {
+        top: 7vh;
+        background: rgba(22, 44, 22, 0.82);
+        border-color: rgba(111, 219, 111, 0.5);
+        color: #eaffea;
     }
 
     main button {
