@@ -10,91 +10,111 @@
 </script>
 
 <main>
-	<h1>Character Tracker</h1>
+	<section class="menu-shell">
+		<h1>WebGwent</h1>
+		<p class="subtitle">Classic battle menu</p>
 
-	{#if data.user}
-		<div class="card">
-			<p>Welcome back, {data.user.username}!</p>
-			<a href="/characters">View Characters</a>
-			<form method="POST" action="/logout">
-				<button type="submit">Logout</button>
+		{#if data.user}
+			<p class="welcome">Welcome back, {data.user.username}.</p>
+			<nav class="menu-list" aria-label="Game menu">
+				<a href="/card-select" class="menu-item">Start Match</a>
+				<a href="/card-select" class="menu-item">Deck Builder</a>
+				<a href="/profile" class="menu-item">Profile</a>
+				<a href="/sessions" class="menu-item">Active Sessions</a>
+			</nav>
+			<form method="POST" action="/logout" class="logout-form">
+				<button type="submit" class="menu-item menu-item--danger">Quit to Desktop</button>
 			</form>
-		</div>
-	{:else}
-		<div class="card">
-			<p>Get started by logging in or registering</p>
-			<div class="row-actions">
-				<a href="/login">Login</a>
-				<a href="/register">Register</a>
-            </div>
-		</div>
-	{/if}
+		{:else}
+			<p class="welcome">Choose an option to continue.</p>
+			<nav class="menu-list" aria-label="Guest menu">
+				<a href="/login" class="menu-item">Login</a>
+				<a href="/register" class="menu-item">Register</a>
+			</nav>
+		{/if}
+	</section>
 </main>
 
 <style>
 	main {
 		width: 100%;
-		height: 100%;
+		min-height: 100%;
 		display: flex;
-		flex-direction: column;
 		justify-content: center;
 		align-items: center;
-		gap: 1rem;
-		padding: 1rem;
+		padding: 1.2rem;
+		background: radial-gradient(circle at top, #f5f7fb 0%, #e8edf5 100%);
+	}
+
+	.menu-shell {
+		width: 100%;
+		max-width: 460px;
+		padding: 1.1rem;
+		border: 1px solid #cfd6e3;
+		border-radius: 10px;
+		background: rgba(255, 255, 255, 0.95);
+		box-shadow: 0 12px 30px rgba(20, 29, 45, 0.12);
 	}
 
 	h1 {
-		font-size: 1.8rem;
+		font-size: 2rem;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+		text-align: center;
 		margin: 0;
 	}
+
+	.subtitle {
+		text-align: center;
+		margin: 0.2rem 0 0.9rem;
+		font-size: 0.95rem;
+		color: #546179;
+	}
+
+	.welcome {
+		margin: 0 0 0.85rem;
+		text-align: center;
+	}
+
+	.menu-list {
+		display: grid;
+		gap: 0.55rem;
+	}
+
+	.logout-form {
+		margin-top: 0.55rem;
+    }
+
+	.menu-item {
+		display: block;
+		width: 100%;
+		text-align: center;
+		text-decoration: none;
+		color: #111827;
+		font: inherit;
+		padding: 0.65rem 0.8rem;
+		border: 1px solid #d1d5db;
+		border-radius: 0.45rem;
+		background: #fff;
+		cursor: pointer;
+	}
+
+	.menu-item:hover {
+		background: #f2f5fb;
+	}
+
+	.menu-item--danger {
+		border-color: #f2c6c6;
+		color: #8d2525;
+		background: #fff8f8;
+	}
+
+	button {
+		width: 100%;
+    }
 
 	p {
 		margin: 0;
-	}
-
-	.card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		width: 100%;
-		max-width: 360px;
-		padding: 1rem;
-		border: 1px solid #d1d5db;
-		border-radius: 0.5rem;
-		background: #fff;
-	}
-
-	.row-actions {
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-	}
-
-	a,
-	button {
-		font: inherit;
-	}
-
-	a {
-		text-decoration: none;
-		color: inherit;
-		padding: 0.45rem 0.7rem;
-		border: 1px solid #d1d5db;
-		border-radius: 0.35rem;
-		display: inline-block;
-		width: fit-content;
-	}
-
-	form {
-		display: flex;
-	}
-
-	button {
-		padding: 0.45rem 0.7rem;
-		border: 1px solid #d1d5db;
-		background: #fff;
-		border-radius: 0.35rem;
-		cursor: pointer;
 	}
 </style>
 

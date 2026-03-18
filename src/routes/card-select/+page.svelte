@@ -811,6 +811,7 @@
         position: absolute;
         bottom: 2vh;
         right: 2vw;
+        color: white;
         background-color: #0000007a;
         border-radius: 2em;
         box-shadow: #ff9100 0 0 0.7vh;

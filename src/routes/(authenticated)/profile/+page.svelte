@@ -51,6 +51,15 @@
       </div>
     {/if}
   </div>
+
+  <div class="quick-actions">
+    <h2>Game Menu</h2>
+    <p>Ready to jump in?</p>
+    <div class="action-row">
+      <a href="/card-select" class="action-link">Open Card Select</a>
+      <a href="/gameboard" class="action-link">Open Gameboard</a>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -60,11 +69,28 @@
     gap: 1rem;
   }
 
-  .user-info, .current-profile-picture, .upload-section {
+  .user-info, .current-profile-picture, .upload-section, .quick-actions {
     padding: 1rem;
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     background: #fff;
+  }
+
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+  }
+
+  .action-link {
+    text-decoration: none;
+    color: inherit;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.35rem;
+    background: #fff;
+    display: inline-block;
   }
 
   .preview {
