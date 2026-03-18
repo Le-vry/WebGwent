@@ -242,6 +242,27 @@
                     queueStateSync();
                     return;
                 }
+
+                // Fallback polling keeps matchmaking reliable when SSE is delayed by hosting proxies.
+                poller = window.setInterval(async () => {
+                    if (matchmakingStatus === 'active') {
+                        if (poller) {
+                            clearInterval(poller);
+                            poller = undefined;
+                        }
+                        return;
+                    }
+
+                    const next = await fetchMatchGameState(gameCode);
+                    if (next.ready) {
+                        if (poller) {
+                            clearInterval(poller);
+                            poller = undefined;
+                        }
+                        queueStateSync();
+                    }
+                }, 2000);
+
                 return;
             }
 
