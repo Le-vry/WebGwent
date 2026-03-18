@@ -53,6 +53,10 @@ export const GET = async ({ locals, params }: RequestEvent) => {
 		return json({ error: 'Forbidden' }, { status: 403 });
 	}
 
+	if (game.status !== 'waiting' && game.status !== 'active') {
+		return json({ error: 'Match is no longer active', status: game.status }, { status: 410 });
+	}
+
 	if (game.status !== 'active' || !game.user2Id) {
 		return json({
 			gameCode: game.gameCode,

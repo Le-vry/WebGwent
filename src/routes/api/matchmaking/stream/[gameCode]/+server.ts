@@ -1,5 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { getPrismaClient } from '$lib/server/prisma';
+import { getMatchDisconnectInfo, getReconnectGraceMs, registerMatchConnection } from '$lib/server/matchPresence';
 
 function sseHeaders() {
 	return {
@@ -14,9 +15,14 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
+	const gameCode = params.gameCode;
+	if (!gameCode) {
+		return new Response('Bad Request', { status: 400 });
+	}
+
 	const prisma = getPrismaClient();
 	const game = await prisma.game.findUnique({
-		where: { gameCode: params.gameCode },
+		where: { gameCode },
 		select: {
 			id: true,
 			user1Id: true,
@@ -31,6 +37,19 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 	if (game.user1Id !== locals.user.id && game.user2Id !== locals.user.id) {
 		return new Response('Forbidden', { status: 403 });
 	}
+
+	const role = game.user1Id === locals.user.id ? 'p1' : 'p2';
+	const unregisterPresence = registerMatchConnection(gameCode, role, async () => {
+		await prisma.game.updateMany({
+			where: {
+				gameCode,
+				status: 'active'
+			},
+			data: {
+				status: 'cancelled'
+			}
+		});
+	});
 
 	const encoder = new TextEncoder();
 	let cleanup = () => {};
@@ -55,12 +74,17 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 				safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 			};
 
-			send('connected', { ok: true, gameCode: params.gameCode });
+			send('connected', {
+				ok: true,
+				gameCode,
+				role,
+				reconnectGraceMs: getReconnectGraceMs()
+			});
 
 			const tick = async () => {
 				if (closed) return;
 				const latest = await prisma.game.findUnique({
-					where: { gameCode: params.gameCode },
+					where: { gameCode },
 					select: {
 						status: true,
 						currentTurn: true,
@@ -70,10 +94,13 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 				});
 				if (!latest) return;
 
+				const disconnect = getMatchDisconnectInfo(gameCode);
+
 				const gameSnapshot = JSON.stringify({
 					status: latest.status,
 					currentTurn: latest.currentTurn,
-					hasOpponent: Boolean(latest.user2Id)
+					hasOpponent: Boolean(latest.user2Id),
+					disconnect
 				});
 				if (gameSnapshot !== lastGameSnapshot) {
 					lastGameSnapshot = gameSnapshot;
@@ -91,7 +118,7 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 				tick().catch(() => {
 					// Keep stream alive; client retries on failure.
 				});
-			}, 1000);
+			}, 2000);
 
 			tick().catch(() => {
 				// Initial sync is best-effort.
@@ -104,6 +131,7 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 			cleanup = () => {
 				if (closed) return;
 				closed = true;
+				unregisterPresence();
 				clearInterval(interval);
 				clearInterval(heartbeat);
 				try {

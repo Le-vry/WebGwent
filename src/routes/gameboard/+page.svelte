@@ -13,6 +13,12 @@
     let p1Username = 'Player 1'
     let p2Username = 'Player 2'
     let actionNotice = ''
+    let waitingPollTimer = null
+    let waitingPollDelay = 2000
+    let waitingPollInFlight = false
+    let disconnectNotice = ''
+    let disconnectDeadlineMs = 0
+    let disconnectTicker = null
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -27,6 +33,53 @@
         window.setTimeout(() => {
             if (actionNotice === message) actionNotice = '';
         }, 2200);
+    }
+
+    function formatCountdown(totalMs) {
+        const totalSeconds = Math.max(0, Math.ceil(totalMs / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function stopDisconnectTicker() {
+        if (disconnectTicker) {
+            window.clearInterval(disconnectTicker);
+            disconnectTicker = null;
+        }
+    }
+
+    function clearDisconnectNotice() {
+        disconnectDeadlineMs = 0;
+        disconnectNotice = '';
+        stopDisconnectTicker();
+    }
+
+    function refreshDisconnectNotice() {
+        if (!disconnectDeadlineMs) {
+            clearDisconnectNotice();
+            return;
+        }
+
+        const remaining = disconnectDeadlineMs - Date.now();
+        if (remaining <= 0) {
+            disconnectNotice = 'Opponent did not reconnect in time. Ending match...';
+            stopDisconnectTicker();
+            return;
+        }
+
+        disconnectNotice = `Player disconnected, has ${formatCountdown(remaining)} to reconnect before match termination.`;
+    }
+
+    function setDisconnectNotice(deadlineMs) {
+        disconnectDeadlineMs = deadlineMs;
+        refreshDisconnectNotice();
+
+        if (!disconnectTicker) {
+            disconnectTicker = window.setInterval(() => {
+                refreshDisconnectNotice();
+            }, 1000);
+        }
     }
 
     function initializeFromPlayers(playersData) {
@@ -178,6 +231,27 @@
                     });
                 } else if (meta.status === 'waiting') {
                     matchmakingStatus = 'waiting';
+                    clearDisconnectNotice();
+                } else if (meta.status) {
+                    matchmakingError = 'This match ended. Start a new match from card select.';
+                    matchmakingStatus = '';
+                    clearWaitingPoll();
+                    clearDisconnectNotice();
+                    if (sseConnection) {
+                        sseConnection.close();
+                        sseConnection = null;
+                    }
+                }
+
+                if (
+                    meta.disconnect &&
+                    typeof meta.disconnect.deadlineMs === 'number' &&
+                    meta.disconnect.role !== myRole &&
+                    meta.status === 'active'
+                ) {
+                    setDisconnectNotice(meta.disconnect.deadlineMs);
+                } else {
+                    clearDisconnectNotice();
                 }
             } catch (error) {
                 console.error('Failed to parse SSE game meta:', error);
@@ -213,6 +287,11 @@
 
         if (!res.ok) {
             matchmakingError = result?.error ?? `Could not load game state (HTTP ${res.status}).`;
+            if (res.status === 410) {
+                matchmakingStatus = '';
+                clearWaitingPoll();
+                clearDisconnectNotice();
+            }
             return { ready: false };
         }
 
@@ -221,9 +300,12 @@
             return { ready: false };
         }
 
+        matchmakingError = '';
+
         if (result.status === 'waiting') {
             matchmakingStatus = 'waiting';
             myRole = result.role ?? myRole;
+            clearDisconnectNotice();
             return { ready: false };
         }
 
@@ -243,9 +325,43 @@
         return { ready: true };
     }
 
-    onMount(() => {
-        let poller
+    function clearWaitingPoll() {
+        if (waitingPollTimer) {
+            window.clearTimeout(waitingPollTimer);
+            waitingPollTimer = null;
+        }
+        waitingPollInFlight = false;
+    }
 
+    function scheduleWaitingPoll(code) {
+        if (matchmakingStatus === 'active') {
+            clearWaitingPoll();
+            return;
+        }
+
+        waitingPollTimer = window.setTimeout(async () => {
+            if (waitingPollInFlight || matchmakingStatus === 'active') {
+                scheduleWaitingPoll(code);
+                return;
+            }
+
+            waitingPollInFlight = true;
+            const next = await fetchMatchGameState(code);
+            waitingPollInFlight = false;
+
+            if (next.ready) {
+                clearWaitingPoll();
+                queueStateSync();
+                return;
+            }
+
+            // Back off under repeated waiting/errors to avoid request storms.
+            waitingPollDelay = Math.min(waitingPollDelay + 500, 5000);
+            scheduleWaitingPoll(code);
+        }, waitingPollDelay);
+    }
+
+    onMount(() => {
         const init = async () => {
             const params = new URLSearchParams(window.location.search);
             gameCode = params.get('gameCode') ?? '';
@@ -262,24 +378,8 @@
                 }
 
                 // Fallback polling keeps matchmaking reliable when SSE is delayed by hosting proxies.
-                poller = window.setInterval(async () => {
-                    if (matchmakingStatus === 'active') {
-                        if (poller) {
-                            clearInterval(poller);
-                            poller = undefined;
-                        }
-                        return;
-                    }
-
-                    const next = await fetchMatchGameState(gameCode);
-                    if (next.ready) {
-                        if (poller) {
-                            clearInterval(poller);
-                            poller = undefined;
-                        }
-                        queueStateSync();
-                    }
-                }, 2000);
+                waitingPollDelay = 2000;
+                scheduleWaitingPoll(gameCode);
 
                 return;
             }
@@ -292,7 +392,8 @@
         init();
 
         return () => {
-            if (poller) clearInterval(poller);
+            clearWaitingPoll();
+            clearDisconnectNotice();
             if (syncTimer) clearTimeout(syncTimer);
             if (sseConnection) {
                 sseConnection.close();
@@ -847,6 +948,10 @@
 
     {#if actionNotice}
         <div class="match-status match-status--info">{actionNotice}</div>
+    {/if}
+
+    {#if disconnectNotice}
+        <div class="match-status match-status--warning">{disconnectNotice}</div>
     {/if}
 
     {#if isP1Perspective}
@@ -1672,6 +1777,13 @@
         background: rgba(22, 44, 22, 0.82);
         border-color: rgba(111, 219, 111, 0.5);
         color: #eaffea;
+    }
+
+    .match-status--warning {
+        top: 12.5vh;
+        background: rgba(63, 42, 3, 0.88);
+        border-color: rgba(255, 192, 74, 0.6);
+        color: #ffe9ba;
     }
 
     main button {

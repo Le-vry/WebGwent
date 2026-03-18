@@ -4,6 +4,10 @@
 			id: string;
 			username: string;
 		} | null;
+		reconnectMatch: {
+			gameCode: string;
+			status: string;
+		} | null;
 	}
 
 	export let data: PageData;
@@ -16,6 +20,14 @@
 
 		{#if data.user}
 			<p class="welcome">Welcome back, {data.user.username}.</p>
+			{#if data.reconnectMatch}
+				<a
+					href={`/gameboard?gameCode=${encodeURIComponent(data.reconnectMatch.gameCode)}`}
+					class="reconnect-banner"
+				>
+					Reconnect to current match ({data.reconnectMatch.status})
+				</a>
+			{/if}
 			<nav class="menu-list" aria-label="Game menu">
 				<a href="/card-select" class="menu-item">Start Match</a>
 				<a href="/card-select" class="menu-item">Deck Builder</a>
@@ -79,6 +91,23 @@
 	.menu-list {
 		display: grid;
 		gap: 0.55rem;
+	}
+
+	.reconnect-banner {
+		display: block;
+		margin: 0 0 0.7rem;
+		padding: 0.65rem 0.8rem;
+		border-radius: 0.45rem;
+		border: 1px solid #8bc0ff;
+		background: #e8f2ff;
+		color: #123f73;
+		text-decoration: none;
+		text-align: center;
+		font-weight: 600;
+	}
+
+	.reconnect-banner:hover {
+		background: #d7e9ff;
 	}
 
 	.logout-form {

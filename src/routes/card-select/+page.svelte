@@ -473,6 +473,10 @@
             start = 'Finding Match...'
             setDeckStatus('Searching for an opponent...', false)
 
+            await fetch('/api/matchmaking/reset', {
+                method: 'POST'
+            }).catch(() => null);
+
             const res = await fetch('/api/matchmaking/join', {
                 method: 'POST',
                 headers: {
