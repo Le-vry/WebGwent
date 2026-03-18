@@ -1498,7 +1498,7 @@
         {#if isP1Perspective}
             <div class="PlayerInfo">
                 <h1>{p2Username}</h1>
-                <p>{p2[2].name}</p>
+                <p>{p2?.[2]?.name ?? 'Unknown Faction'}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex; top: 60%;">
@@ -1511,7 +1511,7 @@
         {#if !isP1Perspective}
             <div class="PlayerInfo">
                 <h1>{p1Username}</h1>
-                <p>{p1[2].name}</p>
+                <p>{p1?.[2]?.name ?? 'Unknown Faction'}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex; top: 60%;">
@@ -1527,7 +1527,7 @@
         {#if isP1Perspective}
             <div class="PlayerInfo" style="margin-top: 40%;">
                 <h1>{p1Username}</h1>
-                <p>{p1[2].name}</p>
+                <p>{p1?.[2]?.name ?? 'Unknown Faction'}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex;">
@@ -1540,7 +1540,7 @@
         {#if !isP1Perspective}
             <div class="PlayerInfo" style="margin-top: 40%;">
                 <h1>{p2Username}</h1>
-                <p>{p2[2].name}</p>
+                <p>{p2?.[2]?.name ?? 'Unknown Faction'}</p>
             </div>
 
             <div class="amountofCards" style="display:inline-flex;">
