@@ -195,11 +195,29 @@
     }
 
     async function fetchMatchGameState(code) {
-        const res = await fetch(`/api/matchmaking/game/${encodeURIComponent(code)}`);
-        const result = await res.json();
+        let res;
+        try {
+            res = await fetch(`/api/matchmaking/game/${encodeURIComponent(code)}`);
+        } catch (error) {
+            matchmakingError = 'Network error while loading game state.';
+            return { ready: false };
+        }
+
+        const raw = await res.text();
+        let result = null;
+        try {
+            result = raw ? JSON.parse(raw) : null;
+        } catch {
+            result = null;
+        }
 
         if (!res.ok) {
-            matchmakingError = result?.error ?? 'Could not load game state.';
+            matchmakingError = result?.error ?? `Could not load game state (HTTP ${res.status}).`;
+            return { ready: false };
+        }
+
+        if (!result || typeof result !== 'object') {
+            matchmakingError = 'Received an invalid game state response.';
             return { ready: false };
         }
 

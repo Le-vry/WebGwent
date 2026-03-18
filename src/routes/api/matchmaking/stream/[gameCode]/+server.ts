@@ -33,20 +33,32 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 	}
 
 	const encoder = new TextEncoder();
+	let cleanup = () => {};
 
 	const stream = new ReadableStream<Uint8Array>({
 		start(controller) {
 			let lastPayload = '';
 			let lastGameSnapshot = '';
+			let closed = false;
+
+			const safeEnqueue = (chunk: Uint8Array) => {
+				if (closed) return;
+				try {
+					controller.enqueue(chunk);
+				} catch {
+					closed = true;
+				}
+			};
 
 			const send = (event: string, data: unknown) => {
-				controller.enqueue(encoder.encode(`event: ${event}\n`));
-				controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+				safeEnqueue(encoder.encode(`event: ${event}\n`));
+				safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 			};
 
 			send('connected', { ok: true, gameCode: params.gameCode });
 
 			const tick = async () => {
+				if (closed) return;
 				const latest = await prisma.game.findUnique({
 					where: { gameCode: params.gameCode },
 					select: {
@@ -86,14 +98,25 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 			});
 
 			const heartbeat = setInterval(() => {
-				controller.enqueue(encoder.encode(': ping\n\n'));
+				safeEnqueue(encoder.encode(': ping\n\n'));
 			}, 15000);
 
-			request.signal.addEventListener('abort', () => {
+			cleanup = () => {
+				if (closed) return;
+				closed = true;
 				clearInterval(interval);
 				clearInterval(heartbeat);
-				controller.close();
-			});
+				try {
+					controller.close();
+				} catch {
+					// Stream may already be closed by the runtime.
+				}
+			};
+
+			request.signal.addEventListener('abort', cleanup);
+		},
+		cancel() {
+			cleanup();
 		}
 	});
 
