@@ -1,4 +1,5 @@
 ﻿<script>
+    // @ts-nocheck
     import { onMount } from 'svelte'
     import { players_store } from "$lib/players.js"
 
@@ -1759,6 +1760,4 @@
         color: #f9eabd;
         text-align: center;
     }
-
-
 </style>
