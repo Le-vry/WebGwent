@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/stores';
+
 	interface LayoutData {
 		user: {
 			id: string;
@@ -7,6 +9,10 @@
 	}
 
 	export let data: LayoutData;
+
+	$: isFullscreenRoute =
+		$page.url.pathname.startsWith('/card-select') ||
+		$page.url.pathname.startsWith('/gameboard');
 </script>
 
 <svelte:head>
@@ -15,29 +21,33 @@
 	<meta name="viewport" content="width=device-width" />
 </svelte:head>
 
-<div id="app">
-	<header class="site-header">
-		<nav class="nav">
-			<a href="/" class="brand">Character Tracker</a>
-			<div class="links">
-				{#if data.user}
-					<a href="/characters">Characters</a>
-					<a href="/profile">Profile</a>
-					<form action="/logout" method="POST">
-						<button type="submit">Logout</button>
-					</form>
-				{:else}
-					<a href="/login">Login</a>
-					<a href="/register">Register</a>
-				{/if}
-			</div>
-		</nav>
-	</header>
+{#if isFullscreenRoute}
+	<slot />
+{:else}
+	<div id="app">
+		<header class="site-header">
+			<nav class="nav">
+				<a href="/" class="brand">Character Tracker</a>
+				<div class="links">
+					{#if data.user}
+						<a href="/characters">Characters</a>
+						<a href="/profile">Profile</a>
+						<form action="/logout" method="POST">
+							<button type="submit">Logout</button>
+						</form>
+					{:else}
+						<a href="/login">Login</a>
+						<a href="/register">Register</a>
+					{/if}
+				</div>
+			</nav>
+		</header>
 
-	<main class="page-shell">
-		<slot />
-	</main>
-</div>
+		<main class="page-shell">
+			<slot />
+		</main>
+	</div>
+{/if}
 
 <style>
 	:global(*) {

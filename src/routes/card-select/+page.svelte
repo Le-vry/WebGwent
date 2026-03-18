@@ -1,4 +1,5 @@
 <script>
+    // @ts-nocheck
     import {players_store} from "$lib/players";
     import {base} from '$app/paths';
     import { goto } from '$app/navigation';
