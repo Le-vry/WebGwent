@@ -603,6 +603,18 @@
         height: 100vh;
         width: 100vw;
     }
+
+    main button {
+        border: none;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    main button:focus,
+    main button:focus-visible {
+        outline: none;
+    }
     /* 0-----------------------------------------------------------------------------------0 */
 
 
