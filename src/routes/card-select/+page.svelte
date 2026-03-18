@@ -284,7 +284,7 @@
 
     /* Saved player data*/
     /*-----------------------------------------------------------------------------------------*/
-    let player = "P1"
+    let player = "MATCH"
     let selected_deck = []
     let players = []
 
@@ -301,7 +301,7 @@
 
     let count = 0
 
-    let start = "Confirm"
+    let start = "Find Match"
 
     
     let color1
@@ -438,37 +438,47 @@
             confirm()
         }
     }
-    function confirm(){
-        if (player == "P1"){
-            
-            P1_selected_Deck = selected_deck
-            P1_selected_Leader = shownLeaders[count]
-            P1_selected_Faction = selected_faction
+    async function confirm(){
+        if (!selected_deck.length) {
+            alert("Select cards before entering matchmaking.");
+            return;
+        }
 
-            P1 = [P1_selected_Deck, P1_selected_Leader, P1_selected_Faction]
+        const leader = shownLeaders[count];
+        if (!leader) {
+            alert("Select a leader before entering matchmaking.");
+            return;
+        }
 
-            player = "P2"
-            selected_deck = []
-            shownDeck = Base_NR_Deck
-            selected = 2
-            selected_faction = decks[selected]
-            start = "Start"
-            selectFaction()
-            deckSetUp()
-        } else {
-            P2_selected_Deck = selected_deck
-            P2_selected_Leader = shownLeaders[count]
-            P2_selected_Faction = selected_faction
+        const payload = {
+            deck: selected_deck,
+            leader,
+            faction: selected_faction
+        };
 
-            P2 = [P2_selected_Deck, P2_selected_Leader, P2_selected_Faction]
-            players = [P1, P2]
+        try {
+            const res = await fetch('/api/matchmaking/join', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
 
-            $players_store =  JSON.stringify(players)
-            console.log($players_store)
+            const result = await res.json();
+            if (!res.ok) {
+                alert(result?.error ?? 'Could not join matchmaking.');
+                return;
+            }
 
+            if (result.status === 'waiting') {
+                alert('Matchmaking started. Waiting for another player to join.');
+            }
 
-            goto(base + '/gameboard')
-
+            goto(base + `/gameboard?gameCode=${encodeURIComponent(result.gameCode)}`);
+        } catch (error) {
+            console.error('Matchmaking error:', error);
+            alert('Network error while joining matchmaking.');
         }
     }
     /* 4-----------------------------------------------------------------------------------4 */

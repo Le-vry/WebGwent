@@ -3,15 +3,18 @@
     import { onMount } from 'svelte'
     import { players_store } from "$lib/players.js"
 
-    onMount(() => {
-    
-        if($players_store.length > 0){
-            players = JSON.parse($players_store)
+    let matchmakingStatus = ''
+    let matchmakingError = ''
+    let gameCode = ''
+
+    function initializeFromPlayers(playersData) {
+        if (!Array.isArray(playersData) || playersData.length < 2) {
+            return false;
         }
 
+        players = playersData
         p1 = players[0]
         p2 = players[1]
-        
 
         p1Leader = p1[1]
         const p1Init = initializePlayerHand(p1[0]);
@@ -22,6 +25,63 @@
         const p2Init = initializePlayerHand(p2[0]);
         p2Cards = p2Init.deck;
         p2Hand = p2Init.hand;
+
+        return true;
+    }
+
+    async function fetchMatchGameState(code) {
+        const res = await fetch(`/api/matchmaking/game/${encodeURIComponent(code)}`);
+        const result = await res.json();
+
+        if (!res.ok) {
+            matchmakingError = result?.error ?? 'Could not load game state.';
+            return { ready: false };
+        }
+
+        if (result.status === 'waiting') {
+            matchmakingStatus = 'waiting';
+            return { ready: false };
+        }
+
+        matchmakingStatus = 'active';
+        initializeFromPlayers(result.players);
+        $players_store = JSON.stringify(result.players);
+        return { ready: true };
+    }
+
+    onMount(() => {
+        let poller
+
+        const init = async () => {
+            const params = new URLSearchParams(window.location.search);
+            gameCode = params.get('gameCode') ?? '';
+
+            if (gameCode) {
+                const first = await fetchMatchGameState(gameCode);
+                if (first.ready) return;
+
+                if (!matchmakingError) {
+                    poller = window.setInterval(async () => {
+                        const next = await fetchMatchGameState(gameCode);
+                        if (next.ready && poller) {
+                            clearInterval(poller);
+                            poller = undefined;
+                        }
+                    }, 3000);
+                }
+                return;
+            }
+
+            if ($players_store.length > 0) {
+                initializeFromPlayers(JSON.parse($players_store));
+            }
+        };
+
+        init();
+
+        return () => {
+            if (poller) clearInterval(poller);
+        };
     })
     
 
@@ -539,6 +599,12 @@
 <audio src="Gwent Music.mp3" autoplay loop></audio>
 
 <main>
+    {#if matchmakingError}
+        <div class="match-status match-status--error">{matchmakingError}</div>
+    {:else if matchmakingStatus === 'waiting'}
+        <div class="match-status">Waiting for an opponent to join match {gameCode}...</div>
+    {/if}
+
     {#if turn % 2 == 1}
         <button class="P1leader" on:click={() => {console.log("p1 Leader")}}>
             <img src="{p1Leader.name}.webp" alt="Player 1 Leader" loading="lazy" decoding="async">
@@ -1335,6 +1401,26 @@
         background-size:cover;
         height: 100vh;
         width: 100vw;
+    }
+
+    .match-status {
+        position: absolute;
+        top: 1.5vh;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        padding: 0.5rem 0.9rem;
+        border-radius: 0.6rem;
+        background: rgba(0, 0, 0, 0.72);
+        color: #f8e9c2;
+        border: 1px solid rgba(255, 187, 51, 0.45);
+        font: 500 0.95rem 'Roboto', sans-serif;
+    }
+
+    .match-status--error {
+        background: rgba(75, 8, 8, 0.82);
+        border-color: rgba(255, 120, 120, 0.5);
+        color: #ffe8e8;
     }
 
     main button {
