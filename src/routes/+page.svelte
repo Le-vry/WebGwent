@@ -29,7 +29,7 @@
 				</a>
 			{/if}
 			<nav class="menu-list" aria-label="Game menu">
-				<a href="/card-select" class="menu-item">Start Match</a>
+				<a href="/find-match" class="menu-item">Start Match</a>
 				<a href="/card-select" class="menu-item">Deck Builder</a>
 				<a href="/profile" class="menu-item">Profile</a>
 				<a href="/sessions" class="menu-item">Active Sessions</a>

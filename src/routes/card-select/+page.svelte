@@ -1,5 +1,6 @@
 <script>
     // @ts-nocheck
+    import { onMount } from 'svelte'
     import {players_store} from "$lib/players";
     import {base} from '$app/paths';
     import { goto } from '$app/navigation';
@@ -301,14 +302,81 @@
 
     let count = 0
 
-    let start = "Find Match"
+    let start = "Save Deck"
     let deckStatus = ''
     let deckStatusError = false
     let findingMatch = false
+    const SAVED_DECKS_KEY = 'webgwent.savedDecks.v1'
+    let savedDecksByFaction = {}
 
     function setDeckStatus(message, isError = false) {
         deckStatus = message
         deckStatusError = isError
+    }
+
+    function cloneCardList(cards) {
+        return Array.isArray(cards) ? cards.map((card) => ({ ...card })) : []
+    }
+
+    function getFactionKey() {
+        return selected_faction?.name ?? `Faction-${selected}`
+    }
+
+    function syncShownDeck() {
+        const baseDeck = decks_cards[selected]
+        if (!Array.isArray(baseDeck)) {
+            shownLeaders = []
+            shownDeck = []
+            selected_deck = []
+            count = 0
+            return
+        }
+
+        shownLeaders = baseDeck.filter(card => card.type == "leader").map((card) => ({ ...card }))
+        if (!shownLeaders.length) {
+            shownDeck = []
+            selected_deck = []
+            count = 0
+            return
+        }
+
+        const selectedIds = new Set(selected_deck.map(card => card.id))
+        shownDeck = baseDeck
+            .filter(card => card.type != "leader" && !selectedIds.has(card.id))
+            .map((card) => ({ ...card }))
+
+        if (count > shownLeaders.length - 1) count = 0
+    }
+
+    function loadSavedDecks() {
+        if (typeof window === 'undefined') return
+        try {
+            const raw = window.localStorage.getItem(SAVED_DECKS_KEY)
+            savedDecksByFaction = raw ? JSON.parse(raw) : {}
+        } catch {
+            savedDecksByFaction = {}
+        }
+    }
+
+    function persistSavedDecks() {
+        if (typeof window === 'undefined') return
+        window.localStorage.setItem(SAVED_DECKS_KEY, JSON.stringify(savedDecksByFaction))
+    }
+
+    function restoreSavedDeckForFaction() {
+        const factionKey = getFactionKey()
+        const saved = savedDecksByFaction[factionKey]
+
+        selected_deck = cloneCardList(saved?.deck)
+        syncShownDeck()
+
+        const savedLeaderName = saved?.leader?.name
+        if (savedLeaderName && shownLeaders.length) {
+            const leaderIndex = shownLeaders.findIndex((leader) => leader.name === savedLeaderName)
+            count = leaderIndex >= 0 ? leaderIndex : 0
+        } else {
+            count = 0
+        }
     }
 
     
@@ -324,8 +392,7 @@
     /* 1 Initial deck setup and decksetup for swithing*/
     /* 1-----------------------------------------------------------------------------------1 */
     function deckSetUp () {
-        shownLeaders = shownDeck.filter(card => card.type == "leader")
-        shownDeck = shownDeck.filter(card => card.type != "leader")
+        syncShownDeck()
     }
     /* 1-----------------------------------------------------------------------------------1 */
 
@@ -341,11 +408,7 @@
             selected -= 1
         }
         selected_faction = decks[selected]
-        selected_deck = []
-        selected_faction = decks[selected]
-        shownDeck = decks_cards[selected]
-        shownDeck = shownDeck
-        deckSetUp()
+        restoreSavedDeckForFaction()
         selectFaction()
     }
     function cycleright () {
@@ -355,10 +418,7 @@
             selected += 1
         }
         selected_faction = decks[selected]
-        selected_deck = []
-        shownDeck = decks_cards[selected]
-        shownDeck = shownDeck
-        deckSetUp()
+        restoreSavedDeckForFaction()
         selectFaction()
     }
     function selectFaction () {
@@ -452,7 +512,7 @@
         if (findingMatch) return;
 
         if (!selected_deck.length) {
-            setDeckStatus('Select cards before entering matchmaking.', true)
+            setDeckStatus('Select cards before saving this faction deck.', true)
             return;
         }
 
@@ -470,43 +530,36 @@
 
         try {
             findingMatch = true
-            start = 'Finding Match...'
-            setDeckStatus('Searching for an opponent...', false)
+            start = 'Saving Deck...'
 
-            await fetch('/api/matchmaking/reset', {
-                method: 'POST'
-            }).catch(() => null);
-
-            const res = await fetch('/api/matchmaking/join', {
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await res.json();
-            if (!res.ok) {
-                setDeckStatus(result?.error ?? 'Could not join matchmaking.', true)
-                findingMatch = false
-                start = 'Find Match'
-                return;
+            const factionKey = getFactionKey()
+            savedDecksByFaction = {
+                ...savedDecksByFaction,
+                [factionKey]: payload
             }
-
-            setDeckStatus('Match found. Joining board...', false)
-
-            goto(base + `/gameboard?gameCode=${encodeURIComponent(result.gameCode)}`);
+            persistSavedDecks()
+            setDeckStatus(`Saved ${factionKey} deck. Use Find Match to play.`, false)
         } catch (error) {
-            console.error('Matchmaking error:', error);
-            setDeckStatus('Network error while joining matchmaking.', true)
+            console.error('Deck save error:', error);
+            setDeckStatus('Could not save deck.', true)
+        } finally {
             findingMatch = false
-            start = 'Find Match'
+            start = 'Save Deck'
         }
+    }
+
+    function goToFindMatch() {
+        goto(base + '/find-match')
     }
     /* 4-----------------------------------------------------------------------------------4 */
 
     deckSetUp()
     selectFaction()
+
+    onMount(() => {
+        loadSavedDecks()
+        restoreSavedDeckForFaction()
+    })
 </script>
 
 <svelte:window on:keydown|preventDefault={onKeyDown} />
@@ -613,6 +666,10 @@
 
     <button class="confirm" disabled={findingMatch} on:click|preventDefault={() => confirm()}>
         <img src="keyboard_enter_outline.png" alt=enter class="enter"> {start}
+    </button>
+
+    <button class="confirm find-match" on:click|preventDefault={goToFindMatch}>
+        Find Match
     </button>
 </main>
 
@@ -872,6 +929,11 @@
     .confirm:disabled {
         opacity: 0.6;
         cursor: not-allowed;
+    }
+
+    .find-match {
+        right: 12.2vw;
+        padding: 0.5em 1.1em;
     }
 
     .deck-status {

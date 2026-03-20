@@ -692,6 +692,12 @@
         if (activePlayer === 1) p1Hand = p1Hand.filter(c => c.id !== card.id);
         else                    p2Hand = p2Hand.filter(c => c.id !== card.id);
 
+        const remainingHand = activePlayer === 1 ? p1Hand.length : p2Hand.length;
+        if (remainingHand === 0 && !isPlayerPassed(activePlayer)) {
+            markPlayerPassed(activePlayer);
+            setActionNotice('No cards left. You automatically pass the round.');
+        }
+
         if (card.type === "unit" || card.type === "hero") {
             if (card.row === "agile") {
                 const rowName = getSelectedRow();
