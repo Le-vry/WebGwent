@@ -19,6 +19,7 @@
     let disconnectNotice = ''
     let disconnectDeadlineMs = 0
     let disconnectTicker = null
+    let disconnectOpponentName = 'Opponent'
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -63,16 +64,17 @@
 
         const remaining = disconnectDeadlineMs - Date.now();
         if (remaining <= 0) {
-            disconnectNotice = 'Opponent did not reconnect in time. Ending match...';
+            disconnectNotice = `${disconnectOpponentName} did not reconnect in time. Match ended.`;
             stopDisconnectTicker();
             return;
         }
 
-        disconnectNotice = `Player disconnected, has ${formatCountdown(remaining)} to reconnect before match termination.`;
+        disconnectNotice = `${disconnectOpponentName} disconnected. Has ${formatCountdown(remaining)} to reconnect.`;
     }
 
-    function setDisconnectNotice(deadlineMs) {
+    function setDisconnectNotice(deadlineMs, opponentName = 'Opponent') {
         disconnectDeadlineMs = deadlineMs;
+        disconnectOpponentName = opponentName;
         refreshDisconnectNotice();
 
         if (!disconnectTicker) {
@@ -192,15 +194,21 @@
         if (!gameCode || matchmakingStatus !== 'active') return;
         if (!force && !isMyTurn) return;
 
+        const statePayload = exportMatchState();
+        console.log('[Push State]', { force, myRole, turn, placedCard, passedTurn, hand: myPlayerNumber === 1 ? p1Hand.length : p2Hand.length });
+
         try {
-            await fetch(`/api/matchmaking/state/${encodeURIComponent(gameCode)}`, {
+            const res = await fetch(`/api/matchmaking/state/${encodeURIComponent(gameCode)}`, {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({
-                    state: exportMatchState(),
+                    state: statePayload,
                     role: myRole
                 })
             });
+            if (!res.ok) {
+                console.warn('[Push State] Server returned:', res.status);
+            }
         } catch (error) {
             console.error('Failed to sync match state:', error);
         }
@@ -222,11 +230,14 @@
         sseConnection.addEventListener('game', (event) => {
             try {
                 const meta = JSON.parse(event.data);
+                console.log('[SSE:game]', { status: meta.status, currentTurn: meta.currentTurn, disconnect: meta.disconnect });
+                
                 if (typeof meta.currentTurn === 'number') {
                     turn = getTurnPlayer(Math.round(meta.currentTurn));
                 }
 
                 if (meta.status === 'active' && matchmakingStatus !== 'active') {
+                    console.log('[SSE:game] Match transitioned to active, hydrating state...');
                     fetchMatchGameState(code).catch((error) => {
                         console.error('Failed to hydrate active match state:', error);
                     });
@@ -234,7 +245,9 @@
                     matchmakingStatus = 'waiting';
                     clearDisconnectNotice();
                 } else if (meta.status) {
-                    matchmakingError = 'This match ended. Start a new match from card select.';
+                    console.warn('[SSE:game] Match status changed to:', meta.status);
+                    const statusMsg = meta.status === 'cancelled' ? 'Match was cancelled.' : 'Match ended.';
+                    matchmakingError = `${statusMsg} Start a new match from card select.`;
                     matchmakingStatus = '';
                     clearWaitingPoll();
                     clearDisconnectNotice();
@@ -250,7 +263,8 @@
                     meta.disconnect.role !== myRole &&
                     meta.status === 'active'
                 ) {
-                    setDisconnectNotice(meta.disconnect.deadlineMs);
+                    const opponentName = meta.disconnect.role === 'p1' ? p1Username : p2Username;
+                    setDisconnectNotice(meta.disconnect.deadlineMs, opponentName);
                 } else {
                     clearDisconnectNotice();
                 }
@@ -274,7 +288,7 @@
         try {
             res = await fetch(`/api/matchmaking/game/${encodeURIComponent(code)}`);
         } catch (error) {
-            matchmakingError = 'Network error while loading game state.';
+            matchmakingError = `Network error: Unable to reach game server.`;
             return { ready: false };
         }
 
@@ -287,7 +301,8 @@
         }
 
         if (!res.ok) {
-            matchmakingError = result?.error ?? `Could not load game state (HTTP ${res.status}).`;
+            const errorMsg = result?.error ?? `Could not load game state (HTTP ${res.status})`;
+            matchmakingError = res.status === 410 ? 'Match no longer exists or was cancelled.' : errorMsg;
             if (res.status === 410) {
                 matchmakingStatus = '';
                 clearWaitingPoll();
@@ -297,7 +312,7 @@
         }
 
         if (!result || typeof result !== 'object') {
-            matchmakingError = 'Received an invalid game state response.';
+            matchmakingError = `Invalid game state response from server.`;
             return { ready: false };
         }
 
@@ -872,8 +887,10 @@
             endTurn()
         }
         if (e.key === "Tab"){
+            console.log('[Tab Press]', { passedTurn, isMyTurn, turn, activePlayerNumber });
             
             if (passedTurn == true){
+                console.log('[Round Ending] Comparing values and resetting board...');
                 compareValue()
                 p1TotalValue = 0
                 meleeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
@@ -889,7 +906,9 @@
                 weather = []
                 endTurn()
                 passedTurn = false
+                console.log('[Round Ended] New round starting');
             } else {
+                console.log('[Round Pass] Player passing this round...');
                 passedTurn = true 
                 endTurn()
             }
@@ -934,6 +953,7 @@
             return;
         }
 
+        console.log('[endTurn]', { currentTurn: turn, nextTurn: turn === 1 ? 2 : 1, passedTurn });
         turn = activePlayerNumber === 1 ? 2 : 1
         placedCard = false
         // Force-sync turn handoff immediately so opponent gets notified.
