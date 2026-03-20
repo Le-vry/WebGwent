@@ -188,8 +188,9 @@
         suppressStateSync = false;
     }
 
-    async function pushStateToServer() {
-        if (!gameCode || matchmakingStatus !== 'active' || !isMyTurn) return;
+    async function pushStateToServer(force = false) {
+        if (!gameCode || matchmakingStatus !== 'active') return;
+        if (!force && !isMyTurn) return;
 
         try {
             await fetch(`/api/matchmaking/state/${encodeURIComponent(gameCode)}`, {
@@ -928,6 +929,8 @@
 
         turn = activePlayerNumber === 1 ? 2 : 1
         placedCard = false
+        // Force-sync turn handoff immediately so opponent gets notified.
+        pushStateToServer(true)
         
     }
     /* ----------------------------------------------------------------------------------- */
