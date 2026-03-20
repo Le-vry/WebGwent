@@ -20,6 +20,14 @@
     let disconnectDeadlineMs = 0
     let disconnectTicker = null
     let disconnectOpponentName = 'Opponent'
+    let pendingPlacementCard = null
+    let p1Passed = false
+    let p2Passed = false
+    let topPlayerActive = false
+    let bottomPlayerActive = false
+    let showTurnBanner = false
+    let turnBannerTimer = null
+    let wasMyTurn = false
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -53,6 +61,7 @@
     function clearDisconnectNotice() {
         disconnectDeadlineMs = 0;
         disconnectNotice = '';
+        disconnectOpponentName = 'Opponent';
         stopDisconnectTicker();
     }
 
@@ -114,9 +123,8 @@
             placedCard,
             passedTurn,
             popupVisibility,
-            meleeSelected,
-            rangeSelected,
-            siegeSelected,
+            p1Passed,
+            p2Passed,
             p1Leader,
             p1Cards,
             p1Hand,
@@ -155,10 +163,8 @@
         placedCard = typeof state.placedCard === 'boolean' ? state.placedCard : placedCard;
         passedTurn = typeof state.passedTurn === 'boolean' ? state.passedTurn : passedTurn;
         popupVisibility = typeof state.popupVisibility === 'string' ? state.popupVisibility : popupVisibility;
-
-        meleeSelected = Boolean(state.meleeSelected);
-        rangeSelected = Boolean(state.rangeSelected);
-        siegeSelected = Boolean(state.siegeSelected);
+        p1Passed = typeof state.p1Passed === 'boolean' ? state.p1Passed : p1Passed;
+        p2Passed = typeof state.p2Passed === 'boolean' ? state.p2Passed : p2Passed;
 
         p1Leader = state.p1Leader ?? p1Leader;
         p1Cards = Array.isArray(state.p1Cards) ? state.p1Cards : p1Cards;
@@ -412,6 +418,7 @@
             clearWaitingPoll();
             clearDisconnectNotice();
             if (syncTimer) clearTimeout(syncTimer);
+            if (turnBannerTimer) window.clearTimeout(turnBannerTimer);
             if (sseConnection) {
                 sseConnection.close();
                 sseConnection = null;
@@ -430,6 +437,17 @@
     $: myPlayerNumber = roleToPlayerNumber(myRole)
     $: activePlayerNumber = getTurnPlayer(turn)
     $: isMyTurn = matchmakingStatus === 'active' && activePlayerNumber === myPlayerNumber
+    $: topPlayerActive = activePlayerNumber === 1
+    $: bottomPlayerActive = activePlayerNumber === 2
+    $: passedTurn = activePlayerNumber === 1 ? p1Passed : p2Passed
+    $: if (isMyTurn && !wasMyTurn && matchmakingStatus === 'active') {
+        showTurnBanner = true;
+        if (turnBannerTimer) window.clearTimeout(turnBannerTimer);
+        turnBannerTimer = window.setTimeout(() => {
+            showTurnBanner = false;
+        }, 1400);
+    }
+    $: wasMyTurn = isMyTurn
     
     
 
@@ -525,6 +543,84 @@
         return null;
     }
 
+    function clearRowSelection() {
+        meleeSelected = false;
+        rangeSelected = false;
+        siegeSelected = false;
+    }
+
+    function clearPendingPlacement() {
+        pendingPlacementCard = null;
+        clearRowSelection();
+    }
+
+    function isCardNeedingRowSelection(card) {
+        if (!card || typeof card !== 'object') return false;
+        if ((card.type === 'unit' || card.type === 'hero') && card.row === 'agile') return true;
+        if (card.type === 'special' && card.ability === 'horn') return true;
+        return false;
+    }
+
+    function isPlayerPassed(playerNumber) {
+        return playerNumber === 1 ? p1Passed : p2Passed;
+    }
+
+    function markPlayerPassed(playerNumber) {
+        if (playerNumber === 1) p1Passed = true;
+        else p2Passed = true;
+    }
+
+    function loseGem(playerNumber) {
+        if (playerNumber === 1) {
+            if (p1Gem1Visibility === 'visible') p1Gem1Visibility = 'hidden';
+            else if (p1Gem2Visibility === 'visible') p1Gem2Visibility = 'hidden';
+            return;
+        }
+
+        if (p2Gem1Visibility === 'visible') p2Gem1Visibility = 'hidden';
+        else if (p2Gem2Visibility === 'visible') p2Gem2Visibility = 'hidden';
+    }
+
+    function resetRoundBoardState() {
+        p1TotalValue = 0
+        meleeP1 = { value: 0, rowMultiplier: 1, units: [], special: [] }
+        rangeP1 = { value: 0, rowMultiplier: 1, units: [], special: [] }
+        siegeP1 = { value: 0, rowMultiplier: 1, units: [], special: [] }
+
+        p2TotalValue = 0
+        meleeP2 = { value: 0, rowMultiplier: 1, units: [], special: [] }
+        rangeP2 = { value: 0, rowMultiplier: 1, units: [], special: [] }
+        siegeP2 = { value: 0, rowMultiplier: 1, units: [], special: [] }
+
+        placedFrostCard = false
+        placedFogCard = false
+        placedRainCard = false
+        weather = []
+        clearPendingPlacement()
+    }
+
+    function advanceTurnAfterAction() {
+        if (p1Passed && p2Passed) {
+            const winner = compareValue();
+            resetRoundBoardState();
+            p1Passed = false;
+            p2Passed = false;
+
+            if (winner === 1 || winner === 2) {
+                turn = winner;
+            }
+            return;
+        }
+
+        const nextPlayer = activePlayerNumber === 1 ? 2 : 1;
+        if (isPlayerPassed(nextPlayer) && !isPlayerPassed(activePlayerNumber)) {
+            turn = activePlayerNumber;
+            return;
+        }
+
+        turn = nextPlayer;
+    }
+
     // Force Svelte to pick up nested board/array mutations immediately
     function syncBoardState() {
         meleeP1 = { ...meleeP1 };
@@ -550,9 +646,16 @@
     /* Placement */
     function selectRow(row) {
         if (!isMyTurn) return;
+
         meleeSelected = row === "melee";
         rangeSelected = row === "range";
         siegeSelected = row === "siege";
+
+        if (pendingPlacementCard) {
+            const cardToPlace = pendingPlacementCard;
+            pendingPlacementCard = null;
+            placeCard(cardToPlace);
+        }
     }
 
     function placeCard(card) {
@@ -560,80 +663,70 @@
             return;
         }
 
-        const cardWasPlaced = !placedCard || passedTurn;
+        if (isPlayerPassed(myPlayerNumber)) {
+            setActionNotice('You passed this round and cannot place more cards.');
+            return;
+        }
 
-        if (!placedCard || passedTurn) {
-            const activePlayer  = activePlayerNumber;
-            const enemyPlayer   = activePlayer === 1 ? 2 : 1;
-            const ownRows       = getPlayerRows(activePlayer);
-            const enemyRows     = getPlayerRows(enemyPlayer);
-            const activeHand    = activePlayer === 1 ? p1Hand : p2Hand;
+        if (isCardNeedingRowSelection(card) && !getSelectedRow()) {
+            pendingPlacementCard = card;
+            const helpText = card.ability === 'horn'
+                ? "Commander's Horn selected. Click the row to place it."
+                : 'Agile card selected. Click Melee or Range row to place it.';
+            setActionNotice(helpText);
+            return;
+        }
 
-            // Only cards currently in the active hand can be played.
-            if (!activeHand.some((handCard) => handCard.id === card.id)) {
-                return;
+        const activePlayer  = activePlayerNumber;
+        const enemyPlayer   = activePlayer === 1 ? 2 : 1;
+        const ownRows       = getPlayerRows(activePlayer);
+        const enemyRows     = getPlayerRows(enemyPlayer);
+        const activeHand    = activePlayer === 1 ? p1Hand : p2Hand;
+
+        // Only cards currently in the active hand can be played.
+        if (!activeHand.some((handCard) => handCard.id === card.id)) {
+            return;
+        }
+
+        // Remove card from active player's hand
+        if (activePlayer === 1) p1Hand = p1Hand.filter(c => c.id !== card.id);
+        else                    p2Hand = p2Hand.filter(c => c.id !== card.id);
+
+        if (card.type === "unit" || card.type === "hero") {
+            if (card.row === "agile") {
+                const rowName = getSelectedRow();
+                if (rowName === "melee" || rowName === "range") {
+                    const row = ownRows[rowName];
+                    row.units.push(card);
+                    if (card.ability === "morale_boost") placedMoraleBoostCard(card, row.units);
+                    updateWeatherCard(getWeatherForRow(rowName), row);
+                    updateRowValue(row);
+                }
+            } else {
+                // melee / range / siege
+                const rowName = card.row;
+                placeUnitInRow(card, ownRows[rowName], enemyRows[rowName], getWeatherForRow(rowName));
             }
-
-            // Agile cards must be placed in the currently selected melee/range row.
-            // If no valid row is selected, keep the card in hand and do not consume the turn.
-            if ((card.type === "unit" || card.type === "hero") && card.row === "agile") {
-                const selectedRow = getSelectedRow();
-                if (selectedRow !== "melee" && selectedRow !== "range") {
-                    setActionNotice('Select Melee or Range row before placing an agile card.');
-                    return;
-                }
+        } else if (card.type === "special") {
+            if (card.row === "weather") {
+                weather = [...weather, card];
+                placedWeatherCard(card);
             }
-
-            // Commander's Horn must have a row selected before placing.
-            if (card.type === "special" && card.ability === "horn") {
-                if (!getSelectedRow()) {
-                    setActionNotice("Select a row before placing a Commander's Horn.");
-                    return;
-                }
+            if (card.ability === "horn") {
+                placeHornSpecial(card, ownRows);
             }
-
-            placedCard = !passedTurn;
-
-            // Remove card from active player's hand
-            if (activePlayer === 1) p1Hand = p1Hand.filter(c => c.id !== card.id);
-            else                    p2Hand = p2Hand.filter(c => c.id !== card.id);
-
-            if (card.type === "unit" || card.type === "hero") {
-                if (card.row === "agile") {
-                    // Agile cards only support morale_boost, no spy
-                    const rowName = getSelectedRow();
-                    if (rowName === "melee" || rowName === "range") {
-                        const row = ownRows[rowName];
-                        row.units.push(card);
-                        if (card.ability === "morale_boost") placedMoraleBoostCard(card, row.units);
-                        updateWeatherCard(getWeatherForRow(rowName), row);
-                        updateRowValue(row);
-                    }
-                } else {
-                    // melee / range / siege
-                    const rowName = card.row;
-                    placeUnitInRow(card, ownRows[rowName], enemyRows[rowName], getWeatherForRow(rowName));
-                }
-            } else if (card.type === "special") {
-                if (card.row === "weather") {
-                    weather = [...weather, card];
-                    placedWeatherCard(card);
-                }
-                if (card.ability === "horn") {
-                    placeHornSpecial(card, ownRows);
-                }
-                if (card.ability === "scorch") {
-                    placedSpecialScorchCard();
-                }
+            if (card.ability === "scorch") {
+                placedSpecialScorchCard();
             }
         }
+
         updateTotalValue();
         syncBoardState();
+        clearPendingPlacement();
+        placedCard = true;
         
-        // Auto-end turn after successfully placing a card (reactive turn switching)
-        if (cardWasPlaced && placedCard) {
-            endTurn();
-        }
+        // Auto-end turn after successfully placing a card.
+        endTurn();
     }
 
     function placeUnitInRow(card, ownRow, enemyRow, weather) {
@@ -884,69 +977,38 @@
             return;
         }
 
-        if (e.key === "Enter") {
-            endTurn()
-        }
         if (e.key === "Tab"){
-            console.log('[Tab Press]', { passedTurn, isMyTurn, turn, activePlayerNumber });
-            
-            if (passedTurn == true){
-                console.log('[Round Ending] Comparing values and resetting board...');
-                compareValue()
-                p1TotalValue = 0
-                meleeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
-                rangeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
-                siegeP1 = {value: 0, rowMultiplier: 1, units: [], special: []}
-
-
-                p2TotalValue = 0
-                meleeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
-                rangeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
-                siegeP2 = {value: 0, rowMultiplier: 1, units: [], special: []}
-
-                weather = []
-                endTurn()
-                passedTurn = false
-                console.log('[Round Ended] New round starting');
-            } else {
-                console.log('[Round Pass] Player passing this round...');
-                passedTurn = true 
-                endTurn()
-            }
-           
+            handlePassRound()
         }
     }
 
-    function compareValue(){
-        
-        if(p1TotalValue > p2TotalValue){
-            if(p2Gem1Visibility == "visible"){
-                p2Gem1Visibility = "hidden"
-            } else if(p2Gem1Visibility == "hidden"){
-                p2Gem2Visibility = "hidden"
-                setActionNotice('Player 1 wins!')
-            }
-        } else if(p1TotalValue < p2TotalValue){
-            if(p1Gem1Visibility == "visible"){
-                p1Gem1Visibility = "hidden"
-            } else if(p1Gem1Visibility == "hidden"){
-                p1Gem2Visibility = "hidden"
-            }
-        } else {
-            if(p2Gem1Visibility == "visible"){
-                p2Gem1Visibility = "hidden"
-            } else if(p2Gem1Visibility == "hidden"){
-                p2Gem2Visibility = "hidden"
-            }
-            if(p1Gem1Visibility == "visible"){
-                p1Gem1Visibility = "hidden"
-            } else if(p1Gem1Visibility == "hidden"){
-                p1Gem2Visibility = "hidden"
-                setActionNotice('Player 2 wins!')
-            }
+    function handlePassRound() {
+        if (!isMyTurn) return;
+        if (isPlayerPassed(myPlayerNumber)) return;
 
+        markPlayerPassed(myPlayerNumber);
+        clearPendingPlacement();
+        setActionNotice('You passed this round.');
+        endTurn();
+    }
+
+    function compareValue(){
+        if (p1TotalValue > p2TotalValue) {
+            loseGem(2);
+            setActionNotice('Player 1 wins the round.');
+            return 1;
         }
-        
+
+        if (p2TotalValue > p1TotalValue) {
+            loseGem(1);
+            setActionNotice('Player 2 wins the round.');
+            return 2;
+        }
+
+        loseGem(1);
+        loseGem(2);
+        setActionNotice('Round is a draw. Both players lose a gem.');
+        return 0;
     }
     
     function endTurn() {
@@ -954,8 +1016,8 @@
             return;
         }
 
-        console.log('[endTurn]', { currentTurn: turn, nextTurn: turn === 1 ? 2 : 1, passedTurn });
-        turn = activePlayerNumber === 1 ? 2 : 1
+        console.log('[endTurn]', { currentTurn: turn, passedTurn, p1Passed, p2Passed });
+        advanceTurnAfterAction();
         placedCard = false
         // Force-sync turn handoff immediately so opponent gets notified.
         pushStateToServer(true)
@@ -983,6 +1045,16 @@
 
     {#if disconnectNotice}
         <div class="match-status match-status--warning">{disconnectNotice}</div>
+    {/if}
+
+    {#if matchmakingStatus === 'active'}
+        <div class="turn-pill {isMyTurn ? 'turn-pill--mine' : 'turn-pill--theirs'}">
+            {isMyTurn ? 'YOUR TURN' : 'OPPONENT TURN'}
+        </div>
+    {/if}
+
+    {#if showTurnBanner}
+        <div class="turn-flash">YOUR TURN</div>
     {/if}
 
     {#if isP1Perspective}
@@ -1669,7 +1741,7 @@
 
 
 
-    <section class="TopPlayerStats">
+    <section class="TopPlayerStats {topPlayerActive ? 'player-active' : ''}">
         {#if isP1Perspective}
             <div class="PlayerInfo">
                 <h1>{p2Username}</h1>
@@ -1698,7 +1770,7 @@
         {/if}
     </section>
 
-    <section class="BottomPlayerStats">
+    <section class="BottomPlayerStats {bottomPlayerActive ? 'player-active' : ''}">
         {#if isP1Perspective}
             <div class="PlayerInfo" style="margin-top: 40%;">
                 <h1>{p1Username}</h1>
@@ -1723,7 +1795,7 @@
                 <img src="cards_symbol.png" alt="cardsymbol">
                 {p2Hand.length}
                 <img src="Gem.png" alt="gem" class="gem" style="margin-left: 0.7vw; visibility: {p2Gem1Visibility};">
-                <img src="Gem.png" alt="gem" class="gem" style="visibility: {p1Gem2Visibility};">
+                <img src="Gem.png" alt="gem" class="gem" style="visibility: {p2Gem2Visibility};">
             </div> 
         {/if}
     </section>
@@ -1736,7 +1808,7 @@
         {/each}
     </div>
 
-    <button class="passRound" disabled={!isMyTurn} style="opacity: {isMyTurn ? 1 : 0.45};" on:click|preventDefault={() => {passedTurn = true; endTurn()}}>
+    <button class="passRound" disabled={!isMyTurn || isPlayerPassed(myPlayerNumber)} style="opacity: {isMyTurn && !isPlayerPassed(myPlayerNumber) ? 1 : 0.45};" on:click|preventDefault={handlePassRound}>
         <img src="keyboard_tab_icon_outline.png" alt=enter class="enter"> Tab to pass Round
     </button>
 
@@ -1813,6 +1885,54 @@
         background: rgba(63, 42, 3, 0.88);
         border-color: rgba(255, 192, 74, 0.6);
         color: #ffe9ba;
+    }
+
+    .turn-pill {
+        position: absolute;
+        top: 18.2vh;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 22;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        letter-spacing: 0.06em;
+        font: 700 0.95rem 'Roboto', sans-serif;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        text-transform: uppercase;
+    }
+
+    .turn-pill--mine {
+        background: rgba(15, 77, 36, 0.86);
+        color: #d4ffd8;
+        border-color: rgba(128, 255, 166, 0.65);
+    }
+
+    .turn-pill--theirs {
+        background: rgba(74, 20, 20, 0.86);
+        color: #ffd8d8;
+        border-color: rgba(255, 139, 139, 0.65);
+    }
+
+    .turn-flash {
+        position: absolute;
+        top: 23vh;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 30;
+        padding: 0.6rem 1.4rem;
+        border-radius: 0.7rem;
+        font: 800 1.5rem 'Roboto', sans-serif;
+        color: #fff8cc;
+        background: rgba(220, 120, 0, 0.9);
+        box-shadow: 0 0 1.2rem rgba(255, 170, 0, 0.6);
+        animation: turn-pop 1.4s ease forwards;
+    }
+
+    @keyframes turn-pop {
+        0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+        12% { opacity: 1; transform: translateX(-50%) scale(1.02); }
+        78% { opacity: 1; transform: translateX(-50%) scale(1); }
+        100% { opacity: 0; transform: translateX(-50%) scale(0.95); }
     }
 
     main button {
@@ -2160,6 +2280,12 @@
         width: 11%;
         height: 13%;
         background-color: none;
+    }
+    .player-active {
+        border: 2px solid rgba(255, 170, 0, 0.85);
+        border-radius: 0.6rem;
+        box-shadow: 0 0 1rem rgba(255, 170, 0, 0.55);
+        background: rgba(0, 0, 0, 0.22);
     }
     .PlayerInfo{
         font: 300 1.7vh 'Roboto', sans-serif;
