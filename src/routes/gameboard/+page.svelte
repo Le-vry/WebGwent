@@ -238,13 +238,14 @@
 
                 if (meta.status === 'active' && matchmakingStatus !== 'active') {
                     console.log('[SSE:game] Match transitioned to active, hydrating state...');
+                    matchmakingStatus = 'active';
                     fetchMatchGameState(code).catch((error) => {
                         console.error('Failed to hydrate active match state:', error);
                     });
                 } else if (meta.status === 'waiting') {
                     matchmakingStatus = 'waiting';
                     clearDisconnectNotice();
-                } else if (meta.status) {
+                } else if (meta.status && meta.status !== 'active') {
                     console.warn('[SSE:game] Match status changed to:', meta.status);
                     const statusMsg = meta.status === 'cancelled' ? 'Match was cancelled.' : 'Match ended.';
                     matchmakingError = `${statusMsg} Start a new match from card select.`;
