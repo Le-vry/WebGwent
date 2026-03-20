@@ -544,6 +544,8 @@
             return;
         }
 
+        const cardWasPlaced = !placedCard || passedTurn;
+
         if (!placedCard || passedTurn) {
             const activePlayer  = activePlayerNumber;
             const enemyPlayer   = activePlayer === 1 ? 2 : 1;
@@ -611,6 +613,11 @@
         }
         updateTotalValue();
         syncBoardState();
+        
+        // Auto-end turn after successfully placing a card (reactive turn switching)
+        if (cardWasPlaced && placedCard) {
+            endTurn();
+        }
     }
 
     function placeUnitInRow(card, ownRow, enemyRow, weather) {
@@ -1712,9 +1719,7 @@
         <img src="keyboard_tab_icon_outline.png" alt=enter class="enter"> Tab to pass Round
     </button>
 
-    <button class="confirm" disabled={!isMyTurn} style="opacity: {isMyTurn ? 1 : 0.45};" on:click|preventDefault={() => endTurn()}>
-        <img src="keyboard_enter_outline.png" alt=enter class="enter"> End Turn
-    </button>
+
         
 </main>
 
