@@ -1,6 +1,18 @@
-<section class="auth-shell">
+<script lang="ts">
+	import { page } from '$app/stores';
+
+	$: bypassAuthShell =
+		$page.url.pathname.startsWith('/card-select') ||
+		$page.url.pathname.startsWith('/gameboard');
+</script>
+
+{#if bypassAuthShell}
 	<slot />
-</section>
+{:else}
+	<section class="auth-shell">
+		<slot />
+	</section>
+{/if}
 
 <style>
 	.auth-shell {
