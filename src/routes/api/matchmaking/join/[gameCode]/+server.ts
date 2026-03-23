@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { getPrismaClient } from '$lib/server/prisma';
+import { notifyOpenMatchUpdates } from '$lib/server/openMatchUpdates';
 
 export const POST = async ({ locals, params, request }: RequestEvent) => {
 	if (!locals.user) {
@@ -72,6 +73,8 @@ export const POST = async ({ locals, params, request }: RequestEvent) => {
 			}
 		})
 	]);
+
+	notifyOpenMatchUpdates();
 
 	return json({ gameCode: waitingGame.gameCode, status: 'active', currentTurn: firstTurn });
 };

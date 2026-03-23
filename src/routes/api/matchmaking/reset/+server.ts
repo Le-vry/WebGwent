@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { getPrismaClient } from '$lib/server/prisma';
+import { notifyOpenMatchUpdates } from '$lib/server/openMatchUpdates';
 
 export const POST = async ({ locals }: RequestEvent) => {
 	if (!locals.user) {
@@ -19,6 +20,10 @@ export const POST = async ({ locals }: RequestEvent) => {
 			status: 'cancelled'
 		}
 	});
+
+	if (result.count > 0) {
+		notifyOpenMatchUpdates();
+	}
 
 	return json({ ok: true, resetCount: result.count });
 };

@@ -14,7 +14,7 @@
 	let actionBusy = false;
 	let status = '';
 	let statusError = false;
-	let pollTimer = null;
+	let openMatchesStream = null;
 
 	function setStatus(message, isError = false) {
 		status = message;
@@ -58,6 +58,36 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	function stopOpenMatchesStream() {
+		if (openMatchesStream) {
+			openMatchesStream.close();
+			openMatchesStream = null;
+		}
+	}
+
+	function connectOpenMatchesStream() {
+		stopOpenMatchesStream();
+		openMatchesStream = new EventSource('/api/matchmaking/open/stream');
+
+		openMatchesStream.addEventListener('matches', (event) => {
+			try {
+				const payload = JSON.parse(event.data);
+				matches = payload?.matches ?? [];
+				statusError = false;
+				if (!statusError) {
+					setStatus(matches.length ? '' : 'No open matches yet. Create one to start.', false);
+				}
+			} catch {
+				setStatus('Received invalid match updates from server.', true);
+			}
+		});
+
+		openMatchesStream.addEventListener('error', () => {
+			setStatus('Live updates interrupted. Reconnecting...', true);
+			// EventSource will auto-reconnect; keep last known matches in UI.
+		});
 	}
 
 	async function createMatch() {
@@ -130,10 +160,10 @@
 	onMount(async () => {
 		loadSavedDecks();
 		await loadOpenMatches();
-		pollTimer = window.setInterval(loadOpenMatches, 4000);
+		connectOpenMatchesStream();
 
 		return () => {
-			if (pollTimer) window.clearInterval(pollTimer);
+			stopOpenMatchesStream();
 		};
 	});
 </script>

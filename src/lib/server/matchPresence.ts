@@ -138,6 +138,17 @@ export function registerMatchConnection(
 		if (role === 'p1') state.p1Connections = Math.max(0, state.p1Connections - 1);
 		else state.p2Connections = Math.max(0, state.p2Connections - 1);
 
+		if (state.p1Connections === 0 && state.p2Connections === 0) {
+			// If both players leave, terminate immediately instead of waiting through reconnect grace.
+			clearPendingDisconnect(state);
+			clearDisconnect(state);
+			onTimeout({ role, deadlineMs: Date.now() }).catch(() => {
+				// Avoid crashing stream cleanup if DB update fails.
+			});
+			maybeDeletePresence(gameCode, state);
+			return;
+		}
+
 		const roleConnections = role === 'p1' ? state.p1Connections : state.p2Connections;
 		if (roleConnections === 0) {
 			scheduleDisconnectGrace(gameCode, state, role, onTimeout);

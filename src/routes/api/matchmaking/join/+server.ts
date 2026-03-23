@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { getPrismaClient } from '$lib/server/prisma';
+import { notifyOpenMatchUpdates } from '$lib/server/openMatchUpdates';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -67,6 +68,8 @@ export const POST = async ({ locals, request }: RequestEvent) => {
 			})
 		]);
 
+		notifyOpenMatchUpdates();
+
 		return json({ gameCode: waitingGame.gameCode, status: 'active', currentTurn: firstTurn });
 	}
 
@@ -91,6 +94,8 @@ export const POST = async ({ locals, request }: RequestEvent) => {
 			select: { gameCode: true }
 		});
 	});
+
+	notifyOpenMatchUpdates();
 
 	return json({ gameCode: created.gameCode, status: 'waiting' });
 };
