@@ -16,38 +16,41 @@ export const GET = async ({ locals }: RequestEvent) => {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	const prisma = getPrismaClient();
-	const userId = locals.user.id;
+	try {
+		const prisma = getPrismaClient();
+		const userId = locals.user.id;
 
-	const waitingMatches = await prisma.game.findMany({
-		where: {
-			status: 'waiting',
-			user2Id: null
-		},
-		orderBy: { id: 'desc' },
-		select: {
-			gameCode: true,
-			user1Id: true,
-			createdAt: true,
-			user1: { select: { username: true } },
-			player1: { select: { deck: true } }
-		}
-	});
+		const waitingMatches = await prisma.game.findMany({
+			where: {
+				status: 'waiting',
+				user2Id: null
+			},
+			orderBy: { id: 'desc' },
+			select: {
+				gameCode: true,
+				user1Id: true,
+				user1: { select: { username: true } },
+				player1: { select: { deck: true } }
+			}
+		});
 
-	const matches = waitingMatches.map((match) => {
-		const payload = parseDeckPayload(match.player1.deck);
-		const faction = payload?.[2]?.name ?? 'Unknown Faction';
-		const leader = payload?.[1]?.name ?? 'Unknown Leader';
+		const matches = waitingMatches.map((match) => {
+			const payload = parseDeckPayload(match.player1.deck);
+			const faction = payload?.[2]?.name ?? 'Unknown Faction';
+			const leader = payload?.[1]?.name ?? 'Unknown Leader';
 
-		return {
-			gameCode: match.gameCode,
-			hostName: match.user1.username,
-			faction,
-			leader,
-			createdAt: match.createdAt,
-			isMine: match.user1Id === userId
-		};
-	});
+			return {
+				gameCode: match.gameCode,
+				hostName: match.user1.username,
+				faction,
+				leader,
+				isMine: match.user1Id === userId
+			};
+		});
 
-	return json({ matches });
+		return json({ matches });
+	} catch (error) {
+		console.error('Failed to load open matches:', error);
+		return json({ error: 'Could not load open matches.' }, { status: 500 });
+	}
 };
