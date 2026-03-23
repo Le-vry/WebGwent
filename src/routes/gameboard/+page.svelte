@@ -1,6 +1,8 @@
 ﻿<script>
     // @ts-nocheck
     import { onMount } from 'svelte'
+    import { goto } from '$app/navigation'
+    import { base } from '$app/paths'
     import { players_store } from "$lib/players.js"
 
     let matchmakingStatus = ''
@@ -28,6 +30,9 @@
     let showTurnBanner = false
     let turnBannerTimer = null
     let wasMyTurn = false
+    let roundResolveTimer = null
+    const ROUND_CLEAR_DELAY_MS = 1200
+    let isEndingMatch = false
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -42,6 +47,12 @@
         window.setTimeout(() => {
             if (actionNotice === message) actionNotice = '';
         }, 2200);
+    }
+
+    function buildMatchEndNotice(winner) {
+        if (winner === 0) return 'Match ended in a draw.';
+        const winnerName = winner === 1 ? p1Username : p2Username;
+        return `Match ended. ${winnerName} won.`;
     }
 
     function formatCountdown(totalMs) {
@@ -146,7 +157,10 @@
             placedFrostCard,
             placedFogCard,
             placedRainCard,
-            weather
+            weather,
+            roundSummaries,
+            matchWinner,
+            matchCompleted
         };
     }
 
@@ -192,6 +206,9 @@
         placedFogCard = Boolean(state.placedFogCard);
         placedRainCard = Boolean(state.placedRainCard);
         weather = Array.isArray(state.weather) ? state.weather : weather;
+        roundSummaries = Array.isArray(state.roundSummaries) ? state.roundSummaries : roundSummaries;
+        matchWinner = typeof state.matchWinner === 'number' ? state.matchWinner : matchWinner;
+        matchCompleted = typeof state.matchCompleted === 'boolean' ? state.matchCompleted : matchCompleted;
 
         suppressStateSync = false;
     }
@@ -261,6 +278,16 @@
                     if (sseConnection) {
                         sseConnection.close();
                         sseConnection = null;
+                    }
+
+                    if (meta.status === 'cancelled') {
+                        goto(base + '/?matchNotice=' + encodeURIComponent('Match cancelled because an opponent did not reconnect in time.'));
+                    } else if (meta.status === 'completed') {
+                        isEndingMatch = true;
+                        matchCompleted = true;
+                        matchWinner = getMatchWinnerFromGems();
+                        matchSummaryVisible = true;
+                        clearRoundResolveTimer();
                     }
                 }
 
@@ -417,6 +444,7 @@
         return () => {
             clearWaitingPoll();
             clearDisconnectNotice();
+            clearRoundResolveTimer();
             if (syncTimer) clearTimeout(syncTimer);
             if (turnBannerTimer) window.clearTimeout(turnBannerTimer);
             if (sseConnection) {
@@ -432,11 +460,23 @@
     let placedCard = false
     let passedTurn = false
     let popupVisibility = "none"
+    let roundSummaries = []
+    let matchWinner = null
+    let matchCompleted = false
+    let matchSummaryVisible = false
+    let matchSummaryDismissed = false
 
     $: isP1Perspective = myRole !== 'p2'
     $: myPlayerNumber = roleToPlayerNumber(myRole)
     $: activePlayerNumber = getTurnPlayer(turn)
     $: isMyTurn = matchmakingStatus === 'active' && activePlayerNumber === myPlayerNumber
+    $: matchResultTitle = matchWinner === null
+        ? 'MATCH COMPLETE'
+        : matchWinner === 0
+        ? 'DRAW'
+        : matchWinner === myPlayerNumber
+            ? 'VICTORY'
+            : 'DEFEAT'
     $: topPlayerActive = activePlayerNumber === 1
     $: bottomPlayerActive = activePlayerNumber === 2
     $: passedTurn = activePlayerNumber === 1 ? p1Passed : p2Passed
@@ -448,6 +488,9 @@
         }, 1400);
     }
     $: wasMyTurn = isMyTurn
+    $: if (matchCompleted && matchWinner !== null && !matchSummaryDismissed) {
+        matchSummaryVisible = true;
+    }
     
     
 
@@ -570,6 +613,76 @@
         else p2Passed = true;
     }
 
+    function isPlayerOutOfGems(playerNumber) {
+        if (playerNumber === 1) return p1Gem1Visibility === 'hidden' && p1Gem2Visibility === 'hidden';
+        return p2Gem1Visibility === 'hidden' && p2Gem2Visibility === 'hidden';
+    }
+
+    function getMatchWinnerFromGems() {
+        const p1Out = isPlayerOutOfGems(1);
+        const p2Out = isPlayerOutOfGems(2);
+
+        if (!p1Out && !p2Out) return null;
+        if (p1Out && p2Out) return 0;
+        return p1Out ? 2 : 1;
+    }
+
+    function recordRoundSummary(winner) {
+        const nextRound = roundSummaries.length + 1;
+        roundSummaries = [
+            ...roundSummaries,
+            {
+                round: nextRound,
+                p1Score: p1TotalValue,
+                p2Score: p2TotalValue,
+                winner
+            }
+        ];
+    }
+
+    function clearRoundResolveTimer() {
+        if (roundResolveTimer) {
+            window.clearTimeout(roundResolveTimer);
+            roundResolveTimer = null;
+        }
+    }
+
+    async function completeMatchAndShowSummary(winner) {
+        if (isEndingMatch) return;
+        isEndingMatch = true;
+        matchCompleted = true;
+        matchWinner = winner;
+        matchSummaryDismissed = false;
+        matchSummaryVisible = true;
+        clearRoundResolveTimer();
+
+        const notice = buildMatchEndNotice(winner);
+        setActionNotice(notice);
+
+        // Push final round recap and winner so both clients can render the same summary.
+        await pushStateToServer(true);
+
+        try {
+            await fetch(`/api/matchmaking/complete/${encodeURIComponent(gameCode)}`, {
+                method: 'POST'
+            });
+        } catch {
+            // Best effort; navigation still proceeds.
+        }
+
+        if (sseConnection) {
+            sseConnection.close();
+            sseConnection = null;
+        }
+    }
+
+    function dismissMatchSummary() {
+        if (!matchSummaryVisible) return;
+        matchSummaryDismissed = true;
+        matchSummaryVisible = false;
+        goto(base + '/?matchNotice=' + encodeURIComponent(buildMatchEndNotice(matchWinner)));
+    }
+
     function loseGem(playerNumber) {
         if (playerNumber === 1) {
             if (p1Gem1Visibility === 'visible') p1Gem1Visibility = 'hidden';
@@ -599,9 +712,10 @@
         clearPendingPlacement()
     }
 
-    function advanceTurnAfterAction() {
-        if (p1Passed && p2Passed) {
-            const winner = compareValue();
+    function resolveRoundAfterAnnouncement(winner) {
+        clearRoundResolveTimer();
+
+        roundResolveTimer = window.setTimeout(() => {
             resetRoundBoardState();
             p1Passed = false;
             p2Passed = false;
@@ -609,6 +723,22 @@
             if (winner === 1 || winner === 2) {
                 turn = winner;
             }
+
+            syncBoardState();
+            pushStateToServer(true);
+            roundResolveTimer = null;
+        }, ROUND_CLEAR_DELAY_MS);
+    }
+
+    function advanceTurnAfterAction() {
+        if (p1Passed && p2Passed) {
+            const winner = compareValue();
+            const matchWinner = getMatchWinnerFromGems();
+            if (matchWinner !== null) {
+                completeMatchAndShowSummary(matchWinner);
+                return;
+            }
+            resolveRoundAfterAnnouncement(winner);
             return;
         }
 
@@ -645,7 +775,7 @@
 
     /* Placement */
     function selectRow(row) {
-        if (!isMyTurn) return;
+        if (!isMyTurn || isEndingMatch) return;
 
         meleeSelected = row === "melee";
         rangeSelected = row === "range";
@@ -659,7 +789,7 @@
     }
 
     function placeCard(card) {
-        if (!isMyTurn) {
+        if (!isMyTurn || isEndingMatch) {
             return;
         }
 
@@ -979,7 +1109,12 @@
     /* Turn handeling */
     /* ----------------------------------------------------------------------------------- */
     function onKeyDown(e) {
-        if (!isMyTurn) {
+        if (matchSummaryVisible && e.key === 'Enter') {
+            dismissMatchSummary();
+            return;
+        }
+
+        if (!isMyTurn || isEndingMatch) {
             return;
         }
 
@@ -989,7 +1124,7 @@
     }
 
     function handlePassRound() {
-        if (!isMyTurn) return;
+        if (!isMyTurn || isEndingMatch) return;
         if (isPlayerPassed(myPlayerNumber)) return;
 
         markPlayerPassed(myPlayerNumber);
@@ -1000,17 +1135,20 @@
 
     function compareValue(){
         if (p1TotalValue > p2TotalValue) {
+            recordRoundSummary(1);
             loseGem(2);
             setActionNotice('Player 1 wins the round.');
             return 1;
         }
 
         if (p2TotalValue > p1TotalValue) {
+            recordRoundSummary(2);
             loseGem(1);
             setActionNotice('Player 2 wins the round.');
             return 2;
         }
 
+        recordRoundSummary(0);
         loseGem(1);
         loseGem(2);
         setActionNotice('Round is a draw. Both players lose a gem.');
@@ -1018,7 +1156,7 @@
     }
     
     function endTurn() {
-        if (!isMyTurn) {
+        if (!isMyTurn || isEndingMatch) {
             return;
         }
 
@@ -1818,6 +1956,37 @@
         <img src="keyboard_tab_icon_outline.png" alt=enter class="enter"> Tab to pass Round
     </button>
 
+    {#if matchSummaryVisible}
+        <div class="match-summary-overlay">
+            <div class="match-summary-card">
+                <h2>{matchResultTitle}</h2>
+                <p class="match-summary-subtitle">Round recap</p>
+
+                <div class="summary-grid summary-grid-header">
+                    <span>Round</span>
+                    <span>{p1Username}</span>
+                    <span>{p2Username}</span>
+                    <span>Result</span>
+                </div>
+
+                {#each roundSummaries as summary}
+                    <div class="summary-grid">
+                        <span>R{summary.round}</span>
+                        <span class:round-winner={summary.winner === 1}>{summary.p1Score}</span>
+                        <span class:round-winner={summary.winner === 2}>{summary.p2Score}</span>
+                        <span class="summary-result">
+                            {summary.winner === 0 ? 'Draw' : summary.winner === 1 ? `${p1Username} won` : `${p2Username} won`}
+                        </span>
+                    </div>
+                {/each}
+
+                <button class="dismiss-summary" on:click|preventDefault={dismissMatchSummary}>
+                    Continue (Enter)
+                </button>
+            </div>
+        </div>
+    {/if}
+
 
         
 </main>
@@ -2356,6 +2525,79 @@
         width: 3.2vh;
         height: 3.2vh;
     }
+
+    .match-summary-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 60;
+        background: rgba(0, 0, 0, 0.78);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    .match-summary-card {
+        width: min(720px, 92vw);
+        max-height: 82vh;
+        overflow: auto;
+        background: linear-gradient(180deg, #1f150b 0%, #0f0b07 100%);
+        border: 1px solid #df9a37;
+        border-radius: 0.75rem;
+        box-shadow: 0 0 1.2rem rgba(255, 157, 35, 0.45);
+        padding: 1rem;
+        color: #f4e1bf;
+        text-align: center;
+    }
+
+    .match-summary-card h2 {
+        margin: 0;
+        color: #ffb24c;
+        font: 700 2rem 'Roboto', sans-serif;
+        letter-spacing: 0.06em;
+    }
+
+    .match-summary-subtitle {
+        margin: 0.25rem 0 0.95rem;
+        opacity: 0.9;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: 0.7fr 1fr 1fr 1.2fr;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.45rem 0.5rem;
+        border-bottom: 1px solid rgba(255, 178, 76, 0.2);
+        text-align: left;
+    }
+
+    .summary-grid-header {
+        font-weight: 700;
+        color: #ffd69a;
+        border-bottom: 1px solid rgba(255, 178, 76, 0.45);
+    }
+
+    .summary-result {
+        text-align: right;
+    }
+
+    .round-winner {
+        color: #ffb24c;
+        font-weight: 700;
+        text-shadow: 0 0 0.4rem rgba(255, 150, 0, 0.45);
+    }
+
+    .dismiss-summary {
+        margin-top: 1rem;
+        padding: 0.55rem 1rem;
+        border-radius: 0.55rem;
+        background: #ff9f35;
+        color: #1b1107;
+        font-weight: 700;
+        box-shadow: 0 0 0.8rem rgba(255, 165, 0, 0.4);
+    }
+
     .darken{
         position: absolute;
         top: 0;

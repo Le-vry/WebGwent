@@ -1,13 +1,15 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { getPrismaClient } from '$lib/server/prisma';
 
-export const load = async ({ locals }: RequestEvent) => {
+export const load = async ({ locals, url }: RequestEvent) => {
 	const user = locals.user ?? null;
+	const matchNotice = url.searchParams.get('matchNotice');
 
 	if (!user) {
 		return {
 			user,
-			reconnectMatch: null
+			reconnectMatch: null,
+			matchNotice
 		};
 	}
 
@@ -26,6 +28,7 @@ export const load = async ({ locals }: RequestEvent) => {
 
 	return {
 		user,
-		reconnectMatch
+		reconnectMatch,
+		matchNotice
 	};
 };

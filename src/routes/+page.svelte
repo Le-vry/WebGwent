@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
 	interface PageData {
 		user: {
 			id: string;
 			username: string;
 		} | null;
+		matchNotice: string | null;
 		reconnectMatch: {
 			gameCode: string;
 			status: string;
@@ -11,6 +14,18 @@
 	}
 
 	export let data: PageData;
+	let matchNotice = data.matchNotice;
+
+	onMount(() => {
+		if (!matchNotice) return;
+		const timer = window.setTimeout(() => {
+			matchNotice = null;
+		}, 6000);
+
+		return () => {
+			window.clearTimeout(timer);
+		};
+	});
 </script>
 
 <main>
@@ -20,6 +35,9 @@
 
 		{#if data.user}
 			<p class="welcome">Welcome back, {data.user.username}.</p>
+			{#if matchNotice}
+				<p class="match-notice">{matchNotice}</p>
+			{/if}
 			{#if data.reconnectMatch}
 				<a
 					href={`/gameboard?gameCode=${encodeURIComponent(data.reconnectMatch.gameCode)}`}
@@ -86,6 +104,17 @@
 	.welcome {
 		margin: 0 0 0.85rem;
 		text-align: center;
+	}
+
+	.match-notice {
+		margin: 0 0 0.8rem;
+		padding: 0.6rem 0.75rem;
+		border-radius: 0.45rem;
+		border: 1px solid #f0b382;
+		background: #fff2e7;
+		color: #8e3b08;
+		text-align: center;
+		font-weight: 600;
 	}
 
 	.menu-list {
