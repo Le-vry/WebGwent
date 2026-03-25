@@ -23,6 +23,7 @@
     let disconnectTicker = null
     let disconnectOpponentName = 'Opponent'
     let pendingPlacementCard = null
+    let pendingDecoyCard = null
     let p1Passed = false
     let p2Passed = false
     let topPlayerActive = false
@@ -594,7 +595,100 @@
 
     function clearPendingPlacement() {
         pendingPlacementCard = null;
+        pendingDecoyCard = null;
         clearRowSelection();
+    }
+
+    function isDecoyCard(card) {
+        return !!card && card.type === 'special' && card.ability === 'decoy';
+    }
+
+    function isValidDecoyTarget(card) {
+        return !!card && card.type === 'unit';
+    }
+
+    function hasAvailableDecoyTargets(playerNumber) {
+        const rows = getPlayerRows(playerNumber);
+        return ['melee', 'range', 'siege'].some((rowName) => rows[rowName].units.some(isValidDecoyTarget));
+    }
+
+    function isDecoyTargetInRow(card, rowName, rowOwner) {
+        if (!pendingDecoyCard || !isMyTurn || isEndingMatch) return false;
+        if (rowOwner !== activePlayerNumber) return false;
+        if (rowName !== 'melee' && rowName !== 'range' && rowName !== 'siege') return false;
+        return isValidDecoyTarget(card);
+    }
+
+    function startDecoySelection(card) {
+        if (!hasAvailableDecoyTargets(activePlayerNumber)) {
+            setActionNotice('No valid Decoy targets on your board.');
+            return;
+        }
+
+        pendingPlacementCard = null;
+        clearRowSelection();
+        pendingDecoyCard = card;
+        setActionNotice('Decoy selected. Click a highlighted non-hero unit on your side of the board.');
+    }
+
+    function executeDecoySwap(targetCard, rowName, rowOwner) {
+        const row = getPlayerRows(rowOwner)[rowName];
+        if (!row) return;
+
+        const targetIndex = row.units.findIndex((c) => c.id === targetCard.id);
+        if (targetIndex === -1) return;
+
+        const activeHand = activePlayerNumber === 1 ? p1Hand : p2Hand;
+        if (!activeHand.some((c) => c.id === pendingDecoyCard?.id)) {
+            pendingDecoyCard = null;
+            return;
+        }
+
+        // Render the decoy on board in the same slot while keeping row strength unchanged.
+        const placedDecoy = {
+            ...pendingDecoyCard,
+            type: 'hero',
+            value: 0,
+            Basevalue: 0,
+            ValueMultiplier: 1
+        };
+
+        row.units[targetIndex] = placedDecoy;
+
+        const nextHand = [...activeHand.filter((c) => c.id !== pendingDecoyCard.id), targetCard]
+            .sort((a, b) => a.value - b.value);
+
+        if (activePlayerNumber === 1) p1Hand = nextHand;
+        else p2Hand = nextHand;
+
+        updateRowValue(row);
+        updateTotalValue();
+        syncBoardState();
+        clearPendingPlacement();
+        placedCard = true;
+        setActionNotice(`${targetCard.name} returned to your hand.`);
+        endTurn();
+    }
+
+    function handleBoardCardClick(card, rowName, rowOwner) {
+        if (!pendingDecoyCard) {
+            placeCard(card);
+            return;
+        }
+
+        if (!isMyTurn || isEndingMatch) return;
+
+        if (rowOwner !== activePlayerNumber) {
+            setActionNotice('Decoy can only target cards on your side of the board.');
+            return;
+        }
+
+        if (!isValidDecoyTarget(card)) {
+            setActionNotice('Decoy cannot target hero or special cards.');
+            return;
+        }
+
+        executeDecoySwap(card, rowName, rowOwner);
     }
 
     function isCardNeedingRowSelection(card) {
@@ -777,6 +871,11 @@
     function selectRow(row) {
         if (!isMyTurn || isEndingMatch) return;
 
+        if (pendingDecoyCard) {
+            setActionNotice('Decoy is active. Click a highlighted unit on your board.');
+            return;
+        }
+
         meleeSelected = row === "melee";
         rangeSelected = row === "range";
         siegeSelected = row === "siege";
@@ -791,6 +890,16 @@
     function placeCard(card) {
         if (!isMyTurn || isEndingMatch) {
             return;
+        }
+
+        if (pendingDecoyCard && card.id === pendingDecoyCard.id) {
+            pendingDecoyCard = null;
+            setActionNotice('Decoy selection cancelled.');
+            return;
+        }
+
+        if (pendingDecoyCard && card.id !== pendingDecoyCard.id) {
+            pendingDecoyCard = null;
         }
 
         if (isPlayerPassed(myPlayerNumber)) {
@@ -815,6 +924,11 @@
 
         // Only cards currently in the active hand can be played.
         if (!activeHand.some((handCard) => handCard.id === card.id)) {
+            return;
+        }
+
+        if (isDecoyCard(card)) {
+            startDecoySelection(card);
             return;
         }
 
@@ -1300,7 +1414,7 @@
                 <div class="melee-units no-scrollbar">
                     {#each meleeP1.units as card}
                         {#if card.type == "unit"}
-                            <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
+                            <button class="card" class:decoy-target={isDecoyTargetInRow(card, 'melee', 1)} on:click|stopPropagation={() => {handleBoardCardClick(card, 'melee', 1)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier >= 10}
                                 {#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
@@ -1624,7 +1738,7 @@
 
                         
                         {#if card.type == "hero"}
-                            <button class="card" on:click={() => {placeCard(card)}}>
+                            <button class="card" on:click|stopPropagation={() => {handleBoardCardClick(card, 'melee', 1)}}>
                                 <img src="{card.name}.webp" alt="{card.name}">
                             </button>
                         {/if}
@@ -1649,7 +1763,7 @@
                 <div class="range-units no-scrollbar">
                     {#each rangeP1.units as card}
                         {#if card.type == "unit"}
-                            <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
+                            <button class="card" class:decoy-target={isDecoyTargetInRow(card, 'range', 1)} on:click|stopPropagation={() => {handleBoardCardClick(card, 'range', 1)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier >= 10}
                                 {#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
@@ -1671,7 +1785,7 @@
                         {/if} 
 
                         {#if card.type == "hero"}
-                            <button class="card" on:click={() => {placeCard(card)}}>
+                            <button class="card" on:click|stopPropagation={() => {handleBoardCardClick(card, 'range', 1)}}>
                             <img src="{card.name}.webp" alt="{card.name}">
                             </button>
                         {/if}
@@ -1697,7 +1811,7 @@
                 <div class="siege-units no-scrollbar">
                     {#each siegeP1.units as card}
                         {#if card.type == "unit"}
-                            <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
+                            <button class="card" class:decoy-target={isDecoyTargetInRow(card, 'siege', 1)} on:click|stopPropagation={() => {handleBoardCardClick(card, 'siege', 1)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier >= 10}
                                 {#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
@@ -1719,7 +1833,7 @@
                         {/if} 
 
                         {#if card.type == "hero"}
-                            <button class="card" on:click={() => {placeCard(card)}}>
+                            <button class="card" on:click|stopPropagation={() => {handleBoardCardClick(card, 'siege', 1)}}>
                             <img src="{card.name}.webp" alt="{card.name}">
                             </button>
                         {/if}
@@ -1751,7 +1865,7 @@
                 <div class="melee-units no-scrollbar">
                     {#each meleeP2.units as card}
                         {#if card.type == "unit"}
-                            <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
+                            <button class="card" class:decoy-target={isDecoyTargetInRow(card, 'melee', 2)} on:click|stopPropagation={() => {handleBoardCardClick(card, 'melee', 2)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier >= 10}
                                 {#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
@@ -1773,7 +1887,7 @@
                         {/if} 
 
                         {#if card.type == "hero"}
-                            <button class="card" on:click={() => {placeCard(card)}}>
+                            <button class="card" on:click|stopPropagation={() => {handleBoardCardClick(card, 'melee', 2)}}>
                             <img src="{card.name}.webp" alt="{card.name}">
                             </button>
                         {/if}
@@ -1799,7 +1913,7 @@
                 <div class="range-units no-scrollbar">
                     {#each rangeP2.units as card}
                         {#if card.type == "unit"}
-                            <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
+                            <button class="card" class:decoy-target={isDecoyTargetInRow(card, 'range', 2)} on:click|stopPropagation={() => {handleBoardCardClick(card, 'range', 2)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier >= 10}
                                 {#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
@@ -1820,7 +1934,7 @@
                         {/if} 
 
                         {#if card.type == "hero"}
-                            <button class="card" on:click={() => {placeCard(card)}}>
+                            <button class="card" on:click|stopPropagation={() => {handleBoardCardClick(card, 'range', 2)}}>
                             <img src="{card.name}.webp" alt="{card.name}">
                             </button>
                         {/if}
@@ -1846,7 +1960,7 @@
                 <div class="siege-units no-scrollbar">
                     {#each siegeP2.units as card}
                         {#if card.type == "unit"}
-                            <button class="card" on:click={() => {placeCard(card)}} style="padding-left:0.2vw; padding-top:0.2vw;">
+                            <button class="card" class:decoy-target={isDecoyTargetInRow(card, 'siege', 2)} on:click|stopPropagation={() => {handleBoardCardClick(card, 'siege', 2)}} style="padding-left:0.2vw; padding-top:0.2vw;">
                             <img src="{card.name}.webp" alt="{card.name}">
                             {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier >= 10}
                                 {#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
@@ -1867,7 +1981,7 @@
                         {/if} 
 
                         {#if card.type == "hero"}
-                            <button class="card" on:click={() => {placeCard(card)}}>
+                            <button class="card" on:click|stopPropagation={() => {handleBoardCardClick(card, 'siege', 2)}}>
                             <img src="{card.name}.webp" alt="{card.name}">
                             </button>
                         {/if}
@@ -2217,6 +2331,16 @@
     .card img:active{
         box-shadow: #ff9100 0 0 0.5vh;
     }
+
+    .decoy-target {
+        transform: scale(1.045);
+        transition: transform 0.16s ease, filter 0.16s ease;
+        filter: brightness(1.08);
+    }
+
+    .decoy-target img {
+        box-shadow: 0 0 0.75vh rgba(255, 223, 120, 0.9);
+    }
     /* 2-----------------------------------------------------------------------------------2 */
 
 
@@ -2275,7 +2399,7 @@
         top: 2%;
         width: 100%;
         height: 31%;
-        background-color: none;
+        background-color: transparent;
     }
     .melee-value {
         position: absolute;
@@ -2326,7 +2450,7 @@
         top: 35%;
         width: 100%;
         height: 31%;
-        background-color: none;
+        background-color: transparent;
     }
     .range-value {
         position: absolute;
@@ -2377,7 +2501,16 @@
         top: 68%;
         width: 100%;
         height: 31%;
-        background-color: none;
+        background-color: transparent;
+    }
+
+    .Board-bottom > button.melee,
+    .Board-bottom > button.range,
+    .Board-bottom > button.siege {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
     }
     .siege-value {
         position: absolute;
