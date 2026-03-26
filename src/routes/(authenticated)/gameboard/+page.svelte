@@ -556,7 +556,7 @@
     $: topGraveyard = isP1Perspective ? p2Graveyard : p1Graveyard
     $: bottomGraveyard = isP1Perspective ? p1Graveyard : p2Graveyard
     $: graveyardPopupCards = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard
-    $: visibleGraveyardCardCount = Math.min(3, graveyardPopupCards.length)
+    $: visibleGraveyardCardCount = Math.min(5, graveyardPopupCards.length)
     $: maxGraveyardScrollIndex = Math.max(0, graveyardPopupCards.length - visibleGraveyardCardCount)
     $: if (graveyardScrollIndex > maxGraveyardScrollIndex) {
         graveyardScrollIndex = maxGraveyardScrollIndex
@@ -3022,16 +3022,54 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 1rem;
-        min-height: 200px;
+        gap: 0;
+        min-height: 220px;
         width: 100%;
+        perspective: 1200px;
+        overflow: hidden;
+        position: relative;
     }
 
     .graveyard-wheel__card {
         width: 120px;
         height: 200px;
-        margin: 0 0.5rem;
         flex-shrink: 0;
+        transform-style: preserve-3d;
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .graveyard-wheel__card:nth-child(1) {
+        transform: rotateY(25deg) translateZ(140px);
+        opacity: 0.65;
+        margin-right: -45px;
+        z-index: 1;
+    }
+
+    .graveyard-wheel__card:nth-child(2) {
+        transform: rotateY(12deg) translateZ(180px);
+        opacity: 0.85;
+        margin-right: -30px;
+        z-index: 2;
+    }
+
+    .graveyard-wheel__card:nth-child(3) {
+        transform: rotateY(0deg) translateZ(200px);
+        opacity: 1;
+        margin-right: -30px;
+        z-index: 3;
+    }
+
+    .graveyard-wheel__card:nth-child(4) {
+        transform: rotateY(-12deg) translateZ(180px);
+        opacity: 0.85;
+        margin-right: -45px;
+        z-index: 2;
+    }
+
+    .graveyard-wheel__card:nth-child(5) {
+        transform: rotateY(-25deg) translateZ(140px);
+        opacity: 0.65;
+        z-index: 1;
     }
 
     .graveyard-wheel__card img {
@@ -3041,6 +3079,8 @@
         border-radius: 0.35rem;
         border: 1px solid #df9a37;
         box-shadow: 0 0 0.8vh rgba(255, 157, 35, 0.3);
+        display: block;
+        backface-visibility: hidden;
     }
     /* 5-----------------------------------------------------------------------------------5 */
 </style>
