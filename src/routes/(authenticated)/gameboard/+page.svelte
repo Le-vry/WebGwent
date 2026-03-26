@@ -2999,6 +2999,7 @@
         flex-direction: column;
         align-items: center;
         gap: 1rem;
+        container-type: inline-size;
     }
 
     .graveyard-modal__close {
@@ -3027,10 +3028,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 0;
-        min-height: 220px;
+        gap: 6cqw;
+        min-height: 25cqw;
         width: 100%;
-        perspective: 2400px;
+        perspective: 120cqw;
         overflow: hidden;
         position: relative;
         cursor: grab;
@@ -3041,8 +3042,8 @@
     }
 
     .graveyard-wheel__card {
-        width: 120px;
-        height: 200px;
+        width: 10cqw;
+        height: 16.7cqw;
         flex-shrink: 0;
         transform-style: preserve-3d;
         transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -3050,35 +3051,31 @@
     }
 
     .graveyard-wheel__card:nth-child(1) {
-        transform: rotateY(25deg) translateZ(280px);
+        transform: rotateY(25deg) translateZ(14cqw);
         opacity: 0.65;
-        margin-right: -48px;
         z-index: 1;
     }
 
     .graveyard-wheel__card:nth-child(2) {
-        transform: rotateY(12deg) translateZ(360px);
+        transform: rotateY(12deg) translateZ(18cqw);
         opacity: 0.85;
-        margin-right: -48px;
         z-index: 2;
     }
 
     .graveyard-wheel__card:nth-child(3) {
-        transform: rotateY(0deg) translateZ(400px);
+        transform: rotateY(0deg) translateZ(20cqw);
         opacity: 1;
-        margin-right: -48px;
         z-index: 3;
     }
 
     .graveyard-wheel__card:nth-child(4) {
-        transform: rotateY(-12deg) translateZ(360px);
+        transform: rotateY(-12deg) translateZ(18cqw);
         opacity: 0.85;
-        margin-right: -48px;
         z-index: 2;
     }
 
     .graveyard-wheel__card:nth-child(5) {
-        transform: rotateY(-25deg) translateZ(280px);
+        transform: rotateY(-25deg) translateZ(14cqw);
         opacity: 0.65;
         z-index: 1;
     }
