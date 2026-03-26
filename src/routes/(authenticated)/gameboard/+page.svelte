@@ -39,6 +39,7 @@
     let graveyardPopupOpen = false
     let graveyardPopupOwner = 1
     let graveyardScrollIndex = 0
+    let clientReady = false
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -422,6 +423,7 @@
     }
 
     onMount(() => {
+        clientReady = true;
         const init = async () => {
             const params = new URLSearchParams(window.location.search);
             gameCode = params.get('gameCode') ?? '';
@@ -1493,7 +1495,7 @@
         <span class="graveyard-count">{bottomGraveyard.length}</span>
     </button>
 
-    {#if graveyardPopupOpen}
+    {#if clientReady && graveyardPopupOpen && matchmakingStatus === 'active'}
         <div class="graveyard-modal" on:click={closeGraveyard} role="presentation">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
@@ -2875,4 +2877,170 @@
         color: #f9eabd;
         text-align: center;
     }
+
+    /* 5 Graveyard styling */
+    /* 5-----------------------------------------------------------------------------------5 */
+    .graveyard {
+        position: absolute;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        z-index: 10;
+        width: 5vw;
+        height: 11.7vh;
+        min-width: 5vw;
+        min-height: 11.7vh;
+        max-width: 5vw;
+        max-height: 11.7vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .graveyard--top {
+        top: 7%;
+        right: 3%;
+    }
+
+    .graveyard--bottom {
+        bottom: 7%;
+        right: 3%;
+    }
+
+    .graveyard:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
+
+    .graveyard-stack {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .graveyard-stack img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0.3rem;
+        box-shadow: 0 0 0.8vh rgba(0, 0, 0, 0.6);
+    }
+
+    .graveyard-count {
+        position: absolute;
+        bottom: 0.4vh;
+        right: 0.4vh;
+        background: rgba(0, 0, 0, 0.85);
+        color: #f4e1bf;
+        font: 600 0.9rem 'Roboto', sans-serif;
+        width: 1.8rem;
+        height: 1.8rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        border: 1px solid #df9a37;
+        z-index: 5;
+    }
+
+    .graveyard-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.82);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    .graveyard-modal__panel {
+        position: relative;
+        width: min(65vw, 750px);
+        max-height: 70vh;
+        background: linear-gradient(180deg, #1f150b 0%, #0f0b07 100%);
+        border: 1px solid #df9a37;
+        border-radius: 0.75rem;
+        box-shadow: 0 0 1.5rem rgba(255, 157, 35, 0.5);
+        padding: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .graveyard-modal__close {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: none;
+        border: none;
+        color: #df9a37;
+        font: 700 1.5rem 'Roboto', sans-serif;
+        cursor: pointer;
+        z-index: 101;
+        padding: 0.3rem 0.5rem;
+        transition: color 0.2s ease;
+    }
+
+    .graveyard-modal__close:hover {
+        color: #ffb24c;
+    }
+
+    .graveyard-nav {
+        background: #000000cc;
+        border: 1px solid #df9a37;
+        color: #f4e1bf;
+        font: 600 1rem 'Roboto', sans-serif;
+        width: 2.5rem;
+        height: 2.5rem;
+        cursor: pointer;
+        border-radius: 0.35rem;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .graveyard-nav:hover:not(:disabled) {
+        background: #df9a37;
+        color: #1f150b;
+        box-shadow: 0 0 0.6vh rgba(223, 154, 55, 0.5);
+    }
+
+    .graveyard-nav:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+    .graveyard-wheel {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        min-height: 200px;
+        width: 100%;
+    }
+
+    .graveyard-wheel__card {
+        width: 120px;
+        height: 200px;
+        margin: 0 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .graveyard-wheel__card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0.35rem;
+        border: 1px solid #df9a37;
+        box-shadow: 0 0 0.8vh rgba(255, 157, 35, 0.3);
+    }
+    /* 5-----------------------------------------------------------------------------------5 */
 </style>
