@@ -882,17 +882,20 @@
     function resolveRoundAfterAnnouncement(winner) {
         clearRoundResolveTimer();
 
+        // Immediately reset board and passed state so we don't get stuck if SSE syncs
+        resetRoundBoardState();
+        p1Passed = false;
+        p2Passed = false;
+
+        if (winner === 1 || winner === 2) {
+            turn = winner;
+        }
+
+        syncBoardState();
+        pushStateToServer(true);
+
+        // Small delay before next turn to show animation, but state is already reset
         roundResolveTimer = window.setTimeout(() => {
-            resetRoundBoardState();
-            p1Passed = false;
-            p2Passed = false;
-
-            if (winner === 1 || winner === 2) {
-                turn = winner;
-            }
-
-            syncBoardState();
-            pushStateToServer(true);
             roundResolveTimer = null;
         }, ROUND_CLEAR_DELAY_MS);
     }
