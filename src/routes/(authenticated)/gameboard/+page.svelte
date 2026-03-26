@@ -34,6 +34,11 @@
     let roundResolveTimer = null
     const ROUND_CLEAR_DELAY_MS = 1200
     let isEndingMatch = false
+    let p1Graveyard = []
+    let p2Graveyard = []
+    let graveyardPopupOpen = false
+    let graveyardPopupOwner = 1
+    let graveyardScrollIndex = 0
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -159,6 +164,8 @@
             placedFogCard,
             placedRainCard,
             weather,
+            p1Graveyard,
+            p2Graveyard,
             roundSummaries,
             matchWinner,
             matchCompleted
@@ -207,6 +214,8 @@
         placedFogCard = Boolean(state.placedFogCard);
         placedRainCard = Boolean(state.placedRainCard);
         weather = Array.isArray(state.weather) ? state.weather : weather;
+        p1Graveyard = Array.isArray(state.p1Graveyard) ? state.p1Graveyard : p1Graveyard;
+        p2Graveyard = Array.isArray(state.p2Graveyard) ? state.p2Graveyard : p2Graveyard;
         roundSummaries = Array.isArray(state.roundSummaries) ? state.roundSummaries : roundSummaries;
         matchWinner = typeof state.matchWinner === 'number' ? state.matchWinner : matchWinner;
         matchCompleted = typeof state.matchCompleted === 'boolean' ? state.matchCompleted : matchCompleted;
@@ -542,6 +551,19 @@
     let placedRainCard = false
     let weather = []
 
+    $: topGraveyard = isP1Perspective ? p2Graveyard : p1Graveyard
+    $: bottomGraveyard = isP1Perspective ? p1Graveyard : p2Graveyard
+    $: graveyardPopupCards = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard
+    $: visibleGraveyardCardCount = Math.min(3, graveyardPopupCards.length)
+    $: maxGraveyardScrollIndex = Math.max(0, graveyardPopupCards.length - visibleGraveyardCardCount)
+    $: if (graveyardScrollIndex > maxGraveyardScrollIndex) {
+        graveyardScrollIndex = maxGraveyardScrollIndex
+    }
+    $: visibleGraveyardCards = graveyardPopupCards.slice(
+        graveyardScrollIndex,
+        graveyardScrollIndex + visibleGraveyardCardCount
+    )
+
 
     /* Helper functions */
 
@@ -597,6 +619,30 @@
         pendingPlacementCard = null;
         pendingDecoyCard = null;
         clearRowSelection();
+    }
+
+    function sendCardsToGraveyard(owner, cards) {
+        if (!Array.isArray(cards) || cards.length === 0) return;
+        if (owner === 1) p1Graveyard = [...p1Graveyard, ...cards];
+        else p2Graveyard = [...p2Graveyard, ...cards];
+    }
+
+    function openGraveyard(owner) {
+        graveyardPopupOwner = owner;
+        graveyardScrollIndex = 0;
+        graveyardPopupOpen = true;
+    }
+
+    function closeGraveyard() {
+        graveyardPopupOpen = false;
+    }
+
+    function scrollGraveyardLeft() {
+        graveyardScrollIndex = Math.max(0, graveyardScrollIndex - 1);
+    }
+
+    function scrollGraveyardRight() {
+        graveyardScrollIndex = Math.min(maxGraveyardScrollIndex, graveyardScrollIndex + 1);
     }
 
     function isDecoyCard(card) {
@@ -789,6 +835,9 @@
     }
 
     function resetRoundBoardState() {
+        sendCardsToGraveyard(1, [...meleeP1.units, ...rangeP1.units, ...siegeP1.units]);
+        sendCardsToGraveyard(2, [...meleeP2.units, ...rangeP2.units, ...siegeP2.units]);
+
         p1TotalValue = 0
         meleeP1 = { value: 0, rowMultiplier: 1, units: [], special: [] }
         rangeP1 = { value: 0, rowMultiplier: 1, units: [], special: [] }
@@ -858,6 +907,8 @@
         p2Hand = [...p2Hand];
         p1Cards = [...p1Cards];
         p2Cards = [...p2Cards];
+        p1Graveyard = [...p1Graveyard];
+        p2Graveyard = [...p2Graveyard];
         weather = [...weather];
 
         queueStateSync();
@@ -1096,20 +1147,32 @@
         const maxValue = enemyRow.units
             .filter(c => c.type === "unit")
             .reduce((max, c) => Math.max(max, unitScore(c)), 0);
+        const scorched = enemyRow.units.filter(c => c.type === "unit" && unitScore(c) === maxValue);
+        const enemyOwner = enemyRow === meleeP1 || enemyRow === rangeP1 || enemyRow === siegeP1 ? 1 : 2;
+        sendCardsToGraveyard(enemyOwner, scorched);
         enemyRow.units = enemyRow.units.filter(c => c.type !== "unit" || unitScore(c) !== maxValue);
         updateRowValue(enemyRow);
     }
 
     function placedSpecialScorchCard() {
-        const allRows = [meleeP1, rangeP1, siegeP1, meleeP2, rangeP2, siegeP2];
+        const allRows = [
+            { owner: 1, row: meleeP1 },
+            { owner: 1, row: rangeP1 },
+            { owner: 1, row: siegeP1 },
+            { owner: 2, row: meleeP2 },
+            { owner: 2, row: rangeP2 },
+            { owner: 2, row: siegeP2 }
+        ];
         let maxStrength = 0;
-        allRows.forEach(row => {
+        allRows.forEach(({ row }) => {
             row.units.forEach(card => {
                 if (card.type === "unit") maxStrength = Math.max(maxStrength, card.value);
             });
         });
         if (maxStrength === 0) return;
-        allRows.forEach(row => {
+        allRows.forEach(({ owner, row }) => {
+            const scorched = row.units.filter(c => c.type === "unit" && c.value === maxStrength);
+            sendCardsToGraveyard(owner, scorched);
             const before = row.units.length;
             row.units = row.units.filter(c => c.type !== "unit" || c.value !== maxStrength);
             if (row.units.length !== before) updateRowValue(row);
@@ -1311,6 +1374,24 @@
         </div>
     {/if}
 
+    <button
+        class="graveyard graveyard--top"
+        on:click={() => openGraveyard(isP1Perspective ? 2 : 1)}
+        disabled={topGraveyard.length === 0}
+        aria-label="Open opponent graveyard"
+    >
+        <div class="graveyard-stack" aria-hidden="true">
+            {#each topGraveyard.slice(Math.max(0, topGraveyard.length - 5)) as card, idx}
+                <img
+                    src="{card.name}.webp"
+                    alt=""
+                    style="transform: translate({idx * 2}px, {idx * -2}px); z-index: {idx + 1};"
+                >
+            {/each}
+        </div>
+        <span class="graveyard-count">{topGraveyard.length}</span>
+    </button>
+
     {#if showTurnBanner}
         <div class="turn-flash">YOUR TURN</div>
     {/if}
@@ -1393,6 +1474,43 @@
             {/each}
         {/if}
     </div>
+
+    <button
+        class="graveyard graveyard--bottom"
+        on:click={() => openGraveyard(isP1Perspective ? 1 : 2)}
+        disabled={bottomGraveyard.length === 0}
+        aria-label="Open your graveyard"
+    >
+        <div class="graveyard-stack" aria-hidden="true">
+            {#each bottomGraveyard.slice(Math.max(0, bottomGraveyard.length - 5)) as card, idx}
+                <img
+                    src="{card.name}.webp"
+                    alt=""
+                    style="transform: translate({idx * 2}px, {idx * -2}px); z-index: {idx + 1};"
+                >
+            {/each}
+        </div>
+        <span class="graveyard-count">{bottomGraveyard.length}</span>
+    </button>
+
+    {#if graveyardPopupOpen}
+        <div class="graveyard-modal" on:click={closeGraveyard} role="presentation">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+            <div class="graveyard-modal__panel" on:click|stopPropagation role="dialog" aria-modal="true" aria-label="Graveyard cards">
+                <button class="graveyard-modal__close" on:click={closeGraveyard} aria-label="Close graveyard">X</button>
+                <button class="graveyard-nav" on:click={scrollGraveyardLeft} disabled={graveyardScrollIndex === 0} aria-label="Scroll left">&lt;</button>
+                <div class="graveyard-wheel" aria-live="polite">
+                    {#each visibleGraveyardCards as card}
+                        <div class="graveyard-wheel__card">
+                            <img src="{card.name}.webp" alt="{card.name}">
+                        </div>
+                    {/each}
+                </div>
+                <button class="graveyard-nav" on:click={scrollGraveyardRight} disabled={graveyardScrollIndex >= maxGraveyardScrollIndex} aria-label="Scroll right">&gt;</button>
+            </div>
+        </div>
+    {/if}
 
 
 
