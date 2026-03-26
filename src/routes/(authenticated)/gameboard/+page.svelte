@@ -38,11 +38,9 @@
     let p2Graveyard = []
     let graveyardPopupOpen = false
     let graveyardPopupOwner = 1
-    let graveyardScrollIndex = 0
     let clientReady = false
-    let graveyardDragStart = 0
-    let graveyardDragCurrent = 0
-    let graveyardIsDragging = false
+    let graveyardScrollOffset = 0
+    let graveyardScroller = null
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -559,15 +557,6 @@
     $: topGraveyard = isP1Perspective ? p2Graveyard : p1Graveyard
     $: bottomGraveyard = isP1Perspective ? p1Graveyard : p2Graveyard
     $: graveyardPopupCards = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard
-    $: visibleGraveyardCardCount = Math.min(5, graveyardPopupCards.length)
-    $: maxGraveyardScrollIndex = Math.max(0, graveyardPopupCards.length - visibleGraveyardCardCount)
-    $: if (graveyardScrollIndex > maxGraveyardScrollIndex) {
-        graveyardScrollIndex = maxGraveyardScrollIndex
-    }
-    $: visibleGraveyardCards = graveyardPopupCards.slice(
-        graveyardScrollIndex,
-        graveyardScrollIndex + visibleGraveyardCardCount
-    )
 
 
     /* Helper functions */
@@ -634,7 +623,8 @@
 
     function openGraveyard(owner) {
         graveyardPopupOwner = owner;
-        graveyardScrollIndex = 0;
+        graveyardScrollOffset = 0;
+        if (graveyardScroller) graveyardScroller.scrollLeft = 0;
         graveyardPopupOpen = true;
     }
 
@@ -642,31 +632,12 @@
         graveyardPopupOpen = false;
     }
 
-    function startGraveyardDrag(e) {
-        if (!graveyardPopupOpen) return;
-        graveyardIsDragging = true;
-        graveyardDragStart = e.clientX || e.touches?.[0]?.clientX || 0;
-        graveyardDragCurrent = graveyardDragStart;
-    }
-
-    function onGraveyardDragMove(e) {
-        if (!graveyardIsDragging) return;
-        graveyardDragCurrent = e.clientX || e.touches?.[0]?.clientX || 0;
-    }
-
-    function endGraveyardDrag() {
-        if (!graveyardIsDragging) return;
-        graveyardIsDragging = false;
-        const delta = graveyardDragStart - graveyardDragCurrent;
-        const threshold = 30;
-
-        if (Math.abs(delta) > threshold) {
-            const direction = delta > 0 ? 1 : -1;
-            graveyardScrollIndex = Math.max(0, Math.min(maxGraveyardScrollIndex, graveyardScrollIndex + direction));
+    function handleGraveyardWheel(e) {
+        if (graveyardScroller && graveyardPopupOpen) {
+            e.preventDefault();
+            const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+            graveyardScroller.scrollLeft += delta;
         }
-
-        graveyardDragStart = 0;
-        graveyardDragCurrent = 0;
     }
 
     function isDecoyCard(card) {
@@ -1521,18 +1492,31 @@
     </button>
 
     {#if clientReady && graveyardPopupOpen && matchmakingStatus === 'active'}
-        <div class="graveyard-modal" on:click={closeGraveyard} on:mousemove={onGraveyardDragMove} on:mouseup={endGraveyardDrag} on:mouseleave={endGraveyardDrag} role="presentation">
+        <div class="graveyard-modal" on:click={closeGraveyard} role="presentation">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-            <div class="graveyard-modal__panel" on:click|stopPropagation role="dialog" aria-modal="true" aria-label="Graveyard cards">
+            <div class="graveyard-modal__panel" on:click|stopPropagation on:wheel|preventDefault={handleGraveyardWheel} role="dialog" aria-modal="true" aria-label="Graveyard cards">
                 <button class="graveyard-modal__close" on:click={closeGraveyard} aria-label="Close graveyard">X</button>
-                <div class="graveyard-wheel {graveyardIsDragging ? 'dragging' : ''}" on:mousedown={startGraveyardDrag} aria-live="polite">
-                    {#each visibleGraveyardCards as card}
-                        <div class="graveyard-wheel__card">
-                            <img src="{card.name}.webp" alt="{card.name}">
-                        </div>
-                    {/each}
+                
+                <div class="cylinder-scroller-wrapper">
+                    <div class="cylinder-viewport">
+                        {#each graveyardPopupCards as card, i (i)}
+                            <div class="cylinder-card" style="
+                                transform: translateZ(-40cqw) rotateY({(i - graveyardScrollOffset) * -45}deg) translateZ(40cqw);
+                                opacity: {Math.max(0, 1 - Math.abs(i - graveyardScrollOffset) * 0.25)};
+                                visibility: {Math.abs(i - graveyardScrollOffset) < 3.5 ? 'visible' : 'hidden'};
+                                z-index: {100 - Math.round(Math.abs(i - graveyardScrollOffset) * 10)};
+                            ">
+                                <img src="{card.name}.webp" alt="{card.name}" draggable="false">
+                            </div>
+                        {/each}
+                    </div>
+
+                    <div class="native-scroller" bind:this={graveyardScroller} on:scroll={(e) => graveyardScrollOffset = e.target.scrollLeft / 180}>
+                        <div style="width: calc(100% + {Math.max(0, graveyardPopupCards.length - 1) * 180}px); height: 1px;"></div>
+                    </div>
                 </div>
+
             </div>
         </div>
     {/if}
@@ -3020,75 +3004,64 @@
         color: #ffb24c;
     }
 
-    .graveyard-nav {
-        display: none;
+    .cylinder-scroller-wrapper {
+        position: relative;
+        width: 100%;
     }
 
-    .graveyard-wheel {
+    .cylinder-viewport {
+        position: relative;
+        width: 100%;
+        height: 35vh;
+        min-height: 250px;
+        perspective: 1200px;
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 6cqw;
-        min-height: 25cqw;
-        width: 100%;
-        perspective: 120cqw;
-        overflow: hidden;
-        position: relative;
-        cursor: grab;
+        pointer-events: none;
     }
 
-    .graveyard-wheel.dragging {
-        cursor: grabbing;
-    }
-
-    .graveyard-wheel__card {
-        width: 10cqw;
-        height: 16.7cqw;
-        flex-shrink: 0;
+    .cylinder-card {
+        position: absolute;
+        width: 16cqw;
+        height: 27cqw;
         transform-style: preserve-3d;
-        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        user-select: none;
+        will-change: transform, opacity;
     }
 
-    .graveyard-wheel__card:nth-child(1) {
-        transform: rotateY(25deg) translateZ(14cqw);
-        opacity: 0.65;
-        z-index: 1;
-    }
-
-    .graveyard-wheel__card:nth-child(2) {
-        transform: rotateY(12deg) translateZ(18cqw);
-        opacity: 0.85;
-        z-index: 2;
-    }
-
-    .graveyard-wheel__card:nth-child(3) {
-        transform: rotateY(0deg) translateZ(20cqw);
-        opacity: 1;
-        z-index: 3;
-    }
-
-    .graveyard-wheel__card:nth-child(4) {
-        transform: rotateY(-12deg) translateZ(18cqw);
-        opacity: 0.85;
-        z-index: 2;
-    }
-
-    .graveyard-wheel__card:nth-child(5) {
-        transform: rotateY(-25deg) translateZ(14cqw);
-        opacity: 0.65;
-        z-index: 1;
-    }
-
-    .graveyard-wheel__card img {
+    .cylinder-card img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         border-radius: 0.35rem;
         border: 1px solid #df9a37;
-        box-shadow: 0 0 0.8vh rgba(255, 157, 35, 0.3);
-        display: block;
+        box-shadow: 0 0 1.2vh rgba(255, 157, 35, 0.4);
+        background: #000;
         backface-visibility: hidden;
+    }
+
+    .native-scroller {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        margin-top: 1rem;
+        padding-bottom: 0.5rem;
+        scrollbar-width: thin;
+        scrollbar-color: #df9a37 transparent;
+        cursor: grab;
+    }
+
+    .native-scroller:active {
+        cursor: grabbing;
+    }
+
+    .native-scroller::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .native-scroller::-webkit-scrollbar-thumb {
+        background: #df9a37;
+        border-radius: 4px;
     }
     /* 5-----------------------------------------------------------------------------------5 */
 </style>
