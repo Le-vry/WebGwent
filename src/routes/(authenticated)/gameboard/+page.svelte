@@ -40,6 +40,9 @@
     let graveyardPopupOwner = 1
     let graveyardScrollIndex = 0
     let clientReady = false
+    let graveyardDragStart = 0
+    let graveyardDragCurrent = 0
+    let graveyardIsDragging = false
 
     function roleToPlayerNumber(role) {
         return role === 'p2' ? 2 : 1;
@@ -639,12 +642,31 @@
         graveyardPopupOpen = false;
     }
 
-    function scrollGraveyardLeft() {
-        graveyardScrollIndex = Math.max(0, graveyardScrollIndex - 1);
+    function startGraveyardDrag(e) {
+        if (!graveyardPopupOpen) return;
+        graveyardIsDragging = true;
+        graveyardDragStart = e.clientX || e.touches?.[0]?.clientX || 0;
+        graveyardDragCurrent = graveyardDragStart;
     }
 
-    function scrollGraveyardRight() {
-        graveyardScrollIndex = Math.min(maxGraveyardScrollIndex, graveyardScrollIndex + 1);
+    function onGraveyardDragMove(e) {
+        if (!graveyardIsDragging) return;
+        graveyardDragCurrent = e.clientX || e.touches?.[0]?.clientX || 0;
+    }
+
+    function endGraveyardDrag() {
+        if (!graveyardIsDragging) return;
+        graveyardIsDragging = false;
+        const delta = graveyardDragStart - graveyardDragCurrent;
+        const threshold = 30;
+
+        if (Math.abs(delta) > threshold) {
+            const direction = delta > 0 ? 1 : -1;
+            graveyardScrollIndex = Math.max(0, Math.min(maxGraveyardScrollIndex, graveyardScrollIndex + direction));
+        }
+
+        graveyardDragStart = 0;
+        graveyardDragCurrent = 0;
     }
 
     function isDecoyCard(card) {
@@ -1496,20 +1518,18 @@
     </button>
 
     {#if clientReady && graveyardPopupOpen && matchmakingStatus === 'active'}
-        <div class="graveyard-modal" on:click={closeGraveyard} role="presentation">
+        <div class="graveyard-modal" on:click={closeGraveyard} on:mousemove={onGraveyardDragMove} on:mouseup={endGraveyardDrag} on:mouseleave={endGraveyardDrag} role="presentation">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
             <div class="graveyard-modal__panel" on:click|stopPropagation role="dialog" aria-modal="true" aria-label="Graveyard cards">
                 <button class="graveyard-modal__close" on:click={closeGraveyard} aria-label="Close graveyard">X</button>
-                <button class="graveyard-nav" on:click={scrollGraveyardLeft} disabled={graveyardScrollIndex === 0} aria-label="Scroll left">&lt;</button>
-                <div class="graveyard-wheel" aria-live="polite">
+                <div class="graveyard-wheel {graveyardIsDragging ? 'dragging' : ''}" on:mousedown={startGraveyardDrag} aria-live="polite">
                     {#each visibleGraveyardCards as card}
                         <div class="graveyard-wheel__card">
                             <img src="{card.name}.webp" alt="{card.name}">
                         </div>
                     {/each}
                 </div>
-                <button class="graveyard-nav" on:click={scrollGraveyardRight} disabled={graveyardScrollIndex >= maxGraveyardScrollIndex} aria-label="Scroll right">&gt;</button>
             </div>
         </div>
     {/if}
@@ -2901,13 +2921,15 @@
     }
 
     .graveyard--top {
-        top: 7%;
+        top: 1.5%;
         right: 3%;
+        z-index: 50;
     }
 
     .graveyard--bottom {
         bottom: 7%;
         right: 3%;
+        z-index: 50;
     }
 
     .graveyard:disabled {
@@ -2995,27 +3017,7 @@
     }
 
     .graveyard-nav {
-        background: #000000cc;
-        border: 1px solid #df9a37;
-        color: #f4e1bf;
-        font: 600 1rem 'Roboto', sans-serif;
-        width: 2.5rem;
-        height: 2.5rem;
-        cursor: pointer;
-        border-radius: 0.35rem;
-        transition: all 0.2s ease;
-        flex-shrink: 0;
-    }
-
-    .graveyard-nav:hover:not(:disabled) {
-        background: #df9a37;
-        color: #1f150b;
-        box-shadow: 0 0 0.6vh rgba(223, 154, 55, 0.5);
-    }
-
-    .graveyard-nav:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
+        display: none;
     }
 
     .graveyard-wheel {
@@ -3025,9 +3027,14 @@
         gap: 0;
         min-height: 220px;
         width: 100%;
-        perspective: 1200px;
+        perspective: 2400px;
         overflow: hidden;
         position: relative;
+        cursor: grab;
+    }
+
+    .graveyard-wheel.dragging {
+        cursor: grabbing;
     }
 
     .graveyard-wheel__card {
@@ -3036,38 +3043,39 @@
         flex-shrink: 0;
         transform-style: preserve-3d;
         transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        user-select: none;
     }
 
     .graveyard-wheel__card:nth-child(1) {
-        transform: rotateY(25deg) translateZ(140px);
+        transform: rotateY(25deg) translateZ(280px);
         opacity: 0.65;
-        margin-right: -45px;
+        margin-right: -48px;
         z-index: 1;
     }
 
     .graveyard-wheel__card:nth-child(2) {
-        transform: rotateY(12deg) translateZ(180px);
+        transform: rotateY(12deg) translateZ(360px);
         opacity: 0.85;
-        margin-right: -30px;
+        margin-right: -48px;
         z-index: 2;
     }
 
     .graveyard-wheel__card:nth-child(3) {
-        transform: rotateY(0deg) translateZ(200px);
+        transform: rotateY(0deg) translateZ(400px);
         opacity: 1;
-        margin-right: -30px;
+        margin-right: -48px;
         z-index: 3;
     }
 
     .graveyard-wheel__card:nth-child(4) {
-        transform: rotateY(-12deg) translateZ(180px);
+        transform: rotateY(-12deg) translateZ(360px);
         opacity: 0.85;
-        margin-right: -45px;
+        margin-right: -48px;
         z-index: 2;
     }
 
     .graveyard-wheel__card:nth-child(5) {
-        transform: rotateY(-25deg) translateZ(140px);
+        transform: rotateY(-25deg) translateZ(280px);
         opacity: 0.65;
         z-index: 1;
     }
