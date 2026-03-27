@@ -3010,7 +3010,6 @@
 	.card img:active {
 		box-shadow: #ff9100 0 0 0.5vh;
 	}
-
 	.decoy-target {
 		transform: scale(1.045);
 		transition:
@@ -3018,7 +3017,6 @@
 			filter 0.16s ease;
 		filter: brightness(1.08);
 	}
-
 	.decoy-target img {
 		box-shadow: 0 0 0.75vh rgba(255, 223, 120, 0.9);
 	}
@@ -3620,7 +3618,7 @@
 		bottom: -5.5rem;
 		left: 50%;
 		transform: translateX(-50%);
-		width: 120%;
+		width: 100%;
 		background: rgba(0, 0, 0, 0.85);
 		color: #fcebbb;
 		font-family: 'Roboto', sans-serif;
