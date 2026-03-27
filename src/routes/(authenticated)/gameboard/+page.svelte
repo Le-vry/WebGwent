@@ -1502,7 +1502,7 @@
                     <div class="cylinder-viewport">
                         {#each graveyardPopupCards as card, i (i)}
                             <div class="cylinder-card" style="
-                                transform: translateZ(-90cqw) rotateY({(i - graveyardScrollOffset) * -22}deg) translateZ(90cqw);
+                                transform: translateZ(-50vw) rotateY({(i - graveyardScrollOffset) * -22}deg) translateZ(50vw);
                                 opacity: {Math.max(0, 1 - Math.abs(i - graveyardScrollOffset) * 0.15)};
                                 visibility: {Math.abs(i - graveyardScrollOffset) < 5.5 ? 'visible' : 'hidden'};
                                 z-index: {100 - Math.round(Math.abs(i - graveyardScrollOffset) * 10)};
@@ -2972,7 +2972,9 @@
 
     .graveyard-modal__panel {
         position: relative;
-        width: min(90vw, 1200px);
+        width: 70vw;
+        max-width: 1400px;
+        min-height: 60vh;
         max-height: 85vh;
         background: linear-gradient(180deg, #1f150b 0%, #0f0b07 100%);
         border: 1px solid #df9a37;
@@ -2982,8 +2984,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: 1rem;
-        container-type: inline-size;
         overflow: hidden;
     }
 
@@ -3015,19 +3017,20 @@
         width: 100%;
         height: 60vh;
         min-height: 400px;
-        perspective: 2000px;
+        perspective: 2500px;
         display: flex;
         justify-content: center;
         align-items: center;
         pointer-events: none;
+        overflow: visible;
     }
 
     .cylinder-card {
         position: absolute;
-        width: 18cqw;
-        height: 30cqw;
-        max-width: 200px;
-        max-height: 333px;
+        width: 14vw;
+        height: 23vw;
+        max-width: 250px;
+        max-height: 410px;
         transform-style: preserve-3d;
         will-change: transform, opacity;
     }
