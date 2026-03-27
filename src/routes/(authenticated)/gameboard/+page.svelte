@@ -1644,87 +1644,91 @@
 										{card.Basevalue !== undefined ? card.Basevalue : card.value}
 									</p>
 								{/if}
-								{#if card.ability === 'Tight Bond'}
-									<div class="graveyard-ability-info">
-										Tight Bond: Place next to a card with the same name to double the strength of
-										both cards.
-									</div>
-								{:else if card.ability === 'medic' || card.ability === 'Medic'}
-									<div class="graveyard-ability-info">
-										Medic: Choose one card from your discard pile and play it instantly (no Heroes
-										or Special Cards).
-									</div>
-								{:else if card.ability === 'hero' || card.ability === 'Hero' || card.type === 'hero'}
-									<div class="graveyard-ability-info">
-										Hero: Not affected by any Special Cards or abilities.
-									</div>
-								{:else if card.ability === 'morale boost' || card.ability === 'Morale boost' || card.ability === 'Morale Boost'}
-									<div class="graveyard-ability-info">
-										Morale boost: Adds +1 to all units in the row (excluding itself).
-									</div>
-								{:else if card.ability === 'spy' || card.ability === 'Spy'}
-									<div class="graveyard-ability-info">
-										Spy: Place on your opponent's battlefield (counts towards opponent's total) and
-										draw 2 cards from your deck.
-									</div>
-								{:else if card.ability === 'agile' || card.ability === 'Agile'}
-									<div class="graveyard-ability-info">
-										Agile: Can be placed in either the Close Combat or the Ranged Combat row. Cannot
-										be moved once placed.
-									</div>
-								{:else if card.name === 'Villentretenmerth'}
-									<div class="graveyard-ability-info">
-										Scorch - Close Combat: Destroy your enemy's strongest Close Combat unit(s) if
-										the combined strength of all his or her Close Combat units is 10 or more.
-									</div>
-								{:else if card.name === 'Toad'}
-									<div class="graveyard-ability-info">
-										Scorch - Ranged: Destroy your enemy's strongest Ranged Combat unit(s) if the
-										combined strength of all his or her Ranged Combat units is 10 or more.
-									</div>
-								{:else if card.name === 'Schirrú' || card.name === 'Schirru'}
-									<div class="graveyard-ability-info">
-										Scorch - Siege: Destroys your enemy's strongest Siege Combat unit(s) if the
-										combined strength of all his or her Siege Combat units is 10 or more.
-									</div>
-								{:else if card.ability === 'muster' || card.ability === 'Muster'}
-									<div class="graveyard-ability-info">
-										Muster: Find any cards with the same name in your deck and play them instantly.
-									</div>
-								{:else if card.ability === 'W1' || card.name === 'Biting Frost'}
-									<div class="graveyard-ability-info">
-										Sets the strength of all Close Combat cards to 1 for both players.
-									</div>
-								{:else if card.ability === 'W2' || card.name === 'Impenetrable Fog'}
-									<div class="graveyard-ability-info">
-										Sets the strength of all Ranged Combat cards to 1 for both players.
-									</div>
-								{:else if card.ability === 'W3' || card.name === 'Torrential Rain'}
-									<div class="graveyard-ability-info">
-										Sets the strength of all Siege Combat cards to 1 for both players.
-									</div>
-								{:else if card.ability === 'W4' || card.name === 'Skellige Storm'}
-									<div class="graveyard-ability-info">
-										Reduces the Strength of all Range and Siege Units to 1.
-									</div>
-								{:else if card.ability === 'W5' || card.name === 'Clear Weather'}
-									<div class="graveyard-ability-info">
-										Removes all Weather Card (Biting Frost, Impenetrable Fog and Torrential Rain)
-										effects.
-									</div>
-								{:else if card.ability === 'horn' || card.ability === "Commander's Horn" || card.name === "Commander's Horn"}
-									<div class="graveyard-ability-info">
-										Commander's Horn: Doubles the strength of all unit cards in that row. Limited to
-										1 per row.
-									</div>
-								{:else if card.ability === 'decoy' || card.name === 'Decoy'}
-									<div class="graveyard-ability-info">
-										Swap with a card on the battlefield to return it to your hand.
-									</div>
-								{:else if card.ability === 'scorch' || card.ability === 'Scorch' || card.type === 'scorch'}
-									<div class="graveyard-ability-info">
-										Scorch: Discards after playing. Kills the strongest card(s) on the battlefield.
-									</div>
+								{#if Math.round(graveyardScrollOffset) === i}
+									{#if card.ability === 'Tight Bond'}
+										<div class="graveyard-ability-info">
+											Tight Bond: Place next to a card with the same name to double the strength of
+											both cards.
+										</div>
+									{:else if card.ability === 'medic' || card.ability === 'Medic'}
+										<div class="graveyard-ability-info">
+											Medic: Choose one card from your discard pile and play it instantly (no Heroes
+											or Special Cards).
+										</div>
+									{:else if card.ability === 'hero' || card.ability === 'Hero' || card.type === 'hero'}
+										<div class="graveyard-ability-info">
+											Hero: Not affected by any Special Cards or abilities.
+										</div>
+									{:else if card.ability === 'morale boost' || card.ability === 'Morale boost' || card.ability === 'Morale Boost'}
+										<div class="graveyard-ability-info">
+											Morale boost: Adds +1 to all units in the row (excluding itself).
+										</div>
+									{:else if card.ability === 'spy' || card.ability === 'Spy'}
+										<div class="graveyard-ability-info">
+											Spy: Place on your opponent's battlefield (counts towards opponent's total)
+											and draw 2 cards from your deck.
+										</div>
+									{:else if card.ability === 'agile' || card.ability === 'Agile'}
+										<div class="graveyard-ability-info">
+											Agile: Can be placed in either the Close Combat or the Ranged Combat row.
+											Cannot be moved once placed.
+										</div>
+									{:else if card.name === 'Villentretenmerth'}
+										<div class="graveyard-ability-info">
+											Scorch - Close Combat: Destroy your enemy's strongest Close Combat unit(s) if
+											the combined strength of all his or her Close Combat units is 10 or more.
+										</div>
+									{:else if card.name === 'Toad'}
+										<div class="graveyard-ability-info">
+											Scorch - Ranged: Destroy your enemy's strongest Ranged Combat unit(s) if the
+											combined strength of all his or her Ranged Combat units is 10 or more.
+										</div>
+									{:else if card.name === 'Schirrú' || card.name === 'Schirru'}
+										<div class="graveyard-ability-info">
+											Scorch - Siege: Destroys your enemy's strongest Siege Combat unit(s) if the
+											combined strength of all his or her Siege Combat units is 10 or more.
+										</div>
+									{:else if card.ability === 'muster' || card.ability === 'Muster'}
+										<div class="graveyard-ability-info">
+											Muster: Find any cards with the same name in your deck and play them
+											instantly.
+										</div>
+									{:else if card.ability === 'W1' || card.name === 'Biting Frost'}
+										<div class="graveyard-ability-info">
+											Sets the strength of all Close Combat cards to 1 for both players.
+										</div>
+									{:else if card.ability === 'W2' || card.name === 'Impenetrable Fog'}
+										<div class="graveyard-ability-info">
+											Sets the strength of all Ranged Combat cards to 1 for both players.
+										</div>
+									{:else if card.ability === 'W3' || card.name === 'Torrential Rain'}
+										<div class="graveyard-ability-info">
+											Sets the strength of all Siege Combat cards to 1 for both players.
+										</div>
+									{:else if card.ability === 'W4' || card.name === 'Skellige Storm'}
+										<div class="graveyard-ability-info">
+											Reduces the Strength of all Range and Siege Units to 1.
+										</div>
+									{:else if card.ability === 'W5' || card.name === 'Clear Weather'}
+										<div class="graveyard-ability-info">
+											Removes all Weather Card (Biting Frost, Impenetrable Fog and Torrential Rain)
+											effects.
+										</div>
+									{:else if card.ability === 'horn' || card.ability === "Commander's Horn" || card.name === "Commander's Horn"}
+										<div class="graveyard-ability-info">
+											Commander's Horn: Doubles the strength of all unit cards in that row. Limited
+											to 1 per row.
+										</div>
+									{:else if card.ability === 'decoy' || card.name === 'Decoy'}
+										<div class="graveyard-ability-info">
+											Swap with a card on the battlefield to return it to your hand.
+										</div>
+									{:else if card.ability === 'scorch' || card.ability === 'Scorch' || card.type === 'scorch'}
+										<div class="graveyard-ability-info">
+											Scorch: Discards after playing. Kills the strongest card(s) on the
+											battlefield.
+										</div>
+									{/if}
 								{/if}
 							</div>
 						{/each}
