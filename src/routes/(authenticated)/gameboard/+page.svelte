@@ -1041,8 +1041,13 @@
 			}
 		} else if (card.type === 'special') {
 			if (card.row === 'weather') {
-				weather = [...weather, card];
-				placedWeatherCard(card);
+				if (card.ability === 'W5') {
+					placedWeatherCard(card);
+					sendCardsToGraveyard(activePlayer, [card]);
+				} else {
+					weather = [...weather, card];
+					placedWeatherCard(card);
+				}
 			}
 			if (card.ability === 'horn') {
 				placeHornSpecial(card, ownRows);
@@ -1616,12 +1621,12 @@
 								class="cylinder-card"
 								style="
                                 transform: translateZ(-50vw) rotateY({(i - graveyardScrollOffset) *
-									-11}deg) translateZ(50vw) rotateY({(i - graveyardScrollOffset) * 11}deg);
+									-18}deg) translateZ(50vw) rotateY({(i - graveyardScrollOffset) * 18}deg);
                                 opacity: {Math.max(
 									0,
 									1 - Math.abs(i - graveyardScrollOffset) * 0.15
 								)};
-                                visibility: {Math.abs(i - graveyardScrollOffset) < 7
+                                visibility: {Math.abs(i - graveyardScrollOffset) < 4.5
 									? 'visible'
 									: 'hidden'};
                                 z-index: {100 -
@@ -1728,11 +1733,11 @@
 					<div
 						class="native-scroller"
 						bind:this={graveyardScroller}
-						on:scroll={(e) => (graveyardScrollOffset = e.target.scrollLeft / 140)}
+						on:scroll={(e) => (graveyardScrollOffset = e.target.scrollLeft / 230)}
 					>
 						<div
 							style="width: calc(100% + {Math.max(0, graveyardPopupCards.length - 1) *
-								140}px); height: 1px;"
+								230}px); height: 1px;"
 						></div>
 					</div>
 				</div>
