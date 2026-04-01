@@ -1843,8 +1843,9 @@
 						{#if card.type == 'unit'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								class:decoy-target={isDecoyTargetInRow(card, 'range', 1)}
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'range', 1);
 								}}
 								style="padding-left:0.2vw; padding-top:0.2vw;"
 							>
@@ -1917,8 +1918,9 @@
 						{#if card.type == 'unit'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								class:decoy-target={isDecoyTargetInRow(card, 'siege', 1)}
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'siege', 1);
 								}}
 								style="padding-left:0.2vw; padding-top:0.2vw;"
 							>
@@ -1995,8 +1997,9 @@
 						{#if card.type == 'unit'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								class:decoy-target={isDecoyTargetInRow(card, 'melee', 2)}
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'melee', 2);
 								}}
 								style="padding-left:0.2vw; padding-top:0.2vw;"
 							>
@@ -2030,8 +2033,8 @@
 						{#if card.type == 'hero'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'melee', 2);
 								}}
 							>
 								<img src="{card.name}.webp" alt={card.name} />
@@ -2224,8 +2227,9 @@
 						{#if card.type == 'unit'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								class:decoy-target={isDecoyTargetInRow(card, 'melee', 1)}
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'melee', 1);
 								}}
 								style="padding-left:0.2vw; padding-top:0.2vw;"
 							>
