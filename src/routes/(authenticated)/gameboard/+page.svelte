@@ -654,7 +654,7 @@
 	}
 
 	function isValidDecoyTarget(card) {
-		return !!card && card.type === 'unit';
+		return !!card && card.type !== 'hero' && card.type !== 'special';
 	}
 
 	function hasAvailableDecoyTargets(playerNumber) {
@@ -1753,7 +1753,11 @@
 		{#if !isP1Perspective}
 			<div class="totalvalue">{p1TotalValue}</div>
 
-			<div class="melee" style="top: 67%;">
+			<button
+				class="melee"
+				style="top: 67%;"
+				on:click={() => selectRow('melee')}
+			>
 				<div class="melee-value" style="top:35%;">{meleeP1.value}</div>
 
 				<div class="melee-special">
@@ -1804,8 +1808,8 @@
 						{#if card.type == 'hero'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'melee', 1);
 								}}
 							>
 								<img src="{card.name}.webp" alt={card.name} />
@@ -1822,9 +1826,9 @@
 						style="visibility:{placedFrostCard ? 'visible' : 'hidden'}"
 					/>
 				</div>
-			</div>
+			</button>
 
-			<div class="range">
+			<button class="range" on:click={() => selectRow('range')}>
 				<div class="range-value" style="top:32%;">{rangeP1.value}</div>
 
 				<div class="range-special">
@@ -1874,8 +1878,8 @@
 						{#if card.type == 'hero'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'range', 1);
 								}}
 							>
 								<img src="{card.name}.webp" alt={card.name} />
@@ -1892,9 +1896,13 @@
 						style="visibility:{placedFogCard ? 'visible' : 'hidden'}"
 					/>
 				</div>
-			</div>
+			</button>
 
-			<div class="siege" style="top:2%;">
+			<button
+				class="siege"
+				style="top:2%;"
+				on:click={() => selectRow('siege')}
+			>
 				<div class="siege-value">{siegeP1.value}</div>
 
 				<div class="siege-special">
@@ -1944,8 +1952,8 @@
 						{#if card.type == 'hero'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'siege', 1);
 								}}
 							>
 								<img src="{card.name}.webp" alt={card.name} />
@@ -1962,13 +1970,17 @@
 						style="visibility:{placedRainCard ? 'visible' : 'hidden'}"
 					/>
 				</div>
-			</div>
+			</button>
 		{/if}
 
 		{#if isP1Perspective}
 			<div class="totalvalue">{p2TotalValue}</div>
 
-			<div class="melee" style="top: 67%;">
+			<button
+				class="melee"
+				style="top: 67%;"
+				on:click={() => selectRow('melee')}
+			>
 				<div class="melee-value" style="top:35%;">{meleeP2.value}</div>
 
 				<div class="melee-special">
@@ -2036,9 +2048,12 @@
 						style="visibility:{placedFrostCard ? 'visible' : 'hidden'}"
 					/>
 				</div>
-			</div>
+			</button>
 
-			<div class="range">
+			<button
+				class="range"
+				on:click={() => selectRow('range')}
+			>
 				<div class="range-value" style="top:32%;">{rangeP2.value}</div>
 
 				<div class="range-special">
@@ -2053,8 +2068,9 @@
 						{#if card.type == 'unit'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								class:decoy-target={isDecoyTargetInRow(card, 'range', 2)}
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'range', 2);
 								}}
 								style="padding-left:0.2vw; padding-top:0.2vw;"
 							>
@@ -2088,8 +2104,8 @@
 						{#if card.type == 'hero'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'range', 2);
 								}}
 							>
 								<img src="{card.name}.webp" alt={card.name} />
@@ -2106,9 +2122,13 @@
 						style="visibility:{placedFogCard ? 'visible' : 'hidden'}"
 					/>
 				</div>
-			</div>
+			</button>
 
-			<div class="siege" style="top:2%;">
+			<button
+				class="siege"
+				style="top:2%;"
+				on:click={() => selectRow('siege')}
+			>
 				<div class="siege-value">{siegeP2.value}</div>
 
 				<div class="siege-special">
@@ -2123,8 +2143,9 @@
 						{#if card.type == 'unit'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								class:decoy-target={isDecoyTargetInRow(card, 'siege', 2)}
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'siege', 2);
 								}}
 								style="padding-left:0.2vw; padding-top:0.2vw;"
 							>
@@ -2158,8 +2179,8 @@
 						{#if card.type == 'hero'}
 							<button
 								class="card"
-								on:click={() => {
-									placeCard(card);
+								on:click|stopPropagation={() => {
+									handleBoardCardClick(card, 'siege', 2);
 								}}
 							>
 								<img src="{card.name}.webp" alt={card.name} />
@@ -2176,7 +2197,7 @@
 						style="visibility:{placedRainCard ? 'visible' : 'hidden'}"
 					/>
 				</div>
-			</div>
+			</button>
 		{/if}
 	</section>
 
