@@ -78,10 +78,10 @@
 	}
 
 	function clearDisconnectNotice() {
+		stopDisconnectTicker();
 		disconnectDeadlineMs = 0;
 		disconnectNotice = '';
 		disconnectOpponentName = 'Opponent';
-		stopDisconnectTicker();
 	}
 
 	function refreshDisconnectNotice() {

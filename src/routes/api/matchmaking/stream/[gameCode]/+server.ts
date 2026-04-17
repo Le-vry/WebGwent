@@ -53,23 +53,24 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 
 	const encoder = new TextEncoder();
 	let cleanup = () => {};
+		let cleanedUp = false;
+		let closed = false;
 
-	const stream = new ReadableStream<Uint8Array>({
-		start(controller) {
-			let lastPayload = '';
-			let lastGameSnapshot = '';
-			let closed = false;
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				let lastPayload = '';
+				let lastGameSnapshot = '';
 
-			const safeEnqueue = (chunk: Uint8Array) => {
-				if (closed) return;
-				try {
-					controller.enqueue(chunk);
-				} catch {
-					closed = true;
-				}
-			};
+				const safeEnqueue = (chunk: Uint8Array) => {
+					if (closed) return;
+					try {
+						controller.enqueue(chunk);
+					} catch {
+						cleanup();
+					}
+				};
 
-			const send = (event: string, data: unknown) => {
+				const send = (event: string, data: unknown) => {
 				safeEnqueue(encoder.encode(`event: ${event}\n`));
 				safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 			};
@@ -129,7 +130,8 @@ export const GET = async ({ locals, params, request }: RequestEvent) => {
 			}, 15000);
 
 			cleanup = () => {
-				if (closed) return;
+if (cleanedUp) return;
+					cleanedUp = true;
 				closed = true;
 				unregisterPresence();
 				clearInterval(interval);
