@@ -41,6 +41,7 @@
 	let clientReady = false;
 	let graveyardScrollOffset = 0;
 	let graveyardScroller = null;
+	let pendingMedicResurrection = false;
 
 	function roleToPlayerNumber(role) {
 		return role === 'p2' ? 2 : 1;
@@ -637,8 +638,52 @@
 		graveyardPopupOpen = true;
 	}
 
-	function closeGraveyard() {
+	function skipMedicResurrection() {
+		pendingMedicResurrection = false;
 		graveyardPopupOpen = false;
+		endTurn();
+		setActionNotice('Medic resurrection skipped.');
+	}
+
+	function closeGraveyard() {
+		if (pendingMedicResurrection) {
+			setActionNotice('Resurrection active. Choose a card or click Skip Resurrection.');
+			return;
+		}
+		graveyardPopupOpen = false;
+	}
+
+	function handleGraveyardCardClick(card) {
+		if (!pendingMedicResurrection || graveyardPopupOwner !== activePlayerNumber) return;
+		if (!isMyTurn || isEndingMatch) return;
+		if (card.type === 'hero' || card.type === 'special') {
+			setActionNotice('Medic cannot resurrect hero or special cards.');
+			return;
+		}
+
+		executeMedicResurrection(card);
+	}
+
+	function executeMedicResurrection(card) {
+		card.isResurrected = true; // Prevent muster from triggering again
+		if (activePlayerNumber === 1) {
+			p1Graveyard = p1Graveyard.filter((c) => c.id !== card.id);
+			p1Hand = [...p1Hand, card];
+		} else {
+			p2Graveyard = p2Graveyard.filter((c) => c.id !== card.id);
+			p2Hand = [...p2Hand, card];
+		}
+
+		pendingMedicResurrection = false;
+		graveyardPopupOpen = false;
+
+		if (isCardNeedingRowSelection(card)) {
+			pendingPlacementCard = card;
+			setActionNotice(`Resurrected ${card.name}. Select a row to place it.`);
+			syncBoardState();
+		} else {
+			placeCard(card);
+		}
 	}
 
 	function handleGraveyardWheel(e) {
@@ -1064,7 +1109,9 @@
 		placedCard = true;
 
 		// Auto-end turn after successfully placing a card.
-		endTurn();
+		if (!pendingMedicResurrection) {
+			endTurn();
+		}
 	}
 
 	function placeUnitInRow(card, ownRow, enemyRow, weather) {
@@ -1086,7 +1133,9 @@
 					placedMedicCard(card, ownRow.units);
 					break;
 				case 'muster':
-					placedMusterCard(card, ownRow.units);
+					if (!card.isResurrected) {
+						placedMusterCard(card, ownRow.units);
+					}
 					break;
 				case 'morale_boost':
 					placedMoraleBoostCard(card, ownRow.units);
@@ -1139,7 +1188,14 @@
 	}
 
 	function placedMedicCard(placedCard, row) {
-		null;
+		const activeGraveyard = activePlayerNumber === 1 ? p1Graveyard : p2Graveyard;
+		const validTargets = activeGraveyard.filter((c) => c.type !== 'hero' && c.type !== 'special');
+
+		if (validTargets.length > 0) {
+			pendingMedicResurrection = true;
+			setActionNotice('Medic triggered. Select a card from your graveyard to resurrect.');
+			openGraveyard(activePlayerNumber);
+		}
 	}
 
 	function musterPlaceCard(card, playerRows) {
@@ -1614,11 +1670,22 @@
 					aria-label="Close graveyard">X</button
 				>
 
+				{#if pendingMedicResurrection}
+					<button
+						class="skip-resurrection-btn"
+						on:click|stopPropagation={skipMedicResurrection}
+					>
+						Skip Resurrection
+					</button>
+				{/if}
+
 				<div class="cylinder-scroller-wrapper">
 					<div class="cylinder-viewport">
 						{#each graveyardPopupCards as card, i (i)}
+							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 							<div
-								class="cylinder-card"
+								class="cylinder-card {pendingMedicResurrection && card.type !== 'hero' && card.type !== 'special' && graveyardPopupOwner === activePlayerNumber ? 'medic-target' : ''}"
+								on:click={() => handleGraveyardCardClick(card)}
 								style="
                                 transform: translateZ(-50vw) rotateY({(i - graveyardScrollOffset) *
 									-18}deg) translateZ(50vw) rotateY({(i - graveyardScrollOffset) * 18}deg);
@@ -3683,6 +3750,43 @@
 	.native-scroller::-webkit-scrollbar-thumb {
 		background: #df9a37;
 		border-radius: 4px;
+	}
+
+	/* 5.1 Resurection */
+	.skip-resurrection-btn {
+		position: absolute;
+		z-index: 1000;
+		bottom: 2rem;
+		left: 50%;
+		transform: translateX(-50%);
+		background: rgba(43, 23, 10, 0.95);
+		color: #e5cd94;
+		border: 2px solid #a3722e;
+		border-radius: 4px;
+		padding: 10px 24px;
+		font-family: inherit;
+		font-weight: bold;
+		font-size: 1.2rem;
+		cursor: pointer;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+		transition: all 0.2s ease;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+	}
+	.skip-resurrection-btn:hover {
+		background: rgba(63, 33, 15, 0.95);
+		border-color: #d19a3f;
+		transform: translateX(-50%) scale(1.05);
+	}
+
+	.medic-target {
+		cursor: pointer;
+		transition: transform 0.2s ease;
+	}
+	.medic-target:hover {
+		transform: scale(1.05);
+		box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+		z-index: 100;
 	}
 	/* 5-----------------------------------------------------------------------------------5 */
 </style>
