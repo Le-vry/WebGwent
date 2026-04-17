@@ -3782,6 +3782,7 @@
 	.medic-target {
 		cursor: pointer;
 		transition: transform 0.2s ease;
+		pointer-events: auto;
 	}
 	.medic-target:hover {
 		transform: scale(1.05);
