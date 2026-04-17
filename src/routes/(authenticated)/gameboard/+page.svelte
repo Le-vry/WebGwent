@@ -567,7 +567,15 @@
 
 	$: topGraveyard = isP1Perspective ? p2Graveyard : p1Graveyard;
 	$: bottomGraveyard = isP1Perspective ? p1Graveyard : p2Graveyard;
-	$: graveyardPopupCards = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard;
+	$: baseGraveyardCards = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard;
+
+	function getGraveyardPopupCards() {
+		const base = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard;
+		if (pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber) {
+			return base.filter(c => c.type !== 'hero' && c.type !== 'special' && c.ability !== 'hero');
+		}
+		return base;
+	}
 
 	/* Helper functions */
 
@@ -656,7 +664,7 @@
 	function handleGraveyardCardClick(card) {
 		if (!pendingMedicResurrection || graveyardPopupOwner !== activePlayerNumber) return;
 		if (!isMyTurn || isEndingMatch) return;
-		if (card.type === 'hero' || card.type === 'special') {
+		if (card.type === 'hero' || card.type === 'special' || card.ability === 'hero') {
 			setActionNotice('Medic cannot resurrect hero or special cards.');
 			return;
 		}
@@ -1189,7 +1197,7 @@
 
 	function placedMedicCard(placedCard, row) {
 		const activeGraveyard = activePlayerNumber === 1 ? p1Graveyard : p2Graveyard;
-		const validTargets = activeGraveyard.filter((c) => c.type !== 'hero' && c.type !== 'special');
+		const validTargets = activeGraveyard.filter((c) => c.type !== 'hero' && c.type !== 'special' && c.ability !== 'hero');
 
 		if (validTargets.length > 0) {
 			pendingMedicResurrection = true;
@@ -1681,12 +1689,13 @@
 
 				<div class="cylinder-scroller-wrapper">
 					<div class="cylinder-viewport">
-						{#each graveyardPopupCards as card, i (i)}
+						{#each getGraveyardPopupCards() as card, i (i)}
 							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 							<div
-								class="cylinder-card {pendingMedicResurrection && card.type !== 'hero' && card.type !== 'special' && graveyardPopupOwner === activePlayerNumber ? 'medic-target' : ''}"
-								on:click={() => handleGraveyardCardClick(card)}
+								class="cylinder-card {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'medic-target' : ''}"
+								on:click|stopPropagation={() => handleGraveyardCardClick(card)}
 								style="
+                                pointer-events: {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'auto' : 'none'};
                                 transform: translateZ(-50vw) rotateY({(i - graveyardScrollOffset) *
 									-18}deg) translateZ(50vw) rotateY({(i - graveyardScrollOffset) * 18}deg);
                                 opacity: {Math.max(
@@ -1807,7 +1816,7 @@
 						on:scroll={(e) => (graveyardScrollOffset = e.target.scrollLeft / 230)}
 					>
 						<div
-							style="width: calc(100% + {Math.max(0, graveyardPopupCards.length - 1) *
+							style="width: calc(100% + {Math.max(0, getGraveyardPopupCards().length - 1) *
 								230}px); height: 1px;"
 						></div>
 					</div>
