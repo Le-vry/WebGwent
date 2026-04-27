@@ -313,11 +313,13 @@
 								encodeURIComponent('Match cancelled because an opponent did not reconnect in time.')
 						);
 					} else if (meta.status === 'completed') {
-						isEndingMatch = true;
-						matchCompleted = true;
-						matchWinner = getMatchWinnerFromGems();
-						matchSummaryVisible = true;
-						clearRoundResolveTimer();
+						fetchMatchGameState(code).then(() => {
+							isEndingMatch = true;
+							matchCompleted = true;
+							matchWinner = matchWinner !== null ? matchWinner : getMatchWinnerFromGems();
+							matchSummaryVisible = true;
+							clearRoundResolveTimer();
+						});
 					}
 				}
 
@@ -2852,19 +2854,29 @@
 					<span>Result</span>
 				</div>
 
-				{#each roundSummaries as summary}
-					<div class="summary-grid">
-						<span>R{summary.round}</span>
-						<span class:round-winner={summary.winner === 1}>{summary.p1Score}</span>
-						<span class:round-winner={summary.winner === 2}>{summary.p2Score}</span>
-						<span class="summary-result">
-							{summary.winner === 0
-								? 'Draw'
-								: summary.winner === 1
-									? `${p1Username} won`
-									: `${p2Username} won`}
-						</span>
-					</div>
+				{#each [1, 2, 3] as roundNum}
+					{@const summary = roundSummaries.find(r => r.round === roundNum)}
+					{#if summary}
+						<div class="summary-grid">
+							<span>R{summary.round}</span>
+							<span class:round-winner={summary.winner === 1}>{summary.p1Score}</span>
+							<span class:round-winner={summary.winner === 2}>{summary.p2Score}</span>
+							<span class="summary-result">
+								{summary.winner === 0
+									? 'Draw'
+									: summary.winner === 1
+										? `${p1Username} won`
+										: `${p2Username} won`}
+							</span>
+						</div>
+					{:else}
+						<div class="summary-grid summary-grid-unplayed">
+							<span>R{roundNum}</span>
+							<span>-</span>
+							<span>-</span>
+							<span class="summary-result">Not played</span>
+						</div>
+					{/if}
 				{/each}
 
 				<button class="dismiss-summary" on:click|preventDefault={dismissMatchSummary}>
@@ -3494,6 +3506,14 @@
 		font-weight: 700;
 		color: #ffd69a;
 		border-bottom: 1px solid rgba(255, 178, 76, 0.45);
+	}
+
+	.summary-grid-unplayed {
+		opacity: 0.4;
+	}
+
+	.summary-grid-unplayed span {
+		color: #999;
 	}
 
 	.summary-result {
