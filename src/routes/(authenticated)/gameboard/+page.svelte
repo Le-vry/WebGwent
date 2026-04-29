@@ -1927,9 +1927,11 @@
 		border: none;
 		width: 5vw;
 		min-width: 5vw;
-		height: 11.7vh;
+		height: auto;
+		aspect-ratio: 16 / 21;
 		margin-left: 0.5%;
 		overflow: hidden;
+		display: flex;
 	}
 	.unit_value {
 		position: absolute;
@@ -1943,7 +1945,8 @@
 	}
 	.card img {
 		width: 100%;
-		height: 16vh;
+		height: 100%;
+		object-fit: cover;
 		box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 	}
 	.card:hover {
