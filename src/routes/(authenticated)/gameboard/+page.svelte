@@ -4,20 +4,17 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { players_store } from '$lib/players.js';
+	import { GameSync } from '$lib/gameSync.js';
+	import BoardRow from '$lib/components/BoardRow.svelte';
 
 	let matchmakingStatus = '';
 	let matchmakingError = '';
 	let gameCode = '';
 	let myRole = '';
-	let sseConnection = null;
-	let syncTimer = null;
 	let suppressStateSync = false;
 	let p1Username = 'Player 1';
 	let p2Username = 'Player 2';
 	let actionNotice = '';
-	let waitingPollTimer = null;
-	let waitingPollDelay = 2000;
-	let waitingPollInFlight = false;
 	let disconnectNotice = '';
 	let disconnectDeadlineMs = 0;
 	let disconnectTicker = null;
@@ -228,219 +225,45 @@
 		suppressStateSync = false;
 	}
 
+	const gameSyncCtx = {
+		getGameCode: () => gameCode,
+		getMatchmakingStatus: () => matchmakingStatus,
+		setMatchmakingStatus: (v) => matchmakingStatus = v,
+		getIsMyTurn: () => isMyTurn,
+		getMyRole: () => myRole,
+		setMyRole: (v) => myRole = v,
+		getSuppressStateSync: () => suppressStateSync,
+		exportMatchState: () => exportMatchState(),
+		applyMatchState: (n) => applyMatchState(n),
+		syncBoardState: () => syncBoardState(),
+		setMatchmakingError: (err) => matchmakingError = err,
+		clearDisconnectNotice: () => clearDisconnectNotice(),
+		setDisconnectNotice: (deadline, oppName) => setDisconnectNotice(deadline, oppName),
+		setTurn: (val) => turn = getTurnPlayer(Math.round(val)),
+		onMatchCompleted: () => {
+			isEndingMatch = true;
+			matchCompleted = true;
+			matchWinner = matchWinner !== null ? matchWinner : getMatchWinnerFromGems();
+			matchSummaryVisible = true;
+			clearRoundResolveTimer();
+		},
+		getP1Username: () => p1Username,
+		getP2Username: () => p2Username,
+		setP1Username: (v) => p1Username = v,
+		setP2Username: (v) => p2Username = v,
+		initializeFromPlayers: (ps) => initializeFromPlayers(ps),
+		updatePlayersStore: (ps) => $players_store = JSON.stringify(ps),
+		getPlayersStore: () => $players_store
+	};
+	
+	let gameSync = new GameSync(gameSyncCtx);
+
 	async function pushStateToServer(force = false) {
-		if (!gameCode || matchmakingStatus !== 'active') return;
-		if (!force && !isMyTurn) return;
-
-		const statePayload = exportMatchState();
-		console.log('[Push State]', {
-			force,
-			myRole,
-			turn,
-			placedCard,
-			passedTurn,
-			hand: myPlayerNumber === 1 ? p1Hand.length : p2Hand.length
-		});
-
-		try {
-			const res = await fetch(`/api/matchmaking/state/${encodeURIComponent(gameCode)}`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					state: statePayload,
-					role: myRole
-				})
-			});
-			if (!res.ok) {
-				console.warn('[Push State] Server returned:', res.status);
-			}
-		} catch (error) {
-			console.error('Failed to sync match state:', error);
-		}
+		return gameSync.pushStateToServer(force);
 	}
 
 	function queueStateSync() {
-		if (suppressStateSync || !gameCode || matchmakingStatus !== 'active' || !isMyTurn) return;
-		if (syncTimer) window.clearTimeout(syncTimer);
-		syncTimer = window.setTimeout(() => {
-			pushStateToServer();
-			syncTimer = null;
-		}, 250);
-	}
-
-	function startSseStream(code) {
-		if (sseConnection) sseConnection.close();
-
-		sseConnection = new EventSource(`/api/matchmaking/stream/${encodeURIComponent(code)}`);
-		sseConnection.addEventListener('game', (event) => {
-			try {
-				const meta = JSON.parse(event.data);
-				console.log('[SSE:game]', {
-					status: meta.status,
-					currentTurn: meta.currentTurn,
-					disconnect: meta.disconnect
-				});
-
-				if (typeof meta.currentTurn === 'number') {
-					turn = getTurnPlayer(Math.round(meta.currentTurn));
-				}
-
-				if (meta.status === 'active' && matchmakingStatus !== 'active') {
-					console.log('[SSE:game] Match transitioned to active, hydrating state...');
-					matchmakingStatus = 'active';
-					fetchMatchGameState(code).catch((error) => {
-						console.error('Failed to hydrate active match state:', error);
-					});
-				} else if (meta.status === 'waiting') {
-					matchmakingStatus = 'waiting';
-					clearDisconnectNotice();
-				} else if (meta.status && meta.status !== 'active') {
-					console.warn('[SSE:game] Match status changed to:', meta.status);
-					const statusMsg = meta.status === 'cancelled' ? 'Match was cancelled.' : 'Match ended.';
-					matchmakingError = `${statusMsg} Start a new match from card select.`;
-					matchmakingStatus = '';
-					clearWaitingPoll();
-					clearDisconnectNotice();
-					if (sseConnection) {
-						sseConnection.close();
-						sseConnection = null;
-					}
-
-					if (meta.status === 'cancelled') {
-						goto(
-							base +
-								'/?matchNotice=' +
-								encodeURIComponent('Match cancelled because an opponent did not reconnect in time.')
-						);
-					} else if (meta.status === 'completed') {
-						fetchMatchGameState(code).then(() => {
-							isEndingMatch = true;
-							matchCompleted = true;
-							matchWinner = matchWinner !== null ? matchWinner : getMatchWinnerFromGems();
-							matchSummaryVisible = true;
-							clearRoundResolveTimer();
-						});
-					}
-				}
-
-				if (
-					meta.disconnect &&
-					typeof meta.disconnect.deadlineMs === 'number' &&
-					meta.disconnect.role !== myRole &&
-					meta.status === 'active'
-				) {
-					const opponentName = meta.disconnect.role === 'p1' ? p1Username : p2Username;
-					setDisconnectNotice(meta.disconnect.deadlineMs, opponentName);
-				} else {
-					clearDisconnectNotice();
-				}
-			} catch (error) {
-				console.error('Failed to parse SSE game meta:', error);
-			}
-		});
-		sseConnection.addEventListener('state', (event) => {
-			try {
-				const next = JSON.parse(event.data);
-				applyMatchState(next);
-				syncBoardState();
-			} catch (error) {
-				console.error('Failed to parse SSE state:', error);
-			}
-		});
-	}
-
-	async function fetchMatchGameState(code) {
-		let res;
-		try {
-			res = await fetch(`/api/matchmaking/game/${encodeURIComponent(code)}`);
-		} catch (error) {
-			matchmakingError = `Network error: Unable to reach game server.`;
-			return { ready: false };
-		}
-
-		const raw = await res.text();
-		let result = null;
-		try {
-			result = raw ? JSON.parse(raw) : null;
-		} catch {
-			result = null;
-		}
-
-		if (!res.ok) {
-			const errorMsg = result?.error ?? `Could not load game state (HTTP ${res.status})`;
-			matchmakingError = res.status === 410 ? 'Match no longer exists or was cancelled.' : errorMsg;
-			if (res.status === 410) {
-				matchmakingStatus = '';
-				clearWaitingPoll();
-				clearDisconnectNotice();
-			}
-			return { ready: false };
-		}
-
-		if (!result || typeof result !== 'object') {
-			matchmakingError = `Invalid game state response from server.`;
-			return { ready: false };
-		}
-
-		matchmakingError = '';
-
-		if (result.status === 'waiting') {
-			matchmakingStatus = 'waiting';
-			myRole = result.role ?? myRole;
-			clearDisconnectNotice();
-			return { ready: false };
-		}
-
-		matchmakingStatus = 'active';
-		myRole = result.role ?? myRole;
-		if (result.playerNames) {
-			p1Username = result.playerNames.p1 ?? p1Username;
-			p2Username = result.playerNames.p2 ?? p2Username;
-		}
-		initializeFromPlayers(result.players);
-		if (result.state) {
-			applyMatchState(result.state);
-		} else if (typeof result.currentTurn === 'number') {
-			turn = getTurnPlayer(Math.round(result.currentTurn));
-		}
-		$players_store = JSON.stringify(result.players);
-		return { ready: true };
-	}
-
-	function clearWaitingPoll() {
-		if (waitingPollTimer) {
-			window.clearTimeout(waitingPollTimer);
-			waitingPollTimer = null;
-		}
-		waitingPollInFlight = false;
-	}
-
-	function scheduleWaitingPoll(code) {
-		if (matchmakingStatus === 'active') {
-			clearWaitingPoll();
-			return;
-		}
-
-		waitingPollTimer = window.setTimeout(async () => {
-			if (waitingPollInFlight || matchmakingStatus === 'active') {
-				scheduleWaitingPoll(code);
-				return;
-			}
-
-			waitingPollInFlight = true;
-			const next = await fetchMatchGameState(code);
-			waitingPollInFlight = false;
-
-			if (next.ready) {
-				clearWaitingPoll();
-				queueStateSync();
-				return;
-			}
-
-			// Back off under repeated waiting/errors to avoid request storms.
-			waitingPollDelay = Math.min(waitingPollDelay + 500, 5000);
-			scheduleWaitingPoll(code);
-		}, waitingPollDelay);
+		return gameSync.queueStateSync();
 	}
 
 	onMount(() => {
@@ -450,19 +273,19 @@
 			gameCode = params.get('gameCode') ?? '';
 
 			if (gameCode) {
-				startSseStream(gameCode);
-				const first = await fetchMatchGameState(gameCode);
+				gameSync.startSseStream(gameCode);
+				const first = await gameSync.fetchMatchGameState(gameCode);
 				if (first.ready) {
 					if (!players.length && $players_store.length > 0) {
 						initializeFromPlayers(JSON.parse($players_store));
 					}
-					queueStateSync();
+					gameSync.queueStateSync();
 					return;
 				}
 
 				// Fallback polling keeps matchmaking reliable when SSE is delayed by hosting proxies.
-				waitingPollDelay = 2000;
-				scheduleWaitingPoll(gameCode);
+				gameSync.waitingPollDelay = 2000;
+				gameSync.scheduleWaitingPoll(gameCode);
 
 				return;
 			}
@@ -475,15 +298,10 @@
 		init();
 
 		return () => {
-			clearWaitingPoll();
+			gameSync.cleanup();
 			clearDisconnectNotice();
 			clearRoundResolveTimer();
-			if (syncTimer) clearTimeout(syncTimer);
 			if (turnBannerTimer) window.clearTimeout(turnBannerTimer);
-			if (sseConnection) {
-				sseConnection.close();
-				sseConnection = null;
-			}
 		};
 	});
 
@@ -872,10 +690,7 @@
 			// Best effort; navigation still proceeds.
 		}
 
-		if (sseConnection) {
-			sseConnection.close();
-			sseConnection = null;
-		}
+		gameSync.cleanup();
 	}
 
 	function dismissMatchSummary() {
@@ -1282,17 +1097,18 @@
 			{ owner: 2, row: siegeP2 }
 		];
 		let maxStrength = 0;
+		const getUnitScore = (c, row) => c.value * c.ValueMultiplier * row.rowMultiplier;
 		allRows.forEach(({ row }) => {
 			row.units.forEach((card) => {
-				if (card.type === 'unit') maxStrength = Math.max(maxStrength, card.value);
+				if (card.type === 'unit') maxStrength = Math.max(maxStrength, getUnitScore(card, row));
 			});
 		});
 		if (maxStrength === 0) return;
 		allRows.forEach(({ owner, row }) => {
-			const scorched = row.units.filter((c) => c.type === 'unit' && c.value === maxStrength);
+			const scorched = row.units.filter((c) => c.type === 'unit' && getUnitScore(c, row) === maxStrength);
 			sendCardsToGraveyard(owner, scorched);
 			const before = row.units.length;
-			row.units = row.units.filter((c) => c.type !== 'unit' || c.value !== maxStrength);
+			row.units = row.units.filter((c) => c.type !== 'unit' || getUnitScore(c, row) !== maxStrength);
 			if (row.units.length !== before) updateRowValue(row);
 		});
 	}
@@ -1515,133 +1331,36 @@
 	{/if}
 
 	{#if isP1Perspective}
-		<button
-			class="P1leader"
-			on:click={() => {
-				console.log('p1 Leader');
-			}}
-		>
+		<button class="P1leader" on:click={() => console.log('p1 Leader')}>
 			<img src="{p1Leader.name}.webp" alt="Player 1 Leader" loading="lazy" decoding="async" />
 		</button>
-
-		<button
-			class="P2leader"
-			on:click={() => {
-				console.log('p2 Leader');
-			}}
-		>
+		<button class="P2leader" on:click={() => console.log('p2 Leader')}>
 			<img src="{p2Leader.name}.webp" alt="Player 2 Leader" loading="lazy" decoding="async" />
 		</button>
-	{/if}
-
-	{#if !isP1Perspective}
-		<button
-			class="P1leader"
-			on:click={() => {
-				console.log('p1 Leader');
-			}}
-		>
+	{:else}
+		<button class="P1leader" on:click={() => console.log('p1 Leader')}>
 			<img src="{p2Leader.name}.webp" alt="Player 1 Leader" loading="lazy" decoding="async" />
 		</button>
-
-		<button
-			class="P2leader"
-			on:click={() => {
-				console.log('p2 Leader');
-			}}
-		>
+		<button class="P2leader" on:click={() => console.log('p2 Leader')}>
 			<img src="{p1Leader.name}.webp" alt="Player 2 Leader" loading="lazy" decoding="async" />
 		</button>
 	{/if}
 
 	<div class="HeldCards">
-		{#if isP1Perspective}
-			{#each p1Hand as card}
-				{#if card.type == 'unit'}
-					<button
-						class="card"
-						on:click={() => {
-							placeCard(card);
-						}}
-						style="padding-left:0.2vw; padding-top:0.2vw;"
-					>
-						<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
-						{#if card.value >= 10}
-							<p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier}</p>
-						{:else}
-							<p class="unit_value">{card.value * card.ValueMultiplier}</p>
-						{/if}
-					</button>
-				{/if}
-
-				{#if card.type == 'hero'}
-					<button
-						class="card"
-						on:click={() => {
-							placeCard(card);
-						}}
-					>
-						<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
-					</button>
-				{/if}
-
-				{#if card.type == 'special'}
-					<button
-						class="card"
-						on:click={() => {
-							placeCard(card);
-						}}
-						style="padding-left:0.2vw; padding-top:0.2vw;"
-					>
-						<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
-					</button>
-				{/if}
-			{/each}
-		{/if}
-
-		{#if !isP1Perspective}
-			{#each p2Hand as card}
-				{#if card.type == 'unit'}
-					<button
-						class="card"
-						on:click={() => {
-							placeCard(card);
-						}}
-						style="padding-left:0.2vw; padding-top:0.2vw;"
-					>
-						<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
-						{#if card.value >= 10}
-							<p class="unit_value" style="left:8.5%;">{card.value * card.ValueMultiplier}</p>
-						{:else}
-							<p class="unit_value">{card.value * card.ValueMultiplier}</p>
-						{/if}
-					</button>
-				{/if}
-
-				{#if card.type == 'hero'}
-					<button
-						class="card"
-						on:click={() => {
-							placeCard(card);
-						}}
-					>
-						<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
-					</button>
-				{/if}
-
-				{#if card.type == 'special'}
-					<button
-						class="card"
-						on:click={() => {
-							placeCard(card);
-						}}
-						style="padding-left:0.2vw; padding-top:0.2vw;"
-					>
-						<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
-					</button>
-				{/if}
-			{/each}
-		{/if}
+		{#each (isP1Perspective ? p1Hand : p2Hand) as card}
+			{#if card.type == 'unit'}
+				<button class="card" on:click={() => placeCard(card)} style="padding-left:0.2vw; padding-top:0.2vw;">
+					<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
+					<p class="unit_value" style:left={card.value * card.ValueMultiplier >= 10 ? '8.5%' : undefined}>
+						{card.value * card.ValueMultiplier}
+					</p>
+				</button>
+			{:else}
+				<button class="card" on:click={() => placeCard(card)} style={card.type === 'special' ? 'padding-left:0.2vw; padding-top:0.2vw;' : ''}>
+					<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
+				</button>
+			{/if}
+		{/each}
 	</div>
 
 	<button
@@ -1830,914 +1549,28 @@
 	<section class="Board-top">
 		{#if !isP1Perspective}
 			<div class="totalvalue">{p1TotalValue}</div>
-
-			<button
-				class="melee"
-				style="top: 67%;"
-				on:click={() => selectRow('melee')}
-			>
-				<div class="melee-value" style="top:35%;">{meleeP1.value}</div>
-
-				<div class="melee-special">
-					{#each meleeP1.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="melee-units no-scrollbar">
-					{#each meleeP1.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'melee', 1)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 1);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * meleeP1.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 1);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Frost Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFrostCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button class="range" on:click={() => selectRow('range')}>
-				<div class="range-value" style="top:32%;">{rangeP1.value}</div>
-
-				<div class="range-special">
-					{#each rangeP1.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="range-units no-scrollbar">
-					{#each rangeP1.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'range', 1)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 1);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * rangeP1.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 1);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Fog Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFogCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button
-				class="siege"
-				style="top:2%;"
-				on:click={() => selectRow('siege')}
-			>
-				<div class="siege-value">{siegeP1.value}</div>
-
-				<div class="siege-special">
-					{#each siegeP1.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="siege-units no-scrollbar">
-					{#each siegeP1.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'siege', 1)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 1);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * siegeP1.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 1);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Rain Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedRainCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-		{/if}
-
-		{#if isP1Perspective}
+			<BoardRow rowType="melee" rowData={meleeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFrostCard} isTopBoard={true} />
+			<BoardRow rowType="range" rowData={rangeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFogCard} isTopBoard={true} />
+			<BoardRow rowType="siege" rowData={siegeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedRainCard} isTopBoard={true} />
+		{:else}
 			<div class="totalvalue">{p2TotalValue}</div>
-
-			<button
-				class="melee"
-				style="top: 67%;"
-				on:click={() => selectRow('melee')}
-			>
-				<div class="melee-value" style="top:35%;">{meleeP2.value}</div>
-
-				<div class="melee-special">
-					{#each meleeP2.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="melee-units no-scrollbar">
-					{#each meleeP2.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'melee', 2)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 2);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * meleeP2.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 2);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Frost Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFrostCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button
-				class="range"
-				on:click={() => selectRow('range')}
-			>
-				<div class="range-value" style="top:32%;">{rangeP2.value}</div>
-
-				<div class="range-special">
-					{#each rangeP2.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="range-units no-scrollbar">
-					{#each rangeP2.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'range', 2)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 2);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * rangeP2.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 2);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Fog Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFogCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button
-				class="siege"
-				style="top:2%;"
-				on:click={() => selectRow('siege')}
-			>
-				<div class="siege-value">{siegeP2.value}</div>
-
-				<div class="siege-special">
-					{#each siegeP2.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="siege-units no-scrollbar">
-					{#each siegeP2.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'siege', 2)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 2);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * siegeP2.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 2);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Rain Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedRainCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
+			<BoardRow rowType="melee" rowData={meleeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFrostCard} isTopBoard={true} />
+			<BoardRow rowType="range" rowData={rangeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFogCard} isTopBoard={true} />
+			<BoardRow rowType="siege" rowData={siegeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedRainCard} isTopBoard={true} />
 		{/if}
 	</section>
 
 	<section class="Board-bottom">
 		{#if isP1Perspective}
 			<div class="totalvalue" style="top:72.3%;">{p1TotalValue}</div>
-
-			<button
-				class="melee"
-				on:click={() => selectRow('melee')}
-				style="box-shadow: {meleeSelected ? '#ff9100' : '#ff910000'} 0 0 1vh;"
-			>
-				<div class="melee-value">{meleeP1.value}</div>
-
-				<div class="melee-special">
-					{#each meleeP1.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="melee-units no-scrollbar">
-					{#each meleeP1.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'melee', 1)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 1);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * meleeP1.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * meleeP1.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * meleeP1.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 1);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-				<div>
-					<img
-						src="Frost Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFrostCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button
-				class="range"
-				on:click={() => selectRow('range')}
-				style="box-shadow: {rangeSelected ? '#ff9100' : '#ff910000'} 0 0 1vh;"
-			>
-				<div class="range-value">{rangeP1.value}</div>
-
-				<div class="range-special">
-					{#each rangeP1.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="range-units no-scrollbar">
-					{#each rangeP1.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'range', 1)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 1);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * rangeP1.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * rangeP1.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * rangeP1.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 1);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Fog Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFogCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button
-				class="siege"
-				on:click={() => selectRow('siege')}
-				style="box-shadow: {siegeSelected ? '#ff9100' : '#ff910000'} 0 0 1vh;"
-			>
-				<div class="siege-value">{siegeP1.value}</div>
-
-				<div class="siege-special">
-					{#each siegeP1.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="siege-units no-scrollbar">
-					{#each siegeP1.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'siege', 1)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 1);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * siegeP1.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * siegeP1.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * siegeP1.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 1);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Rain Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedRainCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-		{/if}
-
-		{#if !isP1Perspective}
+			<BoardRow rowType="melee" rowData={meleeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFrostCard} isTopBoard={false} isSelectedRow={meleeSelected} />
+			<BoardRow rowType="range" rowData={rangeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFogCard} isTopBoard={false} isSelectedRow={rangeSelected} />
+			<BoardRow rowType="siege" rowData={siegeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedRainCard} isTopBoard={false} isSelectedRow={siegeSelected} />
+		{:else}
 			<div class="totalvalue" style="top:72%;">{p2TotalValue}</div>
-
-			<button
-				class="melee"
-				on:click={() => selectRow('melee')}
-				style="box-shadow: {meleeSelected ? '#ff9100' : '#ff910000'} 0 0 1vh;"
-			>
-				<div class="melee-value">{meleeP2.value}</div>
-
-				<div class="melee-special">
-					{#each meleeP2.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="melee-units no-scrollbar">
-					{#each meleeP2.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'melee', 2)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 2);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * meleeP2.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * meleeP2.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * meleeP2.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'melee', 2);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Frost Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFrostCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button
-				class="range"
-				on:click={() => selectRow('range')}
-				style="box-shadow: {rangeSelected ? '#ff9100' : '#ff910000'} 0 0 1vh;"
-			>
-				<div class="range-value">{rangeP2.value}</div>
-
-				<div class="range-special">
-					{#each rangeP2.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="range-units no-scrollbar">
-					{#each rangeP2.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'range', 2)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 2);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * rangeP2.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * rangeP2.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * rangeP2.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'range', 2);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Fog Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedFogCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
-
-			<button
-				class="siege"
-				on:click={() => selectRow('siege')}
-				style="box-shadow: {siegeSelected ? '#ff9100' : '#ff910000'} 0 0 1vh;"
-			>
-				<div class="siege-value">{siegeP2.value}</div>
-
-				<div class="siege-special">
-					{#each siegeP2.special as special}
-						<div class="card">
-							<img src="{special.name}.webp" alt={special.name} />
-						</div>
-					{/each}
-				</div>
-				<div class="siege-units no-scrollbar">
-					{#each siegeP2.units as card}
-						{#if card.type == 'unit'}
-							<button
-								class="card"
-								class:decoy-target={isDecoyTargetInRow(card, 'siege', 2)}
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 2);
-								}}
-								style="padding-left:0.2vw; padding-top:0.2vw;"
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-								{#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier >= 10}
-									{#if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
-										<p class="unit_value" style="left:8.5%; color:green;">
-											{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-										</p>
-									{:else}
-										<p class="unit_value" style="left:8.5%;">
-											{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-										</p>
-									{/if}
-								{:else if card.value * card.ValueMultiplier * siegeP2.rowMultiplier > card.Basevalue}
-									<p class="unit_value" style="color:green;">
-										{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-									</p>
-								{:else if card.value * card.ValueMultiplier * siegeP2.rowMultiplier < card.Basevalue}
-									<p class="unit_value" style="color:red;">
-										{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-									</p>
-								{:else}
-									<p class="unit_value">
-										{card.value * card.ValueMultiplier * siegeP2.rowMultiplier}
-									</p>
-								{/if}
-							</button>
-						{/if}
-
-						{#if card.type == 'hero'}
-							<button
-								class="card"
-								on:click|stopPropagation={() => {
-									handleBoardCardClick(card, 'siege', 2);
-								}}
-							>
-								<img src="{card.name}.webp" alt={card.name} />
-							</button>
-						{/if}
-					{/each}
-				</div>
-
-				<div>
-					<img
-						src="Rain Symbol.png"
-						alt="Weather"
-						class="weatherSymbol"
-						style="visibility:{placedRainCard ? 'visible' : 'hidden'}"
-					/>
-				</div>
-			</button>
+			<BoardRow rowType="melee" rowData={meleeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFrostCard} isTopBoard={false} isSelectedRow={meleeSelected} />
+			<BoardRow rowType="range" rowData={rangeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFogCard} isTopBoard={false} isSelectedRow={rangeSelected} />
+			<BoardRow rowType="siege" rowData={siegeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedRainCard} isTopBoard={false} isSelectedRow={siegeSelected} />
 		{/if}
 	</section>
 
