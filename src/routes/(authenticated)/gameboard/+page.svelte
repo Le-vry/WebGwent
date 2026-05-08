@@ -1430,8 +1430,11 @@
 								class="cylinder-card {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'medic-target' : ''}"
 								on:click|stopPropagation={() => handleGraveyardCardClick(card)}
 								style="
-                                pointer-events: {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'auto' : 'none'};
-                                transform: translateX({(i - graveyardScrollOffset) * 19}vw) translateZ({-Math.abs(i - graveyardScrollOffset) * 22}vw);
+                                pointer-events: auto;
+                                transition: transform 0.2s ease, opacity 0.2s ease, z-index 0s;
+                                --tz: {-Math.abs(i - graveyardScrollOffset) * 22}vw;
+                                --tx: {(i - graveyardScrollOffset) * 19}vw;
+                                transform: translateX(var(--tx)) translateZ(var(--tz));
                                 opacity: {Math.max(
 									0,
 									1 - Math.max(0, Math.abs(i - graveyardScrollOffset) - 2) * 1.5
@@ -2385,6 +2388,17 @@
 		max-width: 250px;
 		transform-style: preserve-3d;
 		will-change: transform, opacity;
+		transition: transform 0.2s ease;
+	}
+
+	.cylinder-card:hover {
+		transform: translateX(var(--tx)) translateZ(var(--tz)) scale(1.15) !important;
+		z-index: 200 !important;
+	}
+
+	.cylinder-card:hover img {
+		box-shadow: 0 0 2.5vh 0.8vh rgba(255, 145, 0, 0.7);
+		outline: 0.4vh solid rgba(255, 145, 0, 0.9);
 	}
 
 	.cylinder-card img {
@@ -2393,6 +2407,7 @@
 		border-radius: 0.35rem;
 		box-shadow: 0 0 1.2vh rgba(0, 0, 0, 0.7);
 		backface-visibility: hidden;
+		transition: all 0.2s ease;
 	}
 
 	.graveyard_unit_value {
