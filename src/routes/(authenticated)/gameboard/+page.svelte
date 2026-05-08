@@ -1418,7 +1418,7 @@
 								style="
                                 pointer-events: {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'auto' : 'none'};
                                 transform: translateZ(-35vw) rotateY({(i - graveyardScrollOffset) *
-									-18}deg) translateZ(35vw) rotateY({(i - graveyardScrollOffset) * 18}deg);
+									-24}deg) translateZ(35vw) rotateY({(i - graveyardScrollOffset) * 24}deg);
                                 opacity: {Math.max(
 									0,
 									1 - Math.abs(i - graveyardScrollOffset) * 0.15
@@ -2298,7 +2298,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: rgba(80, 80, 80, 0.65);
+		background: rgba(30, 30, 30, 0.45);
 		display: flex;
 		justify-content: center;
 		align-items: center;
