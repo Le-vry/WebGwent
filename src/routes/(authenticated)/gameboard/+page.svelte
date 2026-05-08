@@ -39,6 +39,20 @@
 	let graveyardScrollOffset = 0;
 	let graveyardScroller = null;
 	let pendingMedicResurrection = false;
+	
+	let graveyardScrollTimeout = null;
+	function handleGraveyardScroll(e) {
+		graveyardScrollOffset = e.target.scrollLeft / 230;
+		if (graveyardScrollTimeout) clearTimeout(graveyardScrollTimeout);
+		graveyardScrollTimeout = setTimeout(() => {
+			if (graveyardScroller) {
+				graveyardScroller.scrollTo({
+					left: Math.round(graveyardScrollOffset) * 230,
+					behavior: 'smooth'
+				});
+			}
+		}, 150);
+	}
 
 	function roleToPlayerNumber(role) {
 		return role === 'p2' ? 2 : 1;
@@ -1533,7 +1547,7 @@
 					<div
 						class="native-scroller"
 						bind:this={graveyardScroller}
-						on:scroll={(e) => (graveyardScrollOffset = e.target.scrollLeft / 230)}
+						on:scroll={handleGraveyardScroll}
 					>
 						<div
 							style="width: calc(100% + {Math.max(0, getGraveyardPopupCards().length - 1) *
@@ -2297,7 +2311,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: rgba(30, 30, 30, 0.2);
+		background: rgba(10, 10, 10, 0.4);
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -2307,8 +2321,8 @@
 	.graveyard-modal__panel {
 		position: relative;
 		width: 100vw;
-		min-height: 60vh;
-		max-height: 85vh;
+		min-height: 50vh;
+		max-height: 75vh;
 		background: transparent;
 		border-top: 3px solid;
 		border-bottom: 3px solid;
@@ -2352,8 +2366,8 @@
 	.cylinder-viewport {
 		position: relative;
 		width: 100%;
-		height: 60vh;
-		min-height: 400px;
+		height: 50vh;
+		min-height: 350px;
 		perspective: 2500px;
 		display: flex;
 		justify-content: center;
@@ -2416,8 +2430,7 @@
 		overflow-y: hidden;
 		margin-top: 1rem;
 		padding-bottom: 0.5rem;
-		scrollbar-width: thin;
-		scrollbar-color: #df9a37 transparent;
+		scrollbar-width: none;
 		cursor: grab;
 	}
 
@@ -2426,12 +2439,7 @@
 	}
 
 	.native-scroller::-webkit-scrollbar {
-		height: 8px;
-	}
-
-	.native-scroller::-webkit-scrollbar-thumb {
-		background: #df9a37;
-		border-radius: 4px;
+		display: none;
 	}
 
 	/* 5.1 Resurection */
