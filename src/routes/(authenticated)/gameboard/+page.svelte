@@ -2321,8 +2321,8 @@
 	.graveyard-modal__panel {
 		position: relative;
 		width: 100vw;
-		min-height: 50vh;
-		max-height: 75vh;
+		min-height: 60vh;
+		max-height: 85vh;
 		background: transparent;
 		border-top: 3px solid;
 		border-bottom: 3px solid;
@@ -2366,8 +2366,8 @@
 	.cylinder-viewport {
 		position: relative;
 		width: 100%;
-		height: 50vh;
-		min-height: 350px;
+		height: 60vh;
+		min-height: 400px;
 		perspective: 2500px;
 		display: flex;
 		justify-content: center;
