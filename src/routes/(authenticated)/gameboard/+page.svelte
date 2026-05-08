@@ -1363,14 +1363,14 @@
 	<div class="HeldCards">
 		{#each (isP1Perspective ? p1Hand : p2Hand) as card}
 			{#if card.type == 'unit'}
-				<button class="card" on:click={() => placeCard(card)} style="padding-left:0.2vw; padding-top:0.2vw;">
+				<button class="card" on:click={() => placeCard(card)}>
 					<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
 					<p class="unit_value" style:left={card.value * card.ValueMultiplier >= 10 ? '8.5%' : undefined}>
 						{card.value * card.ValueMultiplier}
 					</p>
 				</button>
 			{:else}
-				<button class="card" on:click={() => placeCard(card)} style={card.type === 'special' ? 'padding-left:0.2vw; padding-top:0.2vw;' : ''}>
+				<button class="card" on:click={() => placeCard(card)}>
 					<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
 				</button>
 			{/if}
@@ -1938,6 +1938,7 @@
 		position: relative;
 		background: none;
 		border: none;
+		padding: 0;
 		width: 5vw;
 		min-width: 5vw;
 		height: auto;
@@ -2323,11 +2324,10 @@
 	.graveyard-modal__panel {
 		position: relative;
 		width: 100vw;
-		min-height: 60vh;
-		max-height: 85vh;
+		height: 80vh;
 		background: transparent;
 		border-top: 3px solid;
-		border-bottom: none;
+		border-bottom: 3px solid;
 		border-left: none;
 		border-right: none;
 		border-image: linear-gradient(to right, transparent 0%, rgba(223, 154, 55, 0.8) 50%, transparent 100%) 1;
