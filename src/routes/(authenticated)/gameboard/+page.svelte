@@ -1455,30 +1455,30 @@
 									</p>
 								{/if}
 								{#if Math.round(graveyardScrollOffset) === i}
-									{#if card.ability === 'Tight Bond'}
+									{#if card.ability === 'tight_bond'}
 										<div class="graveyard-ability-info">
 											Tight Bond: Place next to a card with the same name to double the strength of
 											both cards.
 										</div>
-									{:else if card.ability === 'medic' || card.ability === 'Medic'}
+									{:else if card.ability === 'medic'}
 										<div class="graveyard-ability-info">
 											Medic: Choose one card from your discard pile and play it instantly (no Heroes
 											or Special Cards).
 										</div>
-									{:else if card.ability === 'hero' || card.ability === 'Hero' || card.type === 'hero'}
+									{:else if card.type === 'hero'}
 										<div class="graveyard-ability-info">
 											Hero: Not affected by any Special Cards or abilities.
 										</div>
-									{:else if card.ability === 'morale boost' || card.ability === 'Morale boost' || card.ability === 'Morale Boost'}
+									{:else if card.ability === 'morale_boost'}
 										<div class="graveyard-ability-info">
 											Morale boost: Adds +1 to all units in the row (excluding itself).
 										</div>
-									{:else if card.ability === 'spy' || card.ability === 'Spy'}
+									{:else if card.ability === 'spy'}
 										<div class="graveyard-ability-info">
 											Spy: Place on your opponent's battlefield (counts towards opponent's total)
 											and draw 2 cards from your deck.
 										</div>
-									{:else if card.ability === 'agile' || card.ability === 'Agile'}
+									{:else if card.ability === 'agile'}
 										<div class="graveyard-ability-info">
 											Agile: Can be placed in either the Close Combat or the Ranged Combat row.
 											Cannot be moved once placed.
@@ -1498,7 +1498,7 @@
 											Scorch - Siege: Destroys your enemy's strongest Siege Combat unit(s) if the
 											combined strength of all his or her Siege Combat units is 10 or more.
 										</div>
-									{:else if card.ability === 'muster' || card.ability === 'Muster'}
+									{:else if card.ability === 'muster'}
 										<div class="graveyard-ability-info">
 											Muster: Find any cards with the same name in your deck and play them
 											instantly.
@@ -1533,7 +1533,7 @@
 										<div class="graveyard-ability-info">
 											Swap with a card on the battlefield to return it to your hand.
 										</div>
-									{:else if card.ability === 'scorch' || card.ability === 'Scorch' || card.type === 'scorch'}
+									{:else if card.ability === 'scorch' || card.ability === 'Scorch'}
 										<div class="graveyard-ability-info">
 											Scorch: Discards after playing. Kills the strongest card(s) on the
 											battlefield.
@@ -2314,8 +2314,7 @@
 		background: rgba(10, 10, 10, 0.4);
 		display: flex;
 		justify-content: center;
-		align-items: center;
-		padding: 1rem;
+		align-items: flex-end;
 	}
 
 	.graveyard-modal__panel {
@@ -2325,7 +2324,7 @@
 		max-height: 85vh;
 		background: transparent;
 		border-top: 3px solid;
-		border-bottom: 3px solid;
+		border-bottom: none;
 		border-left: none;
 		border-right: none;
 		border-image: linear-gradient(to right, transparent 0%, rgba(223, 154, 55, 0.8) 50%, transparent 100%) 1;
