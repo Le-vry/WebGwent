@@ -2314,7 +2314,8 @@
 		background: rgba(10, 10, 10, 0.4);
 		display: flex;
 		justify-content: center;
-		align-items: flex-end;
+		align-items: flex-start;
+		padding-top: 30vh;
 	}
 
 	.graveyard-modal__panel {
