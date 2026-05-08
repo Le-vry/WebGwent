@@ -1417,8 +1417,8 @@
 								on:click|stopPropagation={() => handleGraveyardCardClick(card)}
 								style="
                                 pointer-events: {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'auto' : 'none'};
-                                transform: translateZ(-50vw) rotateY({(i - graveyardScrollOffset) *
-									-18}deg) translateZ(50vw) rotateY({(i - graveyardScrollOffset) * 18}deg);
+                                transform: translateZ(-35vw) rotateY({(i - graveyardScrollOffset) *
+									-18}deg) translateZ(35vw) rotateY({(i - graveyardScrollOffset) * 18}deg);
                                 opacity: {Math.max(
 									0,
 									1 - Math.abs(i - graveyardScrollOffset) * 0.15
@@ -2298,7 +2298,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: rgba(0, 0, 0, 0.82);
+		background: rgba(80, 80, 80, 0.65);
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -2365,9 +2365,9 @@
 
 	.cylinder-card {
 		position: absolute;
-		width: 13vw;
+		width: 15vw;
 		aspect-ratio: 5 / 8;
-		max-width: 200px;
+		max-width: 250px;
 		transform-style: preserve-3d;
 		will-change: transform, opacity;
 	}
@@ -2394,10 +2394,10 @@
 
 	.graveyard-ability-info {
 		position: absolute;
-		bottom: -5.5rem;
+		bottom: -6.5rem;
 		left: 50%;
 		transform: translateX(-50%);
-		width: 100%;
+		width: 130%;
 		background: rgba(0, 0, 0, 0.85);
 		color: #fcebbb;
 		font-family: 'Roboto', sans-serif;
