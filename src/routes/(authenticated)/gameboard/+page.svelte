@@ -2307,14 +2307,15 @@
 
 	.graveyard-modal__panel {
 		position: relative;
-		width: 70vw;
-		max-width: 1400px;
+		width: 100vw;
 		min-height: 60vh;
 		max-height: 85vh;
-		background: linear-gradient(180deg, #1f150b 0%, #0f0b07 100%);
-		border: 1px solid #df9a37;
-		border-radius: 0.75rem;
-		box-shadow: 0 0 1.5rem rgba(255, 157, 35, 0.5);
+		background: transparent;
+		border-top: 3px solid;
+		border-bottom: 3px solid;
+		border-left: none;
+		border-right: none;
+		border-image: linear-gradient(to right, transparent 0%, rgba(223, 154, 55, 0.8) 50%, transparent 100%) 1;
 		padding: 1.2rem;
 		display: flex;
 		flex-direction: column;
