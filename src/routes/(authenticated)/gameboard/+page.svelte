@@ -2421,7 +2421,7 @@
 		font-size: clamp(0.7rem, 1vw, 0.9rem);
 		padding: 0.5rem;
 		border: 1px solid #df9a37;
-		border-radius: 0.35rem;
+		border-radius: 0.15rem;
 		text-align: center;
 		box-shadow: 0 0.5vh 1vh rgba(0, 0, 0, 0.8);
 		pointer-events: none;
