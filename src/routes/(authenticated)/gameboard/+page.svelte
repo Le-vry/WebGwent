@@ -1417,11 +1417,10 @@
 								on:click|stopPropagation={() => handleGraveyardCardClick(card)}
 								style="
                                 pointer-events: {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'auto' : 'none'};
-                                transform: translateZ(-35vw) rotateY({(i - graveyardScrollOffset) *
-									-24}deg) translateZ(35vw) rotateY({(i - graveyardScrollOffset) * 24}deg);
+                                transform: translateX({(i - graveyardScrollOffset) * 19}vw) translateZ({-Math.abs(i - graveyardScrollOffset) * 22}vw);
                                 opacity: {Math.max(
 									0,
-									1 - Math.abs(i - graveyardScrollOffset) * 0.15
+									1 - Math.max(0, Math.abs(i - graveyardScrollOffset) - 2) * 1.5
 								)};
                                 visibility: {Math.abs(i - graveyardScrollOffset) < 4.5
 									? 'visible'
@@ -2298,7 +2297,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: rgba(30, 30, 30, 0.45);
+		background: rgba(30, 30, 30, 0.2);
 		display: flex;
 		justify-content: center;
 		align-items: center;
