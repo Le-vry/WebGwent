@@ -1960,6 +1960,7 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		object-position: top;
 		box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 	}
 	.card:hover {
@@ -2284,6 +2285,7 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		object-position: top;
 		border-radius: 0.3rem;
 		box-shadow: 0 0 0.8vh rgba(0, 0, 0, 0.6);
 	}
@@ -2315,7 +2317,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: flex-start;
-		padding-top: 30vh;
+		padding-top: 10vh;
 	}
 
 	.graveyard-modal__panel {
