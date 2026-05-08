@@ -2407,10 +2407,15 @@
 
 	.graveyard-ability-info {
 		position: absolute;
-		bottom: -6.5rem;
+		top: 105%;
 		left: 50%;
 		transform: translateX(-50%);
-		width: 130%;
+		width: 140%;
+		height: 25%;
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		background: rgba(0, 0, 0, 0.85);
 		color: #fcebbb;
 		font-family: 'Roboto', sans-serif;
