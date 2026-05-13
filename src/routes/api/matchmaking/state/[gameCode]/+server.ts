@@ -67,13 +67,28 @@ export const POST = async (event: RequestEvent) => {
 		return json({ error: 'Role does not match authenticated user' }, { status: 403 });
 	}
 
+	const persisted = parseState(auth.game.boardState.p1Melee) || {};
+	const isMulliganPhase = !persisted.p1MulliganDone || !persisted.p2MulliganDone;
+
 	const currentTurnRole = auth.game.currentTurn === 2 ? 'p2' : 'p1';
-	if (role !== currentTurnRole) {
+	if (!isMulliganPhase && role !== currentTurnRole) {
 		return json({ error: 'It is not your turn' }, { status: 409 });
 	}
 
+	const finalState = { ...state };
+
+	if (role === 'p2') {
+		finalState.p1MulliganDone = persisted.p1MulliganDone ?? finalState.p1MulliganDone;
+		finalState.p1Cards = persisted.p1Cards ?? finalState.p1Cards;
+		finalState.p1Hand = persisted.p1Hand ?? finalState.p1Hand;
+	} else if (role === 'p1') {
+		finalState.p2MulliganDone = persisted.p2MulliganDone ?? finalState.p2MulliganDone;
+		finalState.p2Cards = persisted.p2Cards ?? finalState.p2Cards;
+		finalState.p2Hand = persisted.p2Hand ?? finalState.p2Hand;
+	}
+
 	const versioned = {
-		...state,
+		...finalState,
 		__version: 1,
 		updatedAt: Date.now()
 	};
