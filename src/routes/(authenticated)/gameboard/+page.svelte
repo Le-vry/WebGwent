@@ -203,9 +203,14 @@
 		p2Passed = typeof state.p2Passed === 'boolean' ? state.p2Passed : p2Passed;
 
 		p1Leader = state.p1Leader ?? p1Leader;
-		p1Cards = Array.isArray(state.p1Cards) ? state.p1Cards : p1Cards;
-		p1Hand = Array.isArray(state.p1Hand) ? state.p1Hand : p1Hand;
 		p1TotalValue = typeof state.p1TotalValue === 'number' ? state.p1TotalValue : p1TotalValue;
+
+		const currentPlayerNumber = myRole === 'p2' ? 2 : 1;
+
+		if (currentPlayerNumber !== 1) {
+			p1Cards = Array.isArray(state.p1Cards) ? state.p1Cards : p1Cards;
+			p1Hand = Array.isArray(state.p1Hand) ? state.p1Hand : p1Hand;
+		}
 
 		meleeP1 = state.meleeP1 ?? meleeP1;
 		rangeP1 = state.rangeP1 ?? rangeP1;
@@ -214,9 +219,12 @@
 		p1Gem2Visibility = state.p1Gem2Visibility ?? p1Gem2Visibility;
 
 		p2Leader = state.p2Leader ?? p2Leader;
-		p2Cards = Array.isArray(state.p2Cards) ? state.p2Cards : p2Cards;
-		p2Hand = Array.isArray(state.p2Hand) ? state.p2Hand : p2Hand;
 		p2TotalValue = typeof state.p2TotalValue === 'number' ? state.p2TotalValue : p2TotalValue;
+
+		if (currentPlayerNumber !== 2) {
+			p2Cards = Array.isArray(state.p2Cards) ? state.p2Cards : p2Cards;
+			p2Hand = Array.isArray(state.p2Hand) ? state.p2Hand : p2Hand;
+		}
 
 		meleeP2 = state.meleeP2 ?? meleeP2;
 		rangeP2 = state.rangeP2 ?? rangeP2;
@@ -538,8 +546,8 @@
 
 		// Take random card from deck and put it into hand
 		// Add clicked card to setAsideRedrawCards, remove it from hand
-		let activeHand = activePlayerNumber === 1 ? p1Hand : p2Hand;
-		let activeDeck = activePlayerNumber === 1 ? p1Cards : p2Cards;
+		let activeHand = myPlayerNumber === 1 ? p1Hand : p2Hand;
+		let activeDeck = myPlayerNumber === 1 ? p1Cards : p2Cards;
 
 		if (activeDeck.length === 0) {
 			setActionNotice('Deck is empty!');
@@ -564,7 +572,7 @@
 		// Re-sort hand based on custom value
 		activeHand.sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
 
-		if (activePlayerNumber === 1) {
+		if (myPlayerNumber === 1) {
 			p1Hand = activeHand;
 			p1Cards = activeDeck;
 		} else {
@@ -577,7 +585,7 @@
 	}
 
 	function finalizeMulligan() {
-		let activeDeck = activePlayerNumber === 1 ? p1Cards : p2Cards;
+		let activeDeck = myPlayerNumber === 1 ? p1Cards : p2Cards;
 
 		// Return discarded cards to the deck
 		if (setAsideRedrawCards.length > 0) {
@@ -586,7 +594,7 @@
 			setAsideRedrawCards = [];
 		}
 
-		if (activePlayerNumber === 1) {
+		if (myPlayerNumber === 1) {
 			p1Cards = activeDeck;
 			p1MulliganDone = true;
 		} else {
@@ -1490,11 +1498,11 @@
 
 	<!-- Mulligan Overlay -->
 	{#if matchmakingStatus === 'active' && (!p1MulliganDone || !p2MulliganDone)}
-		{#if (activePlayerNumber === 1 && p1MulliganDone) || (activePlayerNumber === 2 && p2MulliganDone)}
+		{#if (myPlayerNumber === 1 && p1MulliganDone) || (myPlayerNumber === 2 && p2MulliganDone)}
 			<div class="mulligan-waiting">
-				{#if activePlayerNumber === 1 && p1MulliganDone && !p2MulliganDone}
+				{#if myPlayerNumber === 1 && p1MulliganDone && !p2MulliganDone}
 					Waiting for {p2Username} to finish redraw...
-				{:else if activePlayerNumber === 2 && p2MulliganDone && !p1MulliganDone}
+				{:else if myPlayerNumber === 2 && p2MulliganDone && !p1MulliganDone}
 					Waiting for {p1Username} to finish redraw...
 				{/if}
 			</div>
