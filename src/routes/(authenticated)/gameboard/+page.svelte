@@ -6,6 +6,7 @@
 	import { players_store } from '$lib/players.js';
 	import { GameSync } from '$lib/gameSync.js';
 	import BoardRow from '$lib/components/BoardRow.svelte';
+	import CardDisplay from '$lib/components/CardDisplay.svelte';
 
 	let matchmakingStatus = '';
 	let matchmakingError = '';
@@ -37,27 +38,13 @@
 	let graveyardPopupOwner = 1;
 	let clientReady = false;
 	let graveyardScrollOffset = 0;
-	
+
 	let p1MulliganDone = false;
 	let p2MulliganDone = false;
 	let mulliganDiscardCount = 0;
 	let mulliganMaxDiscard = 2;
-	let graveyardScroller = null;
+	let setAsideRedrawCards = [];
 	let pendingMedicResurrection = false;
-	
-	let graveyardScrollTimeout = null;
-	function handleGraveyardScroll(e) {
-		graveyardScrollOffset = e.target.scrollLeft / 230;
-		if (graveyardScrollTimeout) clearTimeout(graveyardScrollTimeout);
-		graveyardScrollTimeout = setTimeout(() => {
-			if (graveyardScroller) {
-				graveyardScroller.scrollTo({
-					left: Math.round(graveyardScrollOffset) * 230,
-					behavior: 'smooth'
-				});
-			}
-		}, 150);
-	}
 
 	function roleToPlayerNumber(role) {
 		return role === 'p2' ? 2 : 1;
@@ -202,8 +189,10 @@
 		p1 = players[0] ?? p1;
 		p2 = players[1] ?? p2;
 
-		p1MulliganDone = typeof state.p1MulliganDone === 'boolean' ? state.p1MulliganDone : p1MulliganDone;
-		p2MulliganDone = typeof state.p2MulliganDone === 'boolean' ? state.p2MulliganDone : p2MulliganDone;
+		p1MulliganDone =
+			typeof state.p1MulliganDone === 'boolean' ? state.p1MulliganDone : p1MulliganDone;
+		p2MulliganDone =
+			typeof state.p2MulliganDone === 'boolean' ? state.p2MulliganDone : p2MulliganDone;
 
 		turn = typeof state.turn === 'number' ? getTurnPlayer(Math.round(state.turn)) : turn;
 		placedCard = typeof state.placedCard === 'boolean' ? state.placedCard : placedCard;
@@ -252,18 +241,18 @@
 	const gameSyncCtx = {
 		getGameCode: () => gameCode,
 		getMatchmakingStatus: () => matchmakingStatus,
-		setMatchmakingStatus: (v) => matchmakingStatus = v,
+		setMatchmakingStatus: (v) => (matchmakingStatus = v),
 		getIsMyTurn: () => isMyTurn,
 		getMyRole: () => myRole,
-		setMyRole: (v) => myRole = v,
+		setMyRole: (v) => (myRole = v),
 		getSuppressStateSync: () => suppressStateSync,
 		exportMatchState: () => exportMatchState(),
 		applyMatchState: (n) => applyMatchState(n),
 		syncBoardState: () => syncBoardState(),
-		setMatchmakingError: (err) => matchmakingError = err,
+		setMatchmakingError: (err) => (matchmakingError = err),
 		clearDisconnectNotice: () => clearDisconnectNotice(),
 		setDisconnectNotice: (deadline, oppName) => setDisconnectNotice(deadline, oppName),
-		setTurn: (val) => turn = getTurnPlayer(Math.round(val)),
+		setTurn: (val) => (turn = getTurnPlayer(Math.round(val))),
 		onMatchCompleted: () => {
 			isEndingMatch = true;
 			matchCompleted = true;
@@ -273,13 +262,13 @@
 		},
 		getP1Username: () => p1Username,
 		getP2Username: () => p2Username,
-		setP1Username: (v) => p1Username = v,
-		setP2Username: (v) => p2Username = v,
+		setP1Username: (v) => (p1Username = v),
+		setP2Username: (v) => (p2Username = v),
 		initializeFromPlayers: (ps) => initializeFromPlayers(ps),
-		updatePlayersStore: (ps) => $players_store = JSON.stringify(ps),
+		updatePlayersStore: (ps) => ($players_store = JSON.stringify(ps)),
 		getPlayersStore: () => $players_store
 	};
-	
+
 	let gameSync = new GameSync(gameSyncCtx);
 
 	async function pushStateToServer(force = false) {
@@ -412,14 +401,14 @@
 	$: topGraveyard = isP1Perspective ? p2Graveyard : p1Graveyard;
 	$: bottomGraveyard = isP1Perspective ? p1Graveyard : p2Graveyard;
 	$: baseGraveyardCards = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard;
-	
+
 	$: topDeckSize = isP1Perspective ? p2Cards.length : p1Cards.length;
 	$: bottomDeckSize = isP1Perspective ? p1Cards.length : p2Cards.length;
 
 	function getGraveyardPopupCards() {
 		const base = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard;
 		if (pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber) {
-			return base.filter(c => c.type !== 'hero' && c.type !== 'special' && c.ability !== 'hero');
+			return base.filter((c) => c.type !== 'hero' && c.type !== 'special' && c.ability !== 'hero');
 		}
 		return base;
 	}
@@ -541,12 +530,72 @@
 		}
 	}
 
-	function handleGraveyardWheel(e) {
-		if (graveyardScroller && graveyardPopupOpen) {
-			e.preventDefault();
-			const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-			graveyardScroller.scrollLeft += delta;
+	function handleMulliganCardClick(card) {
+		if (mulliganDiscardCount >= mulliganMaxDiscard) {
+			setActionNotice('You can only discard 2 cards.');
+			return;
 		}
+
+		// Take random card from deck and put it into hand
+		// Add clicked card to setAsideRedrawCards, remove it from hand
+		let activeHand = activePlayerNumber === 1 ? p1Hand : p2Hand;
+		let activeDeck = activePlayerNumber === 1 ? p1Cards : p2Cards;
+
+		if (activeDeck.length === 0) {
+			setActionNotice('Deck is empty!');
+			return;
+		}
+
+		// Ensure the card exists in hand
+		const indexInHand = activeHand.findIndex((c) => c.id === card.id);
+		if (indexInHand === -1) return;
+
+		// Move discarded card to set Aside
+		setAsideRedrawCards.push(card);
+		activeHand.splice(indexInHand, 1);
+
+		// Draw random card
+		const randomDeckIndex = Math.floor(Math.random() * activeDeck.length);
+		const drawnCard = activeDeck[randomDeckIndex];
+		activeDeck.splice(randomDeckIndex, 1);
+
+		activeHand.push(drawnCard);
+
+		// Re-sort hand based on custom value
+		activeHand.sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
+
+		if (activePlayerNumber === 1) {
+			p1Hand = activeHand;
+			p1Cards = activeDeck;
+		} else {
+			p2Hand = activeHand;
+			p2Cards = activeDeck;
+		}
+
+		mulliganDiscardCount += 1;
+		queueStateSync();
+	}
+
+	function finalizeMulligan() {
+		let activeDeck = activePlayerNumber === 1 ? p1Cards : p2Cards;
+
+		// Return discarded cards to the deck
+		if (setAsideRedrawCards.length > 0) {
+			activeDeck.push(...setAsideRedrawCards);
+			activeDeck = shuffleArray(activeDeck);
+			setAsideRedrawCards = [];
+		}
+
+		if (activePlayerNumber === 1) {
+			p1Cards = activeDeck;
+			p1MulliganDone = true;
+		} else {
+			p2Cards = activeDeck;
+			p2MulliganDone = true;
+		}
+
+		setActionNotice('Mulligan complete. Waiting for opponent...');
+		pushStateToServer(true);
 	}
 
 	function isDecoyCard(card) {
@@ -1041,7 +1090,9 @@
 
 	function placedMedicCard(placedCard, row) {
 		const activeGraveyard = activePlayerNumber === 1 ? p1Graveyard : p2Graveyard;
-		const validTargets = activeGraveyard.filter((c) => c.type !== 'hero' && c.type !== 'special' && c.ability !== 'hero');
+		const validTargets = activeGraveyard.filter(
+			(c) => c.type !== 'hero' && c.type !== 'special' && c.ability !== 'hero'
+		);
 
 		if (validTargets.length > 0) {
 			pendingMedicResurrection = true;
@@ -1132,10 +1183,14 @@
 		});
 		if (maxStrength === 0) return;
 		allRows.forEach(({ owner, row }) => {
-			const scorched = row.units.filter((c) => c.type === 'unit' && getUnitScore(c, row) === maxStrength);
+			const scorched = row.units.filter(
+				(c) => c.type === 'unit' && getUnitScore(c, row) === maxStrength
+			);
 			sendCardsToGraveyard(owner, scorched);
 			const before = row.units.length;
-			row.units = row.units.filter((c) => c.type !== 'unit' || getUnitScore(c, row) !== maxStrength);
+			row.units = row.units.filter(
+				(c) => c.type !== 'unit' || getUnitScore(c, row) !== maxStrength
+			);
 			if (row.units.length !== before) updateRowValue(row);
 		});
 	}
@@ -1385,11 +1440,14 @@
 	{/if}
 
 	<div class="HeldCards">
-		{#each (isP1Perspective ? p1Hand : p2Hand) as card}
+		{#each isP1Perspective ? p1Hand : p2Hand as card}
 			{#if card.type == 'unit'}
 				<button class="card" on:click={() => placeCard(card)}>
 					<img src="{card.name}.webp" alt={card.name} loading="lazy" decoding="async" />
-					<p class="unit_value" style:left={card.value * card.ValueMultiplier >= 10 ? '8.5%' : undefined}>
+					<p
+						class="unit_value"
+						style:left={card.value * card.ValueMultiplier >= 10 ? '8.5%' : undefined}
+					>
 						{card.value * card.ValueMultiplier}
 					</p>
 				</button>
@@ -1430,198 +1488,177 @@
 		<span class="graveyard-count">{bottomDeckSize}</span>
 	</button>
 
-	{#if clientReady && graveyardPopupOpen && matchmakingStatus === 'active'}
-		<div class="graveyard-modal" on:click={closeGraveyard} role="presentation">
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-			<div
-				class="graveyard-modal__panel"
-				on:click|stopPropagation
-				on:wheel|preventDefault={handleGraveyardWheel}
-				role="dialog"
-				aria-modal="true"
-				aria-label="Graveyard cards"
-			>
-				<button
-					class="graveyard-modal__close"
-					on:click={closeGraveyard}
-					aria-label="Close graveyard">X</button
-				>
-
-				{#if pendingMedicResurrection}
-					<button
-						class="skip-resurrection-btn"
-						on:click|stopPropagation={skipMedicResurrection}
-					>
-						Skip Resurrection
-					</button>
+	<!-- Mulligan Overlay -->
+	{#if matchmakingStatus === 'active' && (!p1MulliganDone || !p2MulliganDone)}
+		{#if (activePlayerNumber === 1 && p1MulliganDone) || (activePlayerNumber === 2 && p2MulliganDone)}
+			<div class="mulligan-waiting">
+				{#if activePlayerNumber === 1 && p1MulliganDone && !p2MulliganDone}
+					Waiting for {p2Username} to finish redraw...
+				{:else if activePlayerNumber === 2 && p2MulliganDone && !p1MulliganDone}
+					Waiting for {p1Username} to finish redraw...
 				{/if}
-
-				<div class="cylinder-scroller-wrapper">
-					<div class="cylinder-viewport">
-						{#each getGraveyardPopupCards() as card, i (i)}
-							<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-							<div
-								class="cylinder-card {pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'medic-target' : ''}"
-								on:click|stopPropagation={() => handleGraveyardCardClick(card)}
-								style="
-                                pointer-events: auto;
-                                transition: transform 0.2s ease, opacity 0.2s ease, z-index 0s;
-                                --tz: {-Math.abs(i - graveyardScrollOffset) * 22}vw;
-                                --tx: {(i - graveyardScrollOffset) * 19}vw;
-                                transform: translateX(var(--tx)) translateZ(var(--tz));
-                                opacity: {Math.max(
-									0,
-									1 - Math.max(0, Math.abs(i - graveyardScrollOffset) - 2) * 1.5
-								)};
-                                visibility: {Math.abs(i - graveyardScrollOffset) < 4.5
-									? 'visible'
-									: 'hidden'};
-                                z-index: {100 -
-									Math.round(Math.abs(i - graveyardScrollOffset) * 10)};
-                            "
-							>
-								<img src="{card.name}.webp" alt={card.name} draggable="false" />
-								{#if card.type == 'unit'}
-									<p
-										class="graveyard_unit_value"
-										style={(card.Basevalue !== undefined ? card.Basevalue : card.value) >= 10
-											? 'left: 9%;'
-											: ''}
-									>
-										{card.Basevalue !== undefined ? card.Basevalue : card.value}
-									</p>
-								{/if}
-								{#if Math.round(graveyardScrollOffset) === i}
-									{#if card.ability === 'tight_bond'}
-										<div class="graveyard-ability-info">
-											Tight Bond: Place next to a card with the same name to double the strength of
-											both cards.
-										</div>
-									{:else if card.ability === 'medic'}
-										<div class="graveyard-ability-info">
-											Medic: Choose one card from your discard pile and play it instantly (no Heroes
-											or Special Cards).
-										</div>
-									{:else if card.type === 'hero'}
-										<div class="graveyard-ability-info">
-											Hero: Not affected by any Special Cards or abilities.
-										</div>
-									{:else if card.ability === 'morale_boost'}
-										<div class="graveyard-ability-info">
-											Morale boost: Adds +1 to all units in the row (excluding itself).
-										</div>
-									{:else if card.ability === 'spy'}
-										<div class="graveyard-ability-info">
-											Spy: Place on your opponent's battlefield (counts towards opponent's total)
-											and draw 2 cards from your deck.
-										</div>
-									{:else if card.ability === 'agile'}
-										<div class="graveyard-ability-info">
-											Agile: Can be placed in either the Close Combat or the Ranged Combat row.
-											Cannot be moved once placed.
-										</div>
-									{:else if card.name === 'Villentretenmerth'}
-										<div class="graveyard-ability-info">
-											Scorch - Close Combat: Destroy your enemy's strongest Close Combat unit(s) if
-											the combined strength of all his or her Close Combat units is 10 or more.
-										</div>
-									{:else if card.name === 'Toad'}
-										<div class="graveyard-ability-info">
-											Scorch - Ranged: Destroy your enemy's strongest Ranged Combat unit(s) if the
-											combined strength of all his or her Ranged Combat units is 10 or more.
-										</div>
-									{:else if card.name === 'Schirrú' || card.name === 'Schirru'}
-										<div class="graveyard-ability-info">
-											Scorch - Siege: Destroys your enemy's strongest Siege Combat unit(s) if the
-											combined strength of all his or her Siege Combat units is 10 or more.
-										</div>
-									{:else if card.ability === 'muster'}
-										<div class="graveyard-ability-info">
-											Muster: Find any cards with the same name in your deck and play them
-											instantly.
-										</div>
-									{:else if card.ability === 'W1' || card.name === 'Biting Frost'}
-										<div class="graveyard-ability-info">
-											Sets the strength of all Close Combat cards to 1 for both players.
-										</div>
-									{:else if card.ability === 'W2' || card.name === 'Impenetrable Fog'}
-										<div class="graveyard-ability-info">
-											Sets the strength of all Ranged Combat cards to 1 for both players.
-										</div>
-									{:else if card.ability === 'W3' || card.name === 'Torrential Rain'}
-										<div class="graveyard-ability-info">
-											Sets the strength of all Siege Combat cards to 1 for both players.
-										</div>
-									{:else if card.ability === 'W4' || card.name === 'Skellige Storm'}
-										<div class="graveyard-ability-info">
-											Reduces the Strength of all Range and Siege Units to 1.
-										</div>
-									{:else if card.ability === 'W5' || card.name === 'Clear Weather'}
-										<div class="graveyard-ability-info">
-											Removes all Weather Card (Biting Frost, Impenetrable Fog and Torrential Rain)
-											effects.
-										</div>
-									{:else if card.ability === 'horn' || card.ability === "Commander's Horn" || card.name === "Commander's Horn"}
-										<div class="graveyard-ability-info">
-											Commander's Horn: Doubles the strength of all unit cards in that row. Limited
-											to 1 per row.
-										</div>
-									{:else if card.ability === 'decoy' || card.name === 'Decoy'}
-										<div class="graveyard-ability-info">
-											Swap with a card on the battlefield to return it to your hand.
-										</div>
-									{:else if card.ability === 'scorch' || card.ability === 'Scorch'}
-										<div class="graveyard-ability-info">
-											Scorch: Discards after playing. Kills the strongest card(s) on the
-											battlefield.
-										</div>
-									{/if}
-								{/if}
-							</div>
-						{/each}
-					</div>
-
-					<div
-						class="native-scroller"
-						bind:this={graveyardScroller}
-						on:scroll={handleGraveyardScroll}
-					>
-						<div
-							style="width: calc(100% + {Math.max(0, getGraveyardPopupCards().length - 1) *
-								230}px); height: 1px;"
-						></div>
-					</div>
-				</div>
 			</div>
-		</div>
+		{:else}
+			<CardDisplay
+				cards={isP1Perspective ? p1Hand : p2Hand}
+				isOpen={true}
+				onCardClick={(c) => handleMulliganCardClick(c)}
+				hideCloseBtn={true}
+				cardCustomClass={() => ''}
+				showSkipButton={true}
+				skipButtonLabel={mulliganDiscardCount >= mulliganMaxDiscard
+					? 'Confirm Hand'
+					: `Confirm Hand (Can Discard ${mulliganMaxDiscard - mulliganDiscardCount} More)`}
+				onSkipClick={finalizeMulligan}
+				isPendingAction={mulliganDiscardCount < mulliganMaxDiscard}
+			/>
+		{/if}
 	{/if}
+
+	<CardDisplay
+		cards={getGraveyardPopupCards()}
+		isOpen={clientReady && graveyardPopupOpen && matchmakingStatus === 'active'}
+		onClose={closeGraveyard}
+		onCardClick={(c) => {
+			if (pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber) {
+				handleGraveyardCardClick(c);
+			}
+		}}
+		cardCustomClass={(c) =>
+			pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber ? 'medic-target' : ''}
+		showSkipButton={pendingMedicResurrection}
+		skipButtonLabel="Skip Resurrection"
+		onSkipClick={skipMedicResurrection}
+		isPendingAction={pendingMedicResurrection && graveyardPopupOwner === activePlayerNumber}
+	/>
 
 	<section class="Board-top">
 		{#if !isP1Perspective}
 			<div class="totalvalue">{p1TotalValue}</div>
-			<BoardRow rowType="melee" rowData={meleeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFrostCard} isTopBoard={true} />
-			<BoardRow rowType="range" rowData={rangeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFogCard} isTopBoard={true} />
-			<BoardRow rowType="siege" rowData={siegeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedRainCard} isTopBoard={true} />
+			<BoardRow
+				rowType="melee"
+				rowData={meleeP1}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)}
+				weatherActive={placedFrostCard}
+				isTopBoard={true}
+			/>
+			<BoardRow
+				rowType="range"
+				rowData={rangeP1}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)}
+				weatherActive={placedFogCard}
+				isTopBoard={true}
+			/>
+			<BoardRow
+				rowType="siege"
+				rowData={siegeP1}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)}
+				weatherActive={placedRainCard}
+				isTopBoard={true}
+			/>
 		{:else}
 			<div class="totalvalue">{p2TotalValue}</div>
-			<BoardRow rowType="melee" rowData={meleeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFrostCard} isTopBoard={true} />
-			<BoardRow rowType="range" rowData={rangeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFogCard} isTopBoard={true} />
-			<BoardRow rowType="siege" rowData={siegeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedRainCard} isTopBoard={true} />
+			<BoardRow
+				rowType="melee"
+				rowData={meleeP2}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)}
+				weatherActive={placedFrostCard}
+				isTopBoard={true}
+			/>
+			<BoardRow
+				rowType="range"
+				rowData={rangeP2}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)}
+				weatherActive={placedFogCard}
+				isTopBoard={true}
+			/>
+			<BoardRow
+				rowType="siege"
+				rowData={siegeP2}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)}
+				weatherActive={placedRainCard}
+				isTopBoard={true}
+			/>
 		{/if}
 	</section>
 
 	<section class="Board-bottom">
 		{#if isP1Perspective}
 			<div class="totalvalue" style="top:72.3%;">{p1TotalValue}</div>
-			<BoardRow rowType="melee" rowData={meleeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFrostCard} isTopBoard={false} isSelectedRow={meleeSelected} />
-			<BoardRow rowType="range" rowData={rangeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedFogCard} isTopBoard={false} isSelectedRow={rangeSelected} />
-			<BoardRow rowType="siege" rowData={siegeP1} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)} weatherActive={placedRainCard} isTopBoard={false} isSelectedRow={siegeSelected} />
+			<BoardRow
+				rowType="melee"
+				rowData={meleeP1}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)}
+				weatherActive={placedFrostCard}
+				isTopBoard={false}
+				isSelectedRow={meleeSelected}
+			/>
+			<BoardRow
+				rowType="range"
+				rowData={rangeP1}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)}
+				weatherActive={placedFogCard}
+				isTopBoard={false}
+				isSelectedRow={rangeSelected}
+			/>
+			<BoardRow
+				rowType="siege"
+				rowData={siegeP1}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 1)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 1)}
+				weatherActive={placedRainCard}
+				isTopBoard={false}
+				isSelectedRow={siegeSelected}
+			/>
 		{:else}
 			<div class="totalvalue" style="top:72%;">{p2TotalValue}</div>
-			<BoardRow rowType="melee" rowData={meleeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFrostCard} isTopBoard={false} isSelectedRow={meleeSelected} />
-			<BoardRow rowType="range" rowData={rangeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedFogCard} isTopBoard={false} isSelectedRow={rangeSelected} />
-			<BoardRow rowType="siege" rowData={siegeP2} onRowClick={selectRow} onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)} isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)} weatherActive={placedRainCard} isTopBoard={false} isSelectedRow={siegeSelected} />
+			<BoardRow
+				rowType="melee"
+				rowData={meleeP2}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)}
+				weatherActive={placedFrostCard}
+				isTopBoard={false}
+				isSelectedRow={meleeSelected}
+			/>
+			<BoardRow
+				rowType="range"
+				rowData={rangeP2}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)}
+				weatherActive={placedFogCard}
+				isTopBoard={false}
+				isSelectedRow={rangeSelected}
+			/>
+			<BoardRow
+				rowType="siege"
+				rowData={siegeP2}
+				onRowClick={selectRow}
+				onCardClick={(card, rt) => handleBoardCardClick(card, rt, 2)}
+				isDecoyTarget={(card, rt) => isDecoyTargetInRow(card, rt, 2)}
+				weatherActive={placedRainCard}
+				isTopBoard={false}
+				isSelectedRow={siegeSelected}
+			/>
 		{/if}
 	</section>
 
@@ -1739,7 +1776,7 @@
 				</div>
 
 				{#each [1, 2, 3] as roundNum}
-					{@const summary = roundSummaries.find(r => r.round === roundNum)}
+					{@const summary = roundSummaries.find((r) => r.round === roundNum)}
 					{#if summary}
 						<div class="summary-grid">
 							<span>R{summary.round}</span>
@@ -2341,6 +2378,23 @@
 		opacity: 0.4;
 	}
 
+	.mulligan-waiting {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background: rgba(0, 0, 0, 0.85);
+		border: 1px solid #df9a37;
+		padding: 2rem;
+		border-radius: 12px;
+		color: #ffb24c;
+		font:
+			700 1.5rem 'Roboto',
+			sans-serif;
+		z-index: 99;
+		box-shadow: 0 0 15px rgba(223, 154, 55, 0.4);
+	}
+
 	.graveyard-stack {
 		position: relative;
 		width: 100%;
@@ -2399,7 +2453,13 @@
 		border-bottom: 3px solid;
 		border-left: none;
 		border-right: none;
-		border-image: linear-gradient(to right, transparent 0%, rgba(223, 154, 55, 0.8) 50%, transparent 100%) 1;
+		border-image: linear-gradient(
+				to right,
+				transparent 0%,
+				rgba(223, 154, 55, 0.8) 50%,
+				transparent 100%
+			)
+			1;
 		padding: 1.2rem;
 		display: flex;
 		flex-direction: column;

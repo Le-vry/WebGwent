@@ -18,7 +18,7 @@ export async function detectSuspiciousActivity(userId: string) {
 		orderBy: { createdAt: 'desc' }
 	});
 
-	const ipAddresses = new Set(sessions.map((s: { ipAddress: any; }) => s.ipAddress));
+	const ipAddresses = new Set(sessions.map((s: { ipAddress: any }) => s.ipAddress));
 	const recentSessions = sessions.filter(
 		(s) => s.createdAt.getTime() > Date.now() - 24 * 60 * 60 * 1000
 	);

@@ -22,14 +22,17 @@ export class GameSync {
 		});
 
 		try {
-			const res = await fetch(`/api/matchmaking/state/${encodeURIComponent(this.ctx.getGameCode())}`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					state: statePayload,
-					role: this.ctx.getMyRole()
-				})
-			});
+			const res = await fetch(
+				`/api/matchmaking/state/${encodeURIComponent(this.ctx.getGameCode())}`,
+				{
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({
+						state: statePayload,
+						role: this.ctx.getMyRole()
+					})
+				}
+			);
 			if (!res.ok) {
 				console.warn('[Push State] Server returned:', res.status);
 			}
@@ -44,8 +47,9 @@ export class GameSync {
 			!this.ctx.getGameCode() ||
 			this.ctx.getMatchmakingStatus() !== 'active' ||
 			!this.ctx.getIsMyTurn()
-		) return;
-		
+		)
+			return;
+
 		if (this.syncTimer) window.clearTimeout(this.syncTimer);
 		this.syncTimer = window.setTimeout(() => {
 			this.pushStateToServer();
@@ -110,7 +114,8 @@ export class GameSync {
 					meta.disconnect.role !== this.ctx.getMyRole() &&
 					meta.status === 'active'
 				) {
-					const opponentName = meta.disconnect.role === 'p1' ? this.ctx.getP1Username() : this.ctx.getP2Username();
+					const opponentName =
+						meta.disconnect.role === 'p1' ? this.ctx.getP1Username() : this.ctx.getP2Username();
 					this.ctx.setDisconnectNotice(meta.disconnect.deadlineMs, opponentName);
 				} else {
 					this.ctx.clearDisconnectNotice();
@@ -119,7 +124,7 @@ export class GameSync {
 				console.error('Failed to parse SSE game meta:', error);
 			}
 		});
-		
+
 		this.sseConnection.addEventListener('state', (event) => {
 			try {
 				const next = JSON.parse(event.data);
@@ -150,7 +155,9 @@ export class GameSync {
 
 		if (!res.ok) {
 			const errorMsg = result?.error ?? `Could not load game state (HTTP ${res.status})`;
-			this.ctx.setMatchmakingError(res.status === 410 ? 'Match no longer exists or was cancelled.' : errorMsg);
+			this.ctx.setMatchmakingError(
+				res.status === 410 ? 'Match no longer exists or was cancelled.' : errorMsg
+			);
 			if (res.status === 410) {
 				this.ctx.setMatchmakingStatus('');
 				this.clearWaitingPoll();

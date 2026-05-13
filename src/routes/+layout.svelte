@@ -11,8 +11,7 @@
 	export let data: LayoutData;
 
 	$: isFullscreenRoute =
-		$page.url.pathname.startsWith('/card-select') ||
-		$page.url.pathname.startsWith('/gameboard');
+		$page.url.pathname.startsWith('/card-select') || $page.url.pathname.startsWith('/gameboard');
 </script>
 
 <svelte:head>
@@ -54,7 +53,8 @@
 		box-sizing: border-box;
 	}
 
-	:global(html), :global(body) {
+	:global(html),
+	:global(body) {
 		margin: 0;
 		padding: 0;
 		min-height: 100%;
@@ -118,5 +118,4 @@
 		flex: 1;
 		display: flex;
 	}
-
 </style>

@@ -2,7 +2,11 @@ import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { getPrismaClient } from '$lib/server/prisma';
 
-const DEFAULT_PLAYER_PAYLOAD = [[], { name: 'Ballista1' }, { name: 'Northern Realms', ability: '' }];
+const DEFAULT_PLAYER_PAYLOAD = [
+	[],
+	{ name: 'Ballista1' },
+	{ name: 'Northern Realms', ability: '' }
+];
 
 function parsePersistedState(raw: string) {
 	try {

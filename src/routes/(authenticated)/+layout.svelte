@@ -2,8 +2,7 @@
 	import { page } from '$app/stores';
 
 	$: bypassAuthShell =
-		$page.url.pathname.startsWith('/card-select') ||
-		$page.url.pathname.startsWith('/gameboard');
+		$page.url.pathname.startsWith('/card-select') || $page.url.pathname.startsWith('/gameboard');
 </script>
 
 {#if bypassAuthShell}

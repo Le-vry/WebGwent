@@ -16,7 +16,10 @@ function randomGameCode(length = 6) {
 async function createUniqueCode(prisma: ReturnType<typeof getPrismaClient>) {
 	for (let i = 0; i < 10; i += 1) {
 		const candidate = randomGameCode();
-		const existing = await prisma.game.findUnique({ where: { gameCode: candidate }, select: { id: true } });
+		const existing = await prisma.game.findUnique({
+			where: { gameCode: candidate },
+			select: { id: true }
+		});
 		if (!existing) return candidate;
 	}
 	return `${randomGameCode(4)}${Date.now().toString().slice(-4)}`;

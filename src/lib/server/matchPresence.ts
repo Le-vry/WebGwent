@@ -158,7 +158,9 @@ export function registerMatchConnection(
 	};
 }
 
-export function getMatchDisconnectInfo(gameCode: string): { role: MatchRole; deadlineMs: number } | null {
+export function getMatchDisconnectInfo(
+	gameCode: string
+): { role: MatchRole; deadlineMs: number } | null {
 	const state = presenceByGame.get(gameCode);
 	if (!state?.disconnect) return null;
 

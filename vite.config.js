@@ -9,16 +9,16 @@ export default defineConfig({
 		minify: 'terser',
 		terserOptions: {
 			compress: {
-				drop_console: false, // Set to true in production to remove console logs
-			},
+				drop_console: false // Set to true in production to remove console logs
+			}
 		},
 		// Target modern browsers for better compression
 		target: 'ES2020',
 		// Enable sourcemaps for debugging in production (optional)
-		sourcemap: false,
+		sourcemap: false
 	},
 	// Performance optimizations
 	optimizeDeps: {
-		include: ['@sveltejs/kit', '@skeletonlabs/skeleton'],
-	},
+		include: ['@sveltejs/kit', '@skeletonlabs/skeleton']
+	}
 });

@@ -30,10 +30,7 @@
 </script>
 
 <button class={rowType} style={rowStyle} on:click={() => onRowClick(rowType)}>
-	<div
-		class="{rowType}-value"
-		style={isTopBoard && rowType !== 'siege' ? 'top:35%;' : ''}
-	>
+	<div class="{rowType}-value" style={isTopBoard && rowType !== 'siege' ? 'top:35%;' : ''}>
 		{rowData.value}
 	</div>
 
@@ -44,7 +41,7 @@
 			</div>
 		{/each}
 	</div>
-	
+
 	<div class="{rowType}-units no-scrollbar">
 		{#each rowData.units as card}
 			{#if card.type === 'unit'}
@@ -56,19 +53,21 @@
 					style="padding-left:0.2vw; padding-top:0.2vw;"
 				>
 					<img src="{card.name}.webp" alt={card.name} />
-					<p class="unit_value"
+					<p
+						class="unit_value"
 						style:left={getScore(card) >= 10 ? '8.5%' : undefined}
-						style:color={getScore(card) > card.Basevalue ? 'green' : getScore(card) < card.Basevalue ? 'red' : undefined}
+						style:color={getScore(card) > card.Basevalue
+							? 'green'
+							: getScore(card) < card.Basevalue
+								? 'red'
+								: undefined}
 					>
 						{getScore(card)}
 					</p>
 				</button>
 			{:else if card.type === 'hero'}
 				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-				<button
-					class="card"
-					on:click|stopPropagation={() => onCardClick(card, rowType)}
-				>
+				<button class="card" on:click|stopPropagation={() => onCardClick(card, rowType)}>
 					<img src="{card.name}.webp" alt={card.name} />
 				</button>
 			{/if}
@@ -96,7 +95,9 @@
 		background-color: transparent;
 	}
 
-	.melee, .range, .siege {
+	.melee,
+	.range,
+	.siege {
 		background-color: transparent;
 		border: none;
 		border-radius: 0;
@@ -105,16 +106,26 @@
 		width: 100%;
 		height: 31%;
 	}
-	.melee { top: 2%; }
-	.range { top: 35%; }
-	.siege { top: 68%; }
+	.melee {
+		top: 2%;
+	}
+	.range {
+		top: 35%;
+	}
+	.siege {
+		top: 68%;
+	}
 
-	.melee-value, .range-value, .siege-value {
+	.melee-value,
+	.range-value,
+	.siege-value {
 		position: absolute;
 		left: 0.8%;
 		width: 5.3%;
 		background-color: transparent;
-		font: 500 1.7em 'Roboto', sans-serif;
+		font:
+			500 1.7em 'Roboto',
+			sans-serif;
 		color: #000000;
 		text-align: center;
 		text-shadow:
@@ -127,10 +138,17 @@
 			0px -2px 2px #ffffff,
 			0px 2px 2px #ffffff;
 	}
-	.melee-value, .range-value { top: 34%; }
-	.siege-value { top: 36.25%; }
+	.melee-value,
+	.range-value {
+		top: 34%;
+	}
+	.siege-value {
+		top: 36.25%;
+	}
 
-	.melee-special, .range-special, .siege-special {
+	.melee-special,
+	.range-special,
+	.siege-special {
 		position: absolute;
 		left: 7%;
 		width: 12.5%;
@@ -140,11 +158,19 @@
 		justify-content: center;
 		align-items: center;
 	}
-	.melee-special { top: 5%; }
-	.range-special { top: 4%; }
-	.siege-special { top: 5%; }
+	.melee-special {
+		top: 5%;
+	}
+	.range-special {
+		top: 4%;
+	}
+	.siege-special {
+		top: 5%;
+	}
 
-	.melee-units, .range-units, .siege-units {
+	.melee-units,
+	.range-units,
+	.siege-units {
 		position: absolute;
 		left: 20.2%;
 		width: 79.5%;
@@ -155,9 +181,15 @@
 		justify-content: center;
 		align-items: center;
 	}
-	.melee-units { top: 4%; }
-	.range-units { top: 4%; }
-	.siege-units { top: 5%; }
+	.melee-units {
+		top: 4%;
+	}
+	.range-units {
+		top: 4%;
+	}
+	.siege-units {
+		top: 5%;
+	}
 
 	/* Cards Styles */
 	.card {
@@ -197,7 +229,9 @@
 	}
 	.decoy-target {
 		transform: scale(1.045);
-		transition: transform 0.16s ease, filter 0.16s ease;
+		transition:
+			transform 0.16s ease,
+			filter 0.16s ease;
 		filter: brightness(1.08);
 	}
 	.decoy-target img {
@@ -205,7 +239,9 @@
 	}
 	.unit_value {
 		position: absolute;
-		font: 500 0.75em 'Roboto', sans-serif;
+		font:
+			500 0.75em 'Roboto',
+			sans-serif;
 		top: 7%;
 		left: 13.5%;
 		z-index: 1;

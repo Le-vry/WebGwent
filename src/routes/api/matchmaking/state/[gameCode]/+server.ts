@@ -86,9 +86,8 @@ export const POST = async (event: RequestEvent) => {
 		auth.prisma.game.update({
 			where: { id: auth.game.id },
 			data: {
-				currentTurn: typeof state.turn === 'number'
-					? (Math.round(state.turn) === 2 ? 2 : 1)
-					: undefined
+				currentTurn:
+					typeof state.turn === 'number' ? (Math.round(state.turn) === 2 ? 2 : 1) : undefined
 			}
 		})
 	]);

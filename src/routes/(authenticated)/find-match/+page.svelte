@@ -186,7 +186,9 @@
 
 		<div class="actions">
 			<button on:click={createMatch} disabled={actionBusy || !selectedFaction}>Create Match</button>
-			<button class="secondary" on:click={() => goto(base + '/card-select')}>Open Deck Builder</button>
+			<button class="secondary" on:click={() => goto(base + '/card-select')}
+				>Open Deck Builder</button
+			>
 			<button class="secondary" on:click={loadOpenMatches} disabled={loading}>Refresh</button>
 		</div>
 	</div>
@@ -207,11 +209,17 @@
 						<p>{match.hostName} - {match.faction} ({match.leader})</p>
 					</div>
 					{#if match.isMine}
-						<button on:click={() => goto(base + `/gameboard?gameCode=${encodeURIComponent(match.gameCode)}`)}>
+						<button
+							on:click={() =>
+								goto(base + `/gameboard?gameCode=${encodeURIComponent(match.gameCode)}`)}
+						>
 							Open
 						</button>
 					{:else}
-						<button on:click={() => joinMatch(match.gameCode)} disabled={actionBusy || !selectedFaction}>Join</button>
+						<button
+							on:click={() => joinMatch(match.gameCode)}
+							disabled={actionBusy || !selectedFaction}>Join</button
+						>
 					{/if}
 				</div>
 			{/each}

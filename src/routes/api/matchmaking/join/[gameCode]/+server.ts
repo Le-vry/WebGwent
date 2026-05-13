@@ -31,7 +31,11 @@ export const POST = async ({ locals, params, request }: RequestEvent) => {
 
 	if (existingLiveMatch) {
 		return json(
-			{ error: 'You already have a live match.', gameCode: existingLiveMatch.gameCode, status: existingLiveMatch.status },
+			{
+				error: 'You already have a live match.',
+				gameCode: existingLiveMatch.gameCode,
+				status: existingLiveMatch.status
+			},
 			{ status: 409 }
 		);
 	}

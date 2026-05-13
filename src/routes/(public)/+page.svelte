@@ -141,7 +141,7 @@
 
 	.logout-form {
 		margin-top: 0.55rem;
-    }
+	}
 
 	.menu-item {
 		display: block;
@@ -169,10 +169,9 @@
 
 	button {
 		width: 100%;
-    }
+	}
 
 	p {
 		margin: 0;
 	}
 </style>
-

@@ -30,7 +30,6 @@
 	</section>
 </main>
 
-
 <style>
 	main {
 		width: 100%;

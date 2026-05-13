@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 
-const players = browser ? window.localStorage.getItem('players') ?? '' : '';
+const players = browser ? (window.localStorage.getItem('players') ?? '') : '';
 
 export const players_store = writable(players);
 
