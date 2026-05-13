@@ -2392,7 +2392,7 @@
 	}
 
 	.cylinder-card:hover {
-		transform: translateX(var(--tx)) translateZ(var(--tz)) scale(1.15) !important;
+		transform: translateX(var(--tx)) translateZ(var(--tz)) scale(1.05) !important;
 		z-index: 200 !important;
 	}
 
@@ -2404,7 +2404,7 @@
 	.cylinder-card img {
 		width: 100%;
 		height: 100%;
-		border-radius: 0.35rem;
+		border-radius: 0.5rem;
 		box-shadow: 0 0 1.2vh rgba(0, 0, 0, 0.7);
 		backface-visibility: hidden;
 		transition: all 0.2s ease;
