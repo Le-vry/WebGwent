@@ -37,6 +37,11 @@
 	let graveyardPopupOwner = 1;
 	let clientReady = false;
 	let graveyardScrollOffset = 0;
+	
+	let p1MulliganDone = false;
+	let p2MulliganDone = false;
+	let mulliganDiscardCount = 0;
+	let mulliganMaxDiscard = 2;
 	let graveyardScroller = null;
 	let pendingMedicResurrection = false;
 	
@@ -150,6 +155,8 @@
 		return {
 			__version: 1,
 			players,
+			p1MulliganDone,
+			p2MulliganDone,
 			turn,
 			placedCard,
 			passedTurn,
@@ -194,6 +201,9 @@
 		players = Array.isArray(state.players) ? state.players : players;
 		p1 = players[0] ?? p1;
 		p2 = players[1] ?? p2;
+
+		p1MulliganDone = typeof state.p1MulliganDone === 'boolean' ? state.p1MulliganDone : p1MulliganDone;
+		p2MulliganDone = typeof state.p2MulliganDone === 'boolean' ? state.p2MulliganDone : p2MulliganDone;
 
 		turn = typeof state.turn === 'number' ? getTurnPlayer(Math.round(state.turn)) : turn;
 		placedCard = typeof state.placedCard === 'boolean' ? state.placedCard : placedCard;
@@ -402,6 +412,9 @@
 	$: topGraveyard = isP1Perspective ? p2Graveyard : p1Graveyard;
 	$: bottomGraveyard = isP1Perspective ? p1Graveyard : p2Graveyard;
 	$: baseGraveyardCards = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard;
+	
+	$: topDeckSize = isP1Perspective ? p2Cards.length : p1Cards.length;
+	$: bottomDeckSize = isP1Perspective ? p1Cards.length : p2Cards.length;
 
 	function getGraveyardPopupCards() {
 		const base = graveyardPopupOwner === 1 ? p1Graveyard : p2Graveyard;
@@ -1340,6 +1353,17 @@
 		<span class="graveyard-count">{topGraveyard.length}</span>
 	</button>
 
+	<button
+		class="deck deck--top"
+		disabled={topDeckSize === 0}
+		aria-label="Deck cards remaining (opponent)"
+	>
+		<div class="graveyard-stack" aria-hidden="true">
+			<img src="cards_symbol.png" alt="deck" />
+		</div>
+		<span class="graveyard-count">{topDeckSize}</span>
+	</button>
+
 	{#if showTurnBanner}
 		<div class="turn-flash">YOUR TURN</div>
 	{/if}
@@ -1393,6 +1417,17 @@
 			{/each}
 		</div>
 		<span class="graveyard-count">{bottomGraveyard.length}</span>
+	</button>
+
+	<button
+		class="deck deck--bottom"
+		disabled={bottomDeckSize === 0}
+		aria-label="Deck cards remaining (you)"
+	>
+		<div class="graveyard-stack" aria-hidden="true">
+			<img src="cards_symbol.png" alt="deck" style="object-fit: contain; padding: 0.5rem;" />
+		</div>
+		<span class="graveyard-count">{bottomDeckSize}</span>
 	</button>
 
 	{#if clientReady && graveyardPopupOpen && matchmakingStatus === 'active'}
@@ -2270,7 +2305,38 @@
 		z-index: 50;
 	}
 
-	.graveyard:disabled {
+	.deck {
+		position: absolute;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: default;
+		z-index: 49;
+		width: 5vw;
+		height: 11.7vh;
+		min-width: 5vw;
+		min-height: 11.7vh;
+		max-width: 5vw;
+		max-height: 11.7vh;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.deck--top {
+		top: 1.5%;
+		right: 8.5%;
+	}
+
+	.deck--bottom {
+		bottom: 7%;
+		right: 8.5%;
+	}
+
+	.graveyard:disabled,
+	.deck:disabled {
 		cursor: not-allowed;
 		opacity: 0.4;
 	}
@@ -2404,7 +2470,7 @@
 	.cylinder-card img {
 		width: 100%;
 		height: 100%;
-		border-radius: 0.5rem;
+		border-radius: 0.75rem;
 		box-shadow: 0 0 1.2vh rgba(0, 0, 0, 0.7);
 		backface-visibility: hidden;
 		transition: all 0.2s ease;
